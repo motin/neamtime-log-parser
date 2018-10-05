@@ -6,10 +6,10 @@ class TimeSpendingLog {
   }
 
   public static createFromStdClassAndUseDefaultsForMissingAttributes(
-    timeSpendingLogStdClass: stdClass
+    timeSpendingLogStdClass: stdClass,
   ) {
     this.useDefaultsForMissingAttributesInStdClassRepresentation(
-      timeSpendingLogStdClass
+      timeSpendingLogStdClass,
     );
     const timeSpendingLog = new TimeSpendingLog();
     timeSpendingLog.setAttributesFromStdClass(timeSpendingLogStdClass);
@@ -18,47 +18,47 @@ class TimeSpendingLog {
 
   public static createFromPathAndStdClassAndUseDefaultsForMissingAttributes(
     timeSpendingLogPath,
-    timeSpendingLogStdClass: stdClass
+    timeSpendingLogStdClass: stdClass,
   ) {
     const timeSpendingLogContents = file_get_contents(timeSpendingLogPath);
     timeSpendingLogStdClass.rawLogContents = timeSpendingLogContents;
     const timeSpendingLog = this.createFromStdClassAndUseDefaultsForMissingAttributes(
-      timeSpendingLogStdClass
+      timeSpendingLogStdClass,
     );
     return timeSpendingLog;
   }
 
   public static useDefaultsForMissingAttributesInStdClassRepresentation(
-    timeSpendingLogStdClass: stdClass
+    timeSpendingLogStdClass: stdClass,
   ) {
     if (!(undefined !== timeSpendingLogStdClass.tzFirst)) {
-      timeSpendingLogStdClass.tzFirst = 'UTC';
+      timeSpendingLogStdClass.tzFirst = "UTC";
     }
 
     if (!(undefined !== timeSpendingLogStdClass.inputContentTypeRef)) {
-      timeSpendingLogStdClass.inputContentTypeRef = 'neamtime-log';
+      timeSpendingLogStdClass.inputContentTypeRef = "neamtime-log";
     }
 
     if (!(undefined !== timeSpendingLogStdClass.firstRowsCommentIsTheName)) {
       timeSpendingLogStdClass.firstRowsCommentIsTheName = !timeSpendingLogStdClass.name
-        ? '1'
+        ? "1"
         : undefined;
     }
   }
 
   public static validateStdClassRepresentation(
-    timeSpendingLogStdClass: stdClass
+    timeSpendingLogStdClass: stdClass,
   ) {
     if (!(undefined !== timeSpendingLogStdClass.tzFirst)) {
-      throw new InvalidArgumentException('Missing param: tzFirst');
+      throw new InvalidArgumentException("Missing param: tzFirst");
     }
 
     if (!(undefined !== timeSpendingLogStdClass.rawLogContents)) {
-      throw new InvalidArgumentException('Missing param: rawLogContents');
+      throw new InvalidArgumentException("Missing param: rawLogContents");
     }
 
     if (!(undefined !== timeSpendingLogStdClass.name)) {
-      throw new InvalidArgumentException('Missing param: name');
+      throw new InvalidArgumentException("Missing param: name");
     }
   }
 
@@ -80,18 +80,18 @@ class TimeSpendingLog {
   public nameFromFirstRowOfRawLogContents() {
     if (!this.rawLogContents) {
       throw new InvalidArgumentException(
-        'nameFromFirstRowOfRawLogContents requires that rawLogContents is not empty'
+        "nameFromFirstRowOfRawLogContents requires that rawLogContents is not empty",
       );
     }
 
     const name = str_replace(
-      '#',
-      '',
-      LogParser.readFirstNonEmptyLineOfText(this.rawLogContents)
+      "#",
+      "",
+      LogParser.readFirstNonEmptyLineOfText(this.rawLogContents),
     ).trim();
 
     if (!name) {
-      throw new Error('nameFromFirstRowOfRawLogContents yielded an empty name');
+      throw new Error("nameFromFirstRowOfRawLogContents yielded an empty name");
     }
 
     return name;

@@ -52,16 +52,16 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
     let testDataMatrix = Array();
     const tlp = new TimeLogParser();
     const tokens = tlp.tokens();
-    const keyword = 'pause';
+    const keyword = "pause";
 
     for (const token of Object.values(tokens[keyword])) {
       const tokenSpecific = [
-        [token + '->2010-04-03 7:58', keyword, '->', token],
-        [token + '->2010-04-03 7:58', keyword, undefined, token],
-        [token + ' 2016-05-16 09:55->', keyword, '->', false],
-        [token + ' 2016-05-16 09:55->', keyword, ' ', token],
-        [token + ' 2016-05-16 09:55->', keyword, undefined, token],
-        [token + '->|$', keyword, '->|$', token]
+        [token + "->2010-04-03 7:58", keyword, "->", token],
+        [token + "->2010-04-03 7:58", keyword, undefined, token],
+        [token + " 2016-05-16 09:55->", keyword, "->", false],
+        [token + " 2016-05-16 09:55->", keyword, " ", token],
+        [token + " 2016-05-16 09:55->", keyword, undefined, token],
+        [token + "->|$", keyword, "->|$", token],
       ];
       testDataMatrix = array_merge(testDataMatrix, tokenSpecific);
     }
@@ -71,134 +71,134 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
 
   public static testSecondsToDurationProvider() {
     return [
-      [60, '1min'],
-      [65, '1min'],
-      [120, '2min'],
-      [99 * 60, '1h39min'],
-      [200 * 60, '3h20min'],
-      [184 * 60, '3h4min'],
-      [70 * 60, '1h10min'],
-      [4397 * 60, '3d1h17min'],
-      [4397 * 60 + 3600 * 24 * 7 * 5, '5w3d1h17min'],
-      [13, '0min']
+      [60, "1min"],
+      [65, "1min"],
+      [120, "2min"],
+      [99 * 60, "1h39min"],
+      [200 * 60, "3h20min"],
+      [184 * 60, "3h4min"],
+      [70 * 60, "1h10min"],
+      [4397 * 60, "3d1h17min"],
+      [4397 * 60 + 3600 * 24 * 7 * 5, "5w3d1h17min"],
+      [13, "0min"],
     ];
   }
 
   public static testDurationToMinutesProvider() {
     return [
-      ['4min', '4'],
-      ['99min', '99'],
-      ['200min', '200'],
-      ['3h4min', 184],
-      ['1h10min', 70],
-      ['3d1h17min', 4397],
-      ['5w3d1h17min', 4397 + (3600 * 24 * 7 * 5) / 60],
-      ['13s', 13 / 60]
+      ["4min", "4"],
+      ["99min", "99"],
+      ["200min", "200"],
+      ["3h4min", 184],
+      ["1h10min", 70],
+      ["3d1h17min", 4397],
+      ["5w3d1h17min", 4397 + (3600 * 24 * 7 * 5) / 60],
+      ["13s", 13 / 60],
     ];
   }
 
   public static testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneProvider() {
     return [
       [
-        '1970-01-01 12:00',
-        'UTC',
+        "1970-01-01 12:00",
+        "UTC",
         12 * 3600,
-        '1970-01-01 12:00',
-        'UTC',
+        "1970-01-01 12:00",
+        "UTC",
         12 * 3600,
-        'Europe/Berlin',
-        '1970-01-01 13:00'
+        "Europe/Berlin",
+        "1970-01-01 13:00",
       ],
       [
-        '1970-01-01 06:00',
-        'UTC',
+        "1970-01-01 06:00",
+        "UTC",
         6 * 3600,
-        '1970-01-01 06:00',
-        'UTC',
+        "1970-01-01 06:00",
+        "UTC",
         6 * 3600,
-        'Europe/Berlin',
-        '1970-01-01 07:00'
+        "Europe/Berlin",
+        "1970-01-01 07:00",
       ],
       [
-        '1970-01-01 06:00',
-        'Europe/Berlin',
+        "1970-01-01 06:00",
+        "Europe/Berlin",
         5 * 3600,
-        '1970-01-01 05:00',
-        'Europe/Berlin',
+        "1970-01-01 05:00",
+        "Europe/Berlin",
         5 * 3600,
-        'Europe/Berlin',
-        '1970-01-01 06:00'
+        "Europe/Berlin",
+        "1970-01-01 06:00",
       ],
       [
-        '1970-01-01 06:00',
-        'Europe/Berlin',
+        "1970-01-01 06:00",
+        "Europe/Berlin",
         5 * 3600,
-        '1970-01-01 05:00',
-        'Europe/Berlin',
+        "1970-01-01 05:00",
+        "Europe/Berlin",
         5 * 3600,
-        'UTC',
-        '1970-01-01 05:00'
+        "UTC",
+        "1970-01-01 05:00",
       ],
       [
-        '1970-01-01 13:00',
-        'Europe/Berlin',
+        "1970-01-01 13:00",
+        "Europe/Berlin",
         12 * 3600,
-        '1970-01-01 12:00',
-        'Europe/Berlin',
+        "1970-01-01 12:00",
+        "Europe/Berlin",
         12 * 3600,
-        'Europe/Berlin',
-        '1970-01-01 13:00'
+        "Europe/Berlin",
+        "1970-01-01 13:00",
       ],
       [
-        '1970-01-01 06:00',
-        'America/Chicago',
+        "1970-01-01 06:00",
+        "America/Chicago",
         12 * 3600,
-        '1970-01-01 12:00',
-        'America/Chicago',
+        "1970-01-01 12:00",
+        "America/Chicago",
         12 * 3600,
-        'Europe/Berlin',
-        '1970-01-01 13:00'
+        "Europe/Berlin",
+        "1970-01-01 13:00",
       ],
       [
-        '1970-01-01 06:00',
-        'GMT-6',
+        "1970-01-01 06:00",
+        "GMT-6",
         12 * 3600,
-        '1970-01-01 12:00',
-        '-06:00',
+        "1970-01-01 12:00",
+        "-06:00",
         12 * 3600,
-        'Europe/Berlin',
-        '1970-01-01 13:00'
+        "Europe/Berlin",
+        "1970-01-01 13:00",
       ],
       [
-        '1970-01-01 06:00',
-        '-06:00',
+        "1970-01-01 06:00",
+        "-06:00",
         12 * 3600,
-        '1970-01-01 12:00',
-        '-06:00',
+        "1970-01-01 12:00",
+        "-06:00",
         12 * 3600,
-        'Europe/Berlin',
-        '1970-01-01 13:00'
+        "Europe/Berlin",
+        "1970-01-01 13:00",
       ],
       [
-        '1970-01-01 06:00',
-        'Etc/GMT-6',
+        "1970-01-01 06:00",
+        "Etc/GMT-6",
         0 * 3600,
-        '1970-01-01 00:00',
-        'Etc/GMT-6',
+        "1970-01-01 00:00",
+        "Etc/GMT-6",
         0 * 3600,
-        'Europe/Berlin',
-        '1970-01-01 01:00'
+        "Europe/Berlin",
+        "1970-01-01 01:00",
       ],
       [
-        '1970-01-01 06:00',
-        'Etc/GMT+6',
+        "1970-01-01 06:00",
+        "Etc/GMT+6",
         12 * 3600,
-        '1970-01-01 12:00',
-        'Etc/GMT+6',
+        "1970-01-01 12:00",
+        "Etc/GMT+6",
         12 * 3600,
-        'Europe/Berlin',
-        '1970-01-01 13:00'
-      ]
+        "Europe/Berlin",
+        "1970-01-01 13:00",
+      ],
     ];
   }
 
@@ -206,18 +206,18 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
     return [
       [
         {
-          '2013-03-28': 'foo',
-          '2013-04-02': 'foo'
+          "2013-03-28": "foo",
+          "2013-04-02": "foo",
         },
         {
-          '2013-03-28': 'foo',
-          '2013-03-29': 0,
-          '2013-03-30': 0,
-          '2013-03-31': 0,
-          '2013-04-01': 0,
-          '2013-04-02': 'foo'
-        }
-      ]
+          "2013-03-28": "foo",
+          "2013-03-29": 0,
+          "2013-03-30": 0,
+          "2013-03-31": 0,
+          "2013-04-01": 0,
+          "2013-04-02": "foo",
+        },
+      ],
     ];
   }
 
@@ -229,711 +229,711 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
         {
           0: {
             rows_with_timemarkers_handled: 0,
-            line: 'start 2017-12-12, 18:24ca',
-            line_with_comment: 'start 2017-12-12, 18:24ca',
-            formatted_date: '2017-12-12 16:24:00',
-            date: '2017-12-12',
-            date_raw: '2017-12-12, 18:24ca',
+            line: "start 2017-12-12, 18:24ca",
+            line_with_comment: "start 2017-12-12, 18:24ca",
+            formatted_date: "2017-12-12 16:24:00",
+            date: "2017-12-12",
+            date_raw: "2017-12-12, 18:24ca",
             ts: 1513095840,
             log: {
               0: "Found a supported timestamp ('Y-m-d, H:i')",
-              1: 'Found a valid timestamp in probable start/pause-row... interpreted as start/pause-row...'
+              1: "Found a valid timestamp in probable start/pause-row... interpreted as start/pause-row...",
             },
             source_line: 3,
             preprocessed_contents_source_line_index: 2,
-            lastKnownTimeZone: 'Europe/Helsinki',
-            lastUsedTimeZone: 'Europe/Helsinki',
-            lastSetTsAndDateErrorMessage: 'Timestamp not found',
-            lastKnownDate: '2017-12-12',
+            lastKnownTimeZone: "Europe/Helsinki",
+            lastUsedTimeZone: "Europe/Helsinki",
+            lastSetTsAndDateErrorMessage: "Timestamp not found",
+            lastKnownDate: "2017-12-12",
             date_raw_was_nonempty_before_detectTimeStamp:
-              'start 2017-12-12, 18:24ca',
-            date_raw_format: 'Y-m-d, H:i',
-            time_raw: '18:24ca',
+              "start 2017-12-12, 18:24ca",
+            date_raw_format: "Y-m-d, H:i",
+            time_raw: "18:24ca",
             ts_is_faked: false,
-            highlight_with_newlines: true
+            highlight_with_newlines: true,
           },
           1: {
             rows_with_timemarkers_handled: 1,
-            line: '2017-12-12, 18:28, bar',
-            line_with_comment: '2017-12-12, 18:28, bar',
-            formatted_date: '2017-12-12 16:28',
-            date: '2017-12-12',
-            date_raw: '2017-12-12, 18:28',
+            line: "2017-12-12, 18:28, bar",
+            line_with_comment: "2017-12-12, 18:28, bar",
+            formatted_date: "2017-12-12 16:28",
+            date: "2017-12-12",
+            date_raw: "2017-12-12, 18:28",
             ts: 1513096080,
             log: Array(),
             source_line: 5,
             preprocessed_contents_source_line_index: 4,
-            lastKnownTimeZone: 'Europe/Helsinki',
-            lastUsedTimeZone: 'Europe/Helsinki',
-            lastSetTsAndDateErrorMessage: '',
-            duration_since_last: 240
+            lastKnownTimeZone: "Europe/Helsinki",
+            lastUsedTimeZone: "Europe/Helsinki",
+            lastSetTsAndDateErrorMessage: "",
+            duration_since_last: 240,
           },
           2: {
             rows_with_timemarkers_handled: 2,
-            line: '2017-12-12, 18:32ca, zoo',
-            line_with_comment: '2017-12-12, 18:32ca, zoo',
-            formatted_date: '2017-12-12 16:32',
-            date: '2017-12-12',
-            date_raw: '2017-12-12, 18:32ca',
+            line: "2017-12-12, 18:32ca, zoo",
+            line_with_comment: "2017-12-12, 18:32ca, zoo",
+            formatted_date: "2017-12-12 16:32",
+            date: "2017-12-12",
+            date_raw: "2017-12-12, 18:32ca",
             ts: 1513096320,
             log: Array(),
             source_line: 7,
             preprocessed_contents_source_line_index: 6,
-            lastKnownTimeZone: 'Europe/Helsinki',
-            lastUsedTimeZone: 'Europe/Helsinki',
-            lastSetTsAndDateErrorMessage: '',
-            duration_since_last: 240
-          }
+            lastKnownTimeZone: "Europe/Helsinki",
+            lastUsedTimeZone: "Europe/Helsinki",
+            lastSetTsAndDateErrorMessage: "",
+            duration_since_last: 240,
+          },
         },
-        480
-      ]
+        480,
+      ],
     ];
   }
 
   public static testDetectStartStopLinesCorrectlyProvider() {
     return [
       [
-        'stop paying the bills',
+        "stop paying the bills",
         false,
         false,
         false,
-        'Europe/Stockholm',
-        '2016-05-01',
+        "Europe/Stockholm",
+        "2016-05-01",
         false,
-        false
+        false,
       ],
       [
-        'start going through the items',
+        "start going through the items",
         false,
         false,
         false,
-        'Europe/Stockholm',
-        '2016-05-01',
+        "Europe/Stockholm",
+        "2016-05-01",
         false,
-        false
-      ]
+        false,
+      ],
     ];
   }
 
   public static testDetectTimeStampAndSetTsAndDateDataProvider() {
     return [
       [
-        'foo 2016-05-25T14:50:00Z bar',
-        '2016-05-25T14:50:00Z',
-        '14:50:00',
+        "foo 2016-05-25T14:50:00Z bar",
+        "2016-05-25T14:50:00Z",
+        "14:50:00",
         DateTime.ISO8601,
-        'Europe/Stockholm',
-        '2016-05-01',
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-25 14:50:00'
+        "2016-05-25 14:50:00",
       ],
       [
-        'foo 2016-05-25T14:50:00+03:00 bar',
-        '2016-05-25T14:50:00+03:00',
-        '14:50:00',
+        "foo 2016-05-25T14:50:00+03:00 bar",
+        "2016-05-25T14:50:00+03:00",
+        "14:50:00",
         DateTime.ISO8601,
-        'Europe/Stockholm',
-        '2016-05-01',
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-25 11:50:00'
+        "2016-05-25 11:50:00",
       ],
       [
-        'foo 2016-05-25T14:50:00+UTC bar',
-        '2016-05-25T14:50:00+UTC',
-        '14:50:00',
+        "foo 2016-05-25T14:50:00+UTC bar",
+        "2016-05-25T14:50:00+UTC",
+        "14:50:00",
         DateTime.ISO8601,
-        'Europe/Stockholm',
-        '2016-05-01',
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-25 14:50:00'
+        "2016-05-25 14:50:00",
       ],
       [
-        'foo 2016-05-25 14:50 bar',
-        '2016-05-25 14:50',
-        '14:50',
-        'Y-m-d H:i',
-        'UTC',
-        '2016-05-01',
+        "foo 2016-05-25 14:50 bar",
+        "2016-05-25 14:50",
+        "14:50",
+        "Y-m-d H:i",
+        "UTC",
+        "2016-05-01",
         true,
-        '2016-05-25 14:50:00'
+        "2016-05-25 14:50:00",
       ],
       [
-        'foo 2016-05-25 14:50 bar',
-        '2016-05-25 14:50',
-        '14:50',
-        'Y-m-d H:i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "foo 2016-05-25 14:50 bar",
+        "2016-05-25 14:50",
+        "14:50",
+        "Y-m-d H:i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-25 12:50:00'
+        "2016-05-25 12:50:00",
       ],
       [
-        'foo 2016-05-25 14:50 bar',
-        '2016-05-25 14:50',
-        '14:50',
-        'Y-m-d H:i',
-        'Europe/Helsinki',
-        '2016-05-01',
+        "foo 2016-05-25 14:50 bar",
+        "2016-05-25 14:50",
+        "14:50",
+        "Y-m-d H:i",
+        "Europe/Helsinki",
+        "2016-05-01",
         true,
-        '2016-05-25 11:50:00'
+        "2016-05-25 11:50:00",
       ],
       [
-        'foo 2014-09-01 14:50 bar',
-        '2014-09-01 14:50',
-        '14:50',
-        'Y-m-d H:i',
-        'UTC',
-        '2016-05-01',
+        "foo 2014-09-01 14:50 bar",
+        "2014-09-01 14:50",
+        "14:50",
+        "Y-m-d H:i",
+        "UTC",
+        "2016-05-01",
         true,
-        '2014-09-01 14:50:00'
+        "2014-09-01 14:50:00",
       ],
       [
-        'foo 2014-09-01 14:50 bar',
-        '2014-09-01 14:50',
-        '14:50',
-        'Y-m-d H:i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "foo 2014-09-01 14:50 bar",
+        "2014-09-01 14:50",
+        "14:50",
+        "Y-m-d H:i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2014-09-01 12:50:00'
+        "2014-09-01 12:50:00",
       ],
       [
-        'foo 2014-09-01 14:50 bar',
-        '2014-09-01 14:50',
-        '14:50',
-        'Y-m-d H:i',
-        'Europe/Helsinki',
-        '2016-05-01',
+        "foo 2014-09-01 14:50 bar",
+        "2014-09-01 14:50",
+        "14:50",
+        "Y-m-d H:i",
+        "Europe/Helsinki",
+        "2016-05-01",
         true,
-        '2014-09-01 11:50:00'
+        "2014-09-01 11:50:00",
       ],
       [
-        'foo 2014-11-21 14:50 bar',
-        '2014-11-21 14:50',
-        '14:50',
-        'Y-m-d H:i',
-        'UTC',
-        '2016-05-01',
+        "foo 2014-11-21 14:50 bar",
+        "2014-11-21 14:50",
+        "14:50",
+        "Y-m-d H:i",
+        "UTC",
+        "2016-05-01",
         true,
-        '2014-11-21 14:50:00'
+        "2014-11-21 14:50:00",
       ],
       [
-        'foo 2014-11-21 14:50 bar',
-        '2014-11-21 14:50',
-        '14:50',
-        'Y-m-d H:i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "foo 2014-11-21 14:50 bar",
+        "2014-11-21 14:50",
+        "14:50",
+        "Y-m-d H:i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2014-11-21 13:50:00'
+        "2014-11-21 13:50:00",
       ],
       [
-        'foo 2014-11-21 14:50 bar',
-        '2014-11-21 14:50',
-        '14:50',
-        'Y-m-d H:i',
-        'Europe/Helsinki',
-        '2016-05-01',
+        "foo 2014-11-21 14:50 bar",
+        "2014-11-21 14:50",
+        "14:50",
+        "Y-m-d H:i",
+        "Europe/Helsinki",
+        "2016-05-01",
         true,
-        '2014-11-21 12:50:00'
+        "2014-11-21 12:50:00",
       ],
       [
-        'foo 2016-05-25, 14:50 bar',
-        '2016-05-25, 14:50',
-        '14:50',
-        'Y-m-d, H:i',
-        'UTC',
-        '2016-05-01',
+        "foo 2016-05-25, 14:50 bar",
+        "2016-05-25, 14:50",
+        "14:50",
+        "Y-m-d, H:i",
+        "UTC",
+        "2016-05-01",
         true,
-        '2016-05-25 14:50:00'
+        "2016-05-25 14:50:00",
       ],
       [
-        'foo 2016-05-25, 14:50 bar',
-        '2016-05-25, 14:50',
-        '14:50',
-        'Y-m-d, H:i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "foo 2016-05-25, 14:50 bar",
+        "2016-05-25, 14:50",
+        "14:50",
+        "Y-m-d, H:i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-25 12:50:00'
+        "2016-05-25 12:50:00",
       ],
       [
-        'foo 2016-05-25, 14:50 bar',
-        '2016-05-25, 14:50',
-        '14:50',
-        'Y-m-d, H:i',
-        'Europe/Helsinki',
-        '2016-05-01',
+        "foo 2016-05-25, 14:50 bar",
+        "2016-05-25, 14:50",
+        "14:50",
+        "Y-m-d, H:i",
+        "Europe/Helsinki",
+        "2016-05-01",
         true,
-        '2016-05-25 11:50:00'
+        "2016-05-25 11:50:00",
       ],
       [
-        'foo 2014-09-01, 14:50 bar',
-        '2014-09-01, 14:50',
-        '14:50',
-        'Y-m-d, H:i',
-        'UTC',
-        '2016-05-01',
+        "foo 2014-09-01, 14:50 bar",
+        "2014-09-01, 14:50",
+        "14:50",
+        "Y-m-d, H:i",
+        "UTC",
+        "2016-05-01",
         true,
-        '2014-09-01 14:50:00'
+        "2014-09-01 14:50:00",
       ],
       [
-        'foo 2014-09-01, 14:50 bar',
-        '2014-09-01, 14:50',
-        '14:50',
-        'Y-m-d, H:i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "foo 2014-09-01, 14:50 bar",
+        "2014-09-01, 14:50",
+        "14:50",
+        "Y-m-d, H:i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2014-09-01 12:50:00'
+        "2014-09-01 12:50:00",
       ],
       [
-        'foo 2014-09-01, 14:50 bar',
-        '2014-09-01, 14:50',
-        '14:50',
-        'Y-m-d, H:i',
-        'Europe/Helsinki',
-        '2016-05-01',
+        "foo 2014-09-01, 14:50 bar",
+        "2014-09-01, 14:50",
+        "14:50",
+        "Y-m-d, H:i",
+        "Europe/Helsinki",
+        "2016-05-01",
         true,
-        '2014-09-01 11:50:00'
+        "2014-09-01 11:50:00",
       ],
       [
-        'foo 2014-11-21, 14:50 bar',
-        '2014-11-21, 14:50',
-        '14:50',
-        'Y-m-d, H:i',
-        'UTC',
-        '2016-05-01',
+        "foo 2014-11-21, 14:50 bar",
+        "2014-11-21, 14:50",
+        "14:50",
+        "Y-m-d, H:i",
+        "UTC",
+        "2016-05-01",
         true,
-        '2014-11-21 14:50:00'
+        "2014-11-21 14:50:00",
       ],
       [
-        'foo 2014-11-21, 14:50 bar',
-        '2014-11-21, 14:50',
-        '14:50',
-        'Y-m-d, H:i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "foo 2014-11-21, 14:50 bar",
+        "2014-11-21, 14:50",
+        "14:50",
+        "Y-m-d, H:i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2014-11-21 13:50:00'
+        "2014-11-21 13:50:00",
       ],
       [
-        'foo 2014-11-21, 14:50 bar',
-        '2014-11-21, 14:50',
-        '14:50',
-        'Y-m-d, H:i',
-        'Europe/Helsinki',
-        '2016-05-01',
+        "foo 2014-11-21, 14:50 bar",
+        "2014-11-21, 14:50",
+        "14:50",
+        "Y-m-d, H:i",
+        "Europe/Helsinki",
+        "2016-05-01",
         true,
-        '2014-11-21 12:50:00'
+        "2014-11-21 12:50:00",
       ],
       [
-        'foo 2016-05-25, 14.50 bar',
-        '2016-05-25, 14.50',
-        '14.50',
-        'Y-m-d, H.i',
-        'UTC',
-        '2016-05-01',
+        "foo 2016-05-25, 14.50 bar",
+        "2016-05-25, 14.50",
+        "14.50",
+        "Y-m-d, H.i",
+        "UTC",
+        "2016-05-01",
         true,
-        '2016-05-25 14:50:00'
+        "2016-05-25 14:50:00",
       ],
       [
-        'foo 2016-05-25, 14.50 bar',
-        '2016-05-25, 14.50',
-        '14.50',
-        'Y-m-d, H.i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "foo 2016-05-25, 14.50 bar",
+        "2016-05-25, 14.50",
+        "14.50",
+        "Y-m-d, H.i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-25 12:50:00'
+        "2016-05-25 12:50:00",
       ],
       [
-        'foo 2016-05-25, 14.50 bar',
-        '2016-05-25, 14.50',
-        '14.50',
-        'Y-m-d, H.i',
-        'Europe/Helsinki',
-        '2016-05-01',
+        "foo 2016-05-25, 14.50 bar",
+        "2016-05-25, 14.50",
+        "14.50",
+        "Y-m-d, H.i",
+        "Europe/Helsinki",
+        "2016-05-01",
         true,
-        '2016-05-25 11:50:00'
+        "2016-05-25 11:50:00",
       ],
       [
-        'foo 2014-09-01, 14.50 bar',
-        '2014-09-01, 14.50',
-        '14.50',
-        'Y-m-d, H.i',
-        'UTC',
-        '2016-05-01',
+        "foo 2014-09-01, 14.50 bar",
+        "2014-09-01, 14.50",
+        "14.50",
+        "Y-m-d, H.i",
+        "UTC",
+        "2016-05-01",
         true,
-        '2014-09-01 14:50:00'
+        "2014-09-01 14:50:00",
       ],
       [
-        'foo 2014-09-01, 14.50 bar',
-        '2014-09-01, 14.50',
-        '14.50',
-        'Y-m-d, H.i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "foo 2014-09-01, 14.50 bar",
+        "2014-09-01, 14.50",
+        "14.50",
+        "Y-m-d, H.i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2014-09-01 12:50:00'
+        "2014-09-01 12:50:00",
       ],
       [
-        'foo 2014-09-01, 14.50 bar',
-        '2014-09-01, 14.50',
-        '14.50',
-        'Y-m-d, H.i',
-        'Europe/Helsinki',
-        '2016-05-01',
+        "foo 2014-09-01, 14.50 bar",
+        "2014-09-01, 14.50",
+        "14.50",
+        "Y-m-d, H.i",
+        "Europe/Helsinki",
+        "2016-05-01",
         true,
-        '2014-09-01 11:50:00'
+        "2014-09-01 11:50:00",
       ],
       [
-        'foo 2014-11-21, 14.50 bar',
-        '2014-11-21, 14.50',
-        '14.50',
-        'Y-m-d, H.i',
-        'UTC',
-        '2016-05-01',
+        "foo 2014-11-21, 14.50 bar",
+        "2014-11-21, 14.50",
+        "14.50",
+        "Y-m-d, H.i",
+        "UTC",
+        "2016-05-01",
         true,
-        '2014-11-21 14:50:00'
+        "2014-11-21 14:50:00",
       ],
       [
-        'foo 2014-11-21, 14.50 bar',
-        '2014-11-21, 14.50',
-        '14.50',
-        'Y-m-d, H.i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "foo 2014-11-21, 14.50 bar",
+        "2014-11-21, 14.50",
+        "14.50",
+        "Y-m-d, H.i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2014-11-21 13:50:00'
+        "2014-11-21 13:50:00",
       ],
       [
-        'foo 2014-11-21, 14.50 bar',
-        '2014-11-21, 14.50',
-        '14.50',
-        'Y-m-d, H.i',
-        'Europe/Helsinki',
-        '2016-05-01',
+        "foo 2014-11-21, 14.50 bar",
+        "2014-11-21, 14.50",
+        "14.50",
+        "Y-m-d, H.i",
+        "Europe/Helsinki",
+        "2016-05-01",
         true,
-        '2014-11-21 12:50:00'
+        "2014-11-21 12:50:00",
       ],
       [
-        'foo 2014-09-01T12:42:21+02:00 bar',
-        '2014-09-01T12:42:21+02:00',
-        '12:42:21',
+        "foo 2014-09-01T12:42:21+02:00 bar",
+        "2014-09-01T12:42:21+02:00",
+        "12:42:21",
         DateTime.ISO8601,
-        'Europe/Stockholm',
-        '2016-05-01',
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2014-09-01 10:42:21'
+        "2014-09-01 10:42:21",
       ],
       [
-        'foo 2014-09-01 12:42 bar',
-        '2014-09-01 12:42',
-        '12:42',
-        'Y-m-d H:i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "foo 2014-09-01 12:42 bar",
+        "2014-09-01 12:42",
+        "12:42",
+        "Y-m-d H:i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2014-09-01 10:42:00'
+        "2014-09-01 10:42:00",
       ],
       [
-        'foo 2014-09-01, 12:42 bar',
-        '2014-09-01, 12:42',
-        '12:42',
-        'Y-m-d, H:i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "foo 2014-09-01, 12:42 bar",
+        "2014-09-01, 12:42",
+        "12:42",
+        "Y-m-d, H:i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2014-09-01 10:42:00'
+        "2014-09-01 10:42:00",
       ],
       [
-        'foo 14:35 bar',
-        '14:35',
-        '14:35',
-        'H:i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "foo 14:35 bar",
+        "14:35",
+        "14:35",
+        "H:i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
       [
-        'foo 14.35 bar',
-        '14.35',
-        '14.35',
-        'H.i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "foo 14.35 bar",
+        "14.35",
+        "14.35",
+        "H.i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
       [
-        'foo bar',
+        "foo bar",
         false,
         false,
         false,
-        'Europe/Stockholm',
-        '2016-05-01',
+        "Europe/Stockholm",
+        "2016-05-01",
         false,
-        false
+        false,
       ],
       [
-        'paus 18:45ca->',
-        '18:45ca',
-        '18:45ca',
-        'H:i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "paus 18:45ca->",
+        "18:45ca",
+        "18:45ca",
+        "H:i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 16:45:00'
+        "2016-05-01 16:45:00",
       ],
       [
-        'paus 2016-05-25 18:45ca->',
-        '2016-05-25 18:45ca',
-        '18:45ca',
-        'Y-m-d H:i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "paus 2016-05-25 18:45ca->",
+        "2016-05-25 18:45ca",
+        "18:45ca",
+        "Y-m-d H:i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-25 16:45:00'
+        "2016-05-25 16:45:00",
       ],
       [
-        'paus 2016-05-25, 18:45ca->',
-        '2016-05-25, 18:45ca',
-        '18:45ca',
-        'Y-m-d, H:i',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "paus 2016-05-25, 18:45ca->",
+        "2016-05-25, 18:45ca",
+        "18:45ca",
+        "Y-m-d, H:i",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-25 16:45:00'
+        "2016-05-25 16:45:00",
       ],
       [
-        'paus ??->',
+        "paus ??->",
         false,
         false,
         false,
-        'Europe/Stockholm',
-        '2016-05-01',
+        "Europe/Stockholm",
+        "2016-05-01",
         false,
-        false
+        false,
       ],
       [
-        'foo bar :zoo:',
+        "foo bar :zoo:",
         false,
         false,
         false,
-        'Europe/Stockholm',
-        '2016-05-01',
+        "Europe/Stockholm",
+        "2016-05-01",
         false,
-        false
+        false,
       ],
       [
-        'start 2014-11-21 17:49',
-        '2014-11-21 17:49',
-        '17:49',
-        'Y-m-d H:i',
-        'Europe/Stockholm',
-        '2014-11-21',
+        "start 2014-11-21 17:49",
+        "2014-11-21 17:49",
+        "17:49",
+        "Y-m-d H:i",
+        "Europe/Stockholm",
+        "2014-11-21",
         true,
-        '2014-11-21 16:49:00'
+        "2014-11-21 16:49:00",
       ],
       [
-        'start 2014-11-21, 17:49',
-        '2014-11-21, 17:49',
-        '17:49',
-        'Y-m-d, H:i',
-        'Europe/Stockholm',
-        '2014-11-21',
+        "start 2014-11-21, 17:49",
+        "2014-11-21, 17:49",
+        "17:49",
+        "Y-m-d, H:i",
+        "Europe/Stockholm",
+        "2014-11-21",
         true,
-        '2014-11-21 16:49:00'
+        "2014-11-21 16:49:00",
       ],
       [
-        ' 2014-11-21T15:51:00+UTC, <just before paus>',
-        '2014-11-21T15:51:00+UTC',
-        '15:51:00',
+        " 2014-11-21T15:51:00+UTC, <just before paus>",
+        "2014-11-21T15:51:00+UTC",
+        "15:51:00",
         DateTime.ISO8601,
-        'Europe/Stockholm',
-        '2014-11-21',
+        "Europe/Stockholm",
+        "2014-11-21",
         true,
-        '2014-11-21 15:51:00'
+        "2014-11-21 15:51:00",
       ],
       [
-        '2017-01-26, 17:26, init',
-        '2017-01-26, 17:26',
-        '17:26',
-        'Y-m-d, H:i',
-        'Europe/Helsinki',
-        '2017-01-26',
+        "2017-01-26, 17:26, init",
+        "2017-01-26, 17:26",
+        "17:26",
+        "Y-m-d, H:i",
+        "Europe/Helsinki",
+        "2017-01-26",
         true,
-        '2017-01-26 15:26:00'
+        "2017-01-26 15:26:00",
       ],
       [
-        'start 2017-03-01, 09:15',
-        '2017-03-01, 09:15',
-        '09:15',
-        'Y-m-d, H:i',
-        'Europe/Helsinki',
-        '2017-03-01',
+        "start 2017-03-01, 09:15",
+        "2017-03-01, 09:15",
+        "09:15",
+        "Y-m-d, H:i",
+        "Europe/Helsinki",
+        "2017-03-01",
         true,
-        '2017-03-01 07:15:00'
-      ]
+        "2017-03-01 07:15:00",
+      ],
     ];
   }
 
   public static testParseLogCommentDataProvider() {
     return [
       [
-        '14:35, bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "14:35, bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
       [
-        '14.35, bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "14.35, bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
       [
-        '14:35ca, bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "14:35ca, bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
       [
-        '14.35ca, bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "14.35ca, bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
-      ['foo bar', '', 'Europe/Stockholm', '2016-05-01', false, false],
+      ["foo bar", "", "Europe/Stockholm", "2016-05-01", false, false],
       [
-        '18:15',
-        '',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "18:15",
+        "",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 16:15:00'
+        "2016-05-01 16:15:00",
       ],
-      ['18.15', '', 'Europe/Stockholm', '2016-05-01', false, false],
-      ['18,15', '', 'Europe/Stockholm', '2016-05-01', false, false],
-      ['foo:bar', '', 'Europe/Stockholm', '2016-05-01', false, false],
-      [':zoo', '', 'Europe/Stockholm', '2016-05-01', false, false],
+      ["18.15", "", "Europe/Stockholm", "2016-05-01", false, false],
+      ["18,15", "", "Europe/Stockholm", "2016-05-01", false, false],
+      ["foo:bar", "", "Europe/Stockholm", "2016-05-01", false, false],
+      [":zoo", "", "Europe/Stockholm", "2016-05-01", false, false],
       [
-        '2016-05-01 14:35, bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "2016-05-01 14:35, bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
-      ],
-      [
-        '2016-05-01 14.35, bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
-        true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
       [
-        '2016-05-01 14:35ca, bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "2016-05-01 14.35, bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
       [
-        '2016-05-01 14.35ca, bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "2016-05-01 14:35ca, bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
       [
-        '2016-05-01 14:35 - bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "2016-05-01 14.35ca, bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
       [
-        '2016-05-01 14.35 - bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "2016-05-01 14:35 - bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
       [
-        '2016-05-01 14:35ca - bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "2016-05-01 14.35 - bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
       [
-        '2016-05-01 14.35ca - bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "2016-05-01 14:35ca - bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
       [
-        '2016-05-01, 14:35, bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "2016-05-01 14.35ca - bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
       [
-        '2016-05-01, 14.35, bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "2016-05-01, 14:35, bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
       [
-        '2016-05-01, 14:35ca, bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "2016-05-01, 14.35, bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
       [
-        '2016-05-01, 14.35ca, bar',
-        ' bar',
-        'Europe/Stockholm',
-        '2016-05-01',
+        "2016-05-01, 14:35ca, bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
         true,
-        '2016-05-01 12:35:00'
+        "2016-05-01 12:35:00",
       ],
-      ['2016-05-01, bar', '', 'Europe/Stockholm', '2016-05-01', false, false],
-      ['2016-05-01, bar', '', 'Europe/Stockholm', '2016-05-01', false, false]
+      [
+        "2016-05-01, 14.35ca, bar",
+        " bar",
+        "Europe/Stockholm",
+        "2016-05-01",
+        true,
+        "2016-05-01 12:35:00",
+      ],
+      ["2016-05-01, bar", "", "Europe/Stockholm", "2016-05-01", false, false],
+      ["2016-05-01, bar", "", "Europe/Stockholm", "2016-05-01", false, false],
     ];
   }
 
   public static correctTimeSpendingLogContentsProvider() {
     const pathToFolderWhereTsLogsReside = codecept_data_dir(
-      'neamtime/time-spending-logs/correct'
+      "neamtime/time-spending-logs/correct",
     );
     const timeSpendingLogPaths = this.timeSpendingLogPathsInFolder(
-      pathToFolderWhereTsLogsReside
+      pathToFolderWhereTsLogsReside,
     );
     const providerData = Array();
 
@@ -946,18 +946,18 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
 
   public static incorrectTimeSpendingLogContentsProvider() {
     const pathToFolderWhereTsLogsReside = codecept_data_dir(
-      'neamtime/time-spending-logs/incorrect'
+      "neamtime/time-spending-logs/incorrect",
     );
     const timeSpendingLogPaths = this.timeSpendingLogPathsInFolder(
-      pathToFolderWhereTsLogsReside
+      pathToFolderWhereTsLogsReside,
     );
     const providerData = Array();
 
     for (const timeSpendingLogPath of Object.values(timeSpendingLogPaths)) {
       const processingErrorsJsonFilePath = str_replace(
-        '.tslog',
-        '.processing-errors.json',
-        timeSpendingLogPath
+        ".tslog",
+        ".processing-errors.json",
+        timeSpendingLogPath,
       );
       providerData.push([timeSpendingLogPath, processingErrorsJsonFilePath]);
     }
@@ -966,24 +966,24 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
   }
 
   public static timeSpendingLogPathsInFolder(
-    pathToFolderWhereTsLogsReside // handle bear-exported txt-files // pick up properly named files for parsing
+    pathToFolderWhereTsLogsReside, // handle bear-exported txt-files // pick up properly named files for parsing
   ) {
-    let timeSpendingLogPaths = glob(pathToFolderWhereTsLogsReside + '/*.txt');
+    let timeSpendingLogPaths = glob(pathToFolderWhereTsLogsReside + "/*.txt");
 
     for (const rawTimeSpendingLogPath of Object.values(timeSpendingLogPaths)) {
       // first rename the file to make it shorter, and end with .tslog
       const dirname = pathinfo(rawTimeSpendingLogPath, PATHINFO_DIRNAME);
       const filename = pathinfo(rawTimeSpendingLogPath, PATHINFO_FILENAME);
 
-      const _ = filename.split(' - ');
+      const _ = filename.split(" - ");
 
       const newFilename = _[0].trim();
 
-      const timeSpendingLogPath = dirname + '/' + newFilename + '.tslog';
+      const timeSpendingLogPath = dirname + "/" + newFilename + ".tslog";
       rename(rawTimeSpendingLogPath, timeSpendingLogPath);
     }
 
-    timeSpendingLogPaths = glob(pathToFolderWhereTsLogsReside + '/*.tslog');
+    timeSpendingLogPaths = glob(pathToFolderWhereTsLogsReside + "/*.tslog");
     return timeSpendingLogPaths;
   }
   public setUp() {}
@@ -994,18 +994,18 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
     haystack,
     keyword,
     suffix,
-    expectedReturnValue
+    expectedReturnValue,
   ) {
     const tlp = new TimeLogParser();
     const result = tlp.startsWithOptionallySuffixedToken(
       haystack,
       keyword,
-      suffix
+      suffix,
     );
     this.assertEquals(
       expectedReturnValue,
       result,
-      'TimeLogParser->startsWithOptionallySuffixedToken() behaves as expected'
+      "TimeLogParser->startsWithOptionallySuffixedToken() behaves as expected",
     );
   }
 
@@ -1015,7 +1015,7 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
     this.assertEquals(
       expectedReturnValue,
       result,
-      'TimeLogParser->secondsToDuration() behaves as expected'
+      "TimeLogParser->secondsToDuration() behaves as expected",
     );
   }
 
@@ -1025,7 +1025,7 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
     this.assertEquals(
       expectedReturnValue,
       result,
-      'TimeLogParser->durationToMinutes() behaves as expected'
+      "TimeLogParser->durationToMinutes() behaves as expected",
     );
   }
 
@@ -1037,39 +1037,39 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
     expectedDateTimeTimeZone,
     expectedTimestampInTimeZone,
     transposeTimeZone,
-    expectedTransposedFormatted // @var DateTime $datetime
+    expectedTransposedFormatted, // @var DateTime $datetime
   ) {
     const tlp = new TimeLogParser();
     let datetime;
     const gmtTimestamp = tlp.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
       str,
       timezone,
-      datetime
+      datetime,
     );
     this.assertEquals(expectedGmtTimestamp, gmtTimestamp);
     const gmtTimestampFormattedAsNewDefaultDatetime = new DateTime().setTimestamp(
-      gmtTimestamp
+      gmtTimestamp,
     );
     this.assertEquals(
       expectedGmtTimestampFormattedAsNewDefaultDatetime,
-      gmtTimestampFormattedAsNewDefaultDatetime.format('Y-m-d H:i')
+      gmtTimestampFormattedAsNewDefaultDatetime.format("Y-m-d H:i"),
     );
     this.assertEquals(
       expectedDateTimeTimeZone,
-      datetime.getTimezone().getName()
+      datetime.getTimezone().getName(),
     );
     this.assertEquals(expectedGmtTimestamp, datetime.getTimestamp());
     const timezoneDatetime = clone(datetime);
     timezoneDatetime.setTimezone(new DateTimeZone(timezone));
     this.assertEquals(
       expectedTimestampInTimeZone,
-      timezoneDatetime.getTimestamp()
+      timezoneDatetime.getTimestamp(),
     );
     const transposed = clone(datetime);
     transposed.setTimezone(new DateTimeZone(transposeTimeZone));
     this.assertEquals(
       expectedTransposedFormatted,
-      transposed.format('Y-m-d H:i')
+      transposed.format("Y-m-d H:i"),
     );
   }
 
@@ -1079,7 +1079,7 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
     this.assertEquals(
       expectedReturnValue,
       result,
-      'TimeLogParser->addZeroFilledDates() behaves as expected'
+      "TimeLogParser->addZeroFilledDates() behaves as expected",
     );
   }
 
@@ -1087,18 +1087,18 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
     ts,
     rows_with_timemarkers_handled,
     rows_with_timemarkers,
-    expectedDurationFromLast
+    expectedDurationFromLast,
   ) {
     const tlp = new TimeLogParser();
     const result = tlp.durationFromLast(
       ts,
       rows_with_timemarkers_handled,
-      rows_with_timemarkers
+      rows_with_timemarkers,
     );
     this.assertEquals(
       expectedDurationFromLast,
       result,
-      'TimeLogParser->testDurationFromLast() behaves as expected'
+      "TimeLogParser->testDurationFromLast() behaves as expected",
     );
   }
 
@@ -1110,65 +1110,65 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
     lastKnownTimeZone,
     lastKnownDate,
     expectedToBeValid,
-    expectedUtcDateString // @var DateTime $datetime
+    expectedUtcDateString, // @var DateTime $datetime
   ) {
     const tlp = new TimeLogParser();
     const metadata = Array();
     tlp.lastKnownDate = lastKnownDate;
     tlp.lastKnownTimeZone = lastKnownTimeZone;
     tlp.detectTimeStamp(linefordatecheck, metadata);
-    codecept_debug(compact('metadata'));
+    codecept_debug(compact("metadata"));
     this.assertEquals(
       expectedMetadataDateRaw,
       metadata.date_raw,
-      'TimeLogParser->detectTimeStamp() detects date_raw as expected'
+      "TimeLogParser->detectTimeStamp() detects date_raw as expected",
     );
     this.assertEquals(
       expectedMetadataTimeRaw,
       metadata.time_raw,
-      'TimeLogParser->detectTimeStamp() detects time_raw as expected'
+      "TimeLogParser->detectTimeStamp() detects time_raw as expected",
     );
     this.assertEquals(
       expectedMetadataDateRawFormat,
       metadata.date_raw_format,
-      'TimeLogParser->detectTimeStamp() detects the datetime with the expected format'
+      "TimeLogParser->detectTimeStamp() detects the datetime with the expected format",
     );
     let ts;
     let date;
     let datetime;
     tlp.set_ts_and_date(metadata.date_raw, ts, date, undefined, datetime);
     const set_ts_and_date_error = tlp.lastSetTsAndDateErrorMessage;
-    codecept_debug(compact('ts', 'date', 'datetime', 'set_ts_and_date_error'));
+    codecept_debug(compact("ts", "date", "datetime", "set_ts_and_date_error"));
     const valid = !!date;
     this.assertEquals(
       expectedToBeValid,
       valid,
-      'TimeLogParser->set_ts_and_date() detects valid datetimes as expected'
+      "TimeLogParser->set_ts_and_date() detects valid datetimes as expected",
     );
     this.assertEquals(
       lastKnownTimeZone,
       tlp.lastKnownTimeZone,
-      'TimeLogParser->set_ts_and_date() does not change the last known timezone by parsing a timestamp string'
+      "TimeLogParser->set_ts_and_date() does not change the last known timezone by parsing a timestamp string",
     );
 
     if (expectedToBeValid) {
       this.assertEmpty(
         set_ts_and_date_error,
-        'TimeLogParser->set_ts_and_date() does not set an error message where valid datetimes are expected'
+        "TimeLogParser->set_ts_and_date() does not set an error message where valid datetimes are expected",
       );
     } else {
       this.assertNotEmpty(
         set_ts_and_date_error,
-        'TimeLogParser->set_ts_and_date() sets an error message where valid datetimes are expected'
+        "TimeLogParser->set_ts_and_date() sets an error message where valid datetimes are expected",
       );
     }
 
     if (expectedToBeValid) {
-      datetime.setTimezone(new DateTimeZone('UTC'));
+      datetime.setTimezone(new DateTimeZone("UTC"));
       this.assertEquals(
         expectedUtcDateString,
-        datetime.format('Y-m-d H:i:s'),
-        'TimeLogParser->set_ts_and_date() behaves as expected'
+        datetime.format("Y-m-d H:i:s"),
+        "TimeLogParser->set_ts_and_date() behaves as expected",
       );
     }
   }
@@ -1179,7 +1179,7 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
     lastKnownTimeZone,
     lastKnownDate,
     expectedToBeValidTimestampedLogComment,
-    expectedUtcDateString // @var DateTime $datetime
+    expectedUtcDateString, // @var DateTime $datetime
   ) {
     const tlp = new TimeLogParser();
     tlp.lastKnownDate = lastKnownDate;
@@ -1197,33 +1197,33 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
       date,
       linewithoutdate,
       invalid,
-      datetime
+      datetime,
     );
-    codecept_debug(compact('line', 'ts', 'date', 'datetime'));
+    codecept_debug(compact("line", "ts", "date", "datetime"));
     const valid = !invalid;
     this.assertEquals(
       expectedLinewithoutdate,
       linewithoutdate,
-      'TimeLogParser->parseLogComment() detects lines without datetime as expected'
+      "TimeLogParser->parseLogComment() detects lines without datetime as expected",
     );
-    codecept_debug(compact('expectedToBeValidTimestampedLogComment', 'valid'));
+    codecept_debug(compact("expectedToBeValidTimestampedLogComment", "valid"));
     this.assertEquals(
       expectedToBeValidTimestampedLogComment,
       valid,
-      'TimeLogParser->parseLogComment() detects valid timestamped log content as expected'
+      "TimeLogParser->parseLogComment() detects valid timestamped log content as expected",
     );
     this.assertEquals(
       lastKnownTimeZone,
       tlp.lastKnownTimeZone,
-      'TimeLogParser->set_ts_and_date() does not change the last known timezone by parsing a timestamp string'
+      "TimeLogParser->set_ts_and_date() does not change the last known timezone by parsing a timestamp string",
     );
 
     if (expectedToBeValidTimestampedLogComment) {
-      datetime.setTimezone(new DateTimeZone('UTC'));
+      datetime.setTimezone(new DateTimeZone("UTC"));
       this.assertEquals(
         expectedUtcDateString,
-        datetime.format('Y-m-d H:i:s'),
-        'TimeLogParser->parseLogComment() behaves as expected'
+        datetime.format("Y-m-d H:i:s"),
+        "TimeLogParser->parseLogComment() behaves as expected",
       );
     }
   }
@@ -1234,24 +1234,24 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
 
   public testCorrectTimeSpendingLogsCorrectness(timeSpendingLogPath) {
     const correspondingCsvDataFilePath = this.correspondingCsvDataFilePath(
-      timeSpendingLogPath
+      timeSpendingLogPath,
     );
     const correspondingCsvDataFileContents = file_get_contents(
-      correspondingCsvDataFilePath
+      correspondingCsvDataFilePath,
     );
     const processedTimeSpendingLog = this.processedTimeSpendingLog(
-      timeSpendingLogPath
+      timeSpendingLogPath,
     );
     this.assertEquals(
       correspondingCsvDataFileContents,
       processedTimeSpendingLog.timeReportCsv,
-      `CSV contents for '${timeSpendingLogPath}' matches expected`
+      `CSV contents for '${timeSpendingLogPath}' matches expected`,
     );
   }
 
   public testCorrectlyReportedProcessingErrors(
     timeSpendingLogPath,
-    processingErrorsJsonFilePath // Save preProcessedContents in order to make debugging easier // Save processedLogContentsWithTimeMarkers in order to make debugging easier
+    processingErrorsJsonFilePath, // Save preProcessedContents in order to make debugging easier // Save processedLogContentsWithTimeMarkers in order to make debugging easier
   ) {
     codecept_debug(timeSpendingLogPath);
     let thrownException;
@@ -1259,7 +1259,7 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
 
     try {
       processedTimeSpendingLog = this.processedTimeSpendingLog(
-        timeSpendingLogPath
+        timeSpendingLogPath,
       );
     } catch (e) {
       if (e instanceof TimeSpendingLogProcessingErrorsEncounteredException) {
@@ -1275,79 +1275,79 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
         codecept_debug(e.processedTimeSpendingLog.getTroubleshootingInfo());
         const errorsJson = AppJson.encode(
           e.processedTimeSpendingLog.getProcessingErrors(),
-          JSON_PRETTY_PRINT
+          JSON_PRETTY_PRINT,
         );
         file_put_contents(
-          timeSpendingLogPath + '.latest-run.processing-errors.json',
-          errorsJson
+          timeSpendingLogPath + ".latest-run.processing-errors.json",
+          errorsJson,
         );
       }
     }
 
     file_put_contents(
-      timeSpendingLogPath + '.latest-run.timeReportCsv.csv',
-      processedTimeSpendingLog.timeReportCsv
+      timeSpendingLogPath + ".latest-run.timeReportCsv.csv",
+      processedTimeSpendingLog.timeReportCsv,
     );
     file_put_contents(
-      timeSpendingLogPath + '.latest-run.preProcessedContents',
-      processedTimeSpendingLog.preProcessedContents
+      timeSpendingLogPath + ".latest-run.preProcessedContents",
+      processedTimeSpendingLog.preProcessedContents,
     );
     file_put_contents(
-      timeSpendingLogPath + '.latest-run.processedLogContentsWithTimeMarkers',
-      processedTimeSpendingLog.processedLogContentsWithTimeMarkers
+      timeSpendingLogPath + ".latest-run.processedLogContentsWithTimeMarkers",
+      processedTimeSpendingLog.processedLogContentsWithTimeMarkers,
     );
 
     if (!!thrownException) {
       const processingErrorsJsonFileContents = file_get_contents(
-        processingErrorsJsonFilePath
+        processingErrorsJsonFilePath,
       );
       this.assertEquals(
         processingErrorsJsonFileContents,
         errorsJson,
-        'Expected error json matches actual error json for ' +
-          timeSpendingLogPath
+        "Expected error json matches actual error json for " +
+          timeSpendingLogPath,
       );
     }
 
     this.assertInstanceOf(
-      'TimeSpendingLogProcessingErrorsEncounteredException',
+      "TimeSpendingLogProcessingErrorsEncounteredException",
       thrownException,
-      'We should have encountered log processing error(s), but we did not'
+      "We should have encountered log processing error(s), but we did not",
     );
   }
 
   public processAndAssertCorrectTimeSpendingLog(timeSpendingLogPath) {
     const processedTimeSpendingLog = this.processTimeSpendingLog(
       timeSpendingLogPath,
-      thrownException
+      thrownException,
     );
     this.assertNotInstanceOf(
-      'TimeSpendingLogProcessingErrorsEncounteredException',
+      "TimeSpendingLogProcessingErrorsEncounteredException",
       thrownException,
-      'We should not have encountered any log processing error, but we did. Check .latest-run.processing-errors.json for more info.'
+      "We should not have encountered any log processing error, but we did. Check .latest-run.processing-errors.json for more info.",
     );
     codecept_debug(
       650 +
-        ' - Memory usage: ' +
+        " - Memory usage: " +
         Math.round(memory_get_usage(true) / 1024 / 1024, 2) +
-        ' MiB'
+        " MiB",
     );
     return processedTimeSpendingLog.calculateTotalReportedTime();
   }
 
   public processTimeSpendingLog(
     timeSpendingLogPath,
-    thrownException = undefined // Save processedLogContentsWithTimeMarkers in order to make debugging easier // Save processedLogContentsWithTimeMarkers_debug in order to make debugging easier
+    thrownException = undefined, // Save processedLogContentsWithTimeMarkers in order to make debugging easier // Save processedLogContentsWithTimeMarkers_debug in order to make debugging easier
   ) {
     codecept_debug(timeSpendingLogPath);
     codecept_debug(
       660 +
-        ' - Memory usage: ' +
+        " - Memory usage: " +
         Math.round(memory_get_usage(true) / 1024 / 1024, 2) +
-        ' MiB'
+        " MiB",
     );
     const correspondingCsvDataFilePath = this.correspondingCsvDataFilePath(
-      timeSpendingLogPath
+      timeSpendingLogPath,
     );
     thrownException = undefined;
     let processedTimeSpendingLog;
@@ -1366,35 +1366,35 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
       // Save processedLogContentsWithTimeMarkers_debug in order to make debugging easier
       codecept_debug(
         667 +
-          ' - Memory usage: ' +
+          " - Memory usage: " +
           Math.round(memory_get_usage(true) / 1024 / 1024, 2) +
-          ' MiB'
+          " MiB",
       );
       processedTimeSpendingLog = this.processedTimeSpendingLog(
-        timeSpendingLogPath
+        timeSpendingLogPath,
       );
       codecept_debug(
         671 +
-          ' - Memory usage: ' +
+          " - Memory usage: " +
           Math.round(memory_get_usage(true) / 1024 / 1024, 2) +
-          ' MiB'
+          " MiB",
       );
       file_put_contents(
-        correspondingCsvDataFilePath + '.latest-run.csv',
-        processedTimeSpendingLog.timeReportCsv
+        correspondingCsvDataFilePath + ".latest-run.csv",
+        processedTimeSpendingLog.timeReportCsv,
       );
       const timeLogEntriesWithMetadata = processedTimeSpendingLog.getTimeLogEntriesWithMetadata();
       codecept_debug(
         692 +
-          ' - Memory usage: ' +
+          " - Memory usage: " +
           Math.round(memory_get_usage(true) / 1024 / 1024, 2) +
-          ' MiB'
+          " MiB",
       );
-      codecept_debug(timeLogEntriesWithMetadata.length + ' time log entries');
+      codecept_debug(timeLogEntriesWithMetadata.length + " time log entries");
       this.assertGreaterThan(0, timeLogEntriesWithMetadata.length);
       file_put_contents(
-        timeSpendingLogPath + '.latest-run.timeLogEntriesWithMetadata.json',
-        AppJson.encode(timeLogEntriesWithMetadata, JSON_PRETTY_PRINT)
+        timeSpendingLogPath + ".latest-run.timeLogEntriesWithMetadata.json",
+        AppJson.encode(timeLogEntriesWithMetadata, JSON_PRETTY_PRINT),
       );
     } catch (e) {
       if (e instanceof TimeSpendingLogProcessingErrorsEncounteredException) {
@@ -1403,27 +1403,27 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
         processedTimeSpendingLog = e.processedTimeSpendingLog;
         const errorsJson = AppJson.encode(
           e.processedTimeSpendingLog.getProcessingErrors(),
-          JSON_PRETTY_PRINT
+          JSON_PRETTY_PRINT,
         );
         file_put_contents(
-          timeSpendingLogPath + '.latest-run.processing-errors.json',
-          errorsJson
+          timeSpendingLogPath + ".latest-run.processing-errors.json",
+          errorsJson,
         );
       }
     }
 
     file_put_contents(
-      timeSpendingLogPath + '.latest-run.preProcessedContents',
-      processedTimeSpendingLog.preProcessedContents
+      timeSpendingLogPath + ".latest-run.preProcessedContents",
+      processedTimeSpendingLog.preProcessedContents,
     );
     file_put_contents(
-      timeSpendingLogPath + '.latest-run.processedLogContentsWithTimeMarkers',
-      processedTimeSpendingLog.processedLogContentsWithTimeMarkers
+      timeSpendingLogPath + ".latest-run.processedLogContentsWithTimeMarkers",
+      processedTimeSpendingLog.processedLogContentsWithTimeMarkers,
     );
     file_put_contents(
       timeSpendingLogPath +
-        '.latest-run.processedLogContentsWithTimeMarkers_debug.json',
-      processedTimeSpendingLog.processedLogContentsWithTimeMarkers_debug
+        ".latest-run.processedLogContentsWithTimeMarkers_debug.json",
+      processedTimeSpendingLog.processedLogContentsWithTimeMarkers_debug,
     );
     return processedTimeSpendingLog;
   }
@@ -1431,22 +1431,24 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
   public processedTimeSpendingLog(timeSpendingLogPath) {
     const timeSpendingLogContents = file_get_contents(timeSpendingLogPath);
 
-    if (is_file(timeSpendingLogPath + '.tzFirst')) {
-      const tzFirst = file_get_contents(timeSpendingLogPath + '.tzFirst').trim();
+    if (is_file(timeSpendingLogPath + ".tzFirst")) {
+      const tzFirst = file_get_contents(
+        timeSpendingLogPath + ".tzFirst",
+      ).trim();
     } else {
-      tzFirst = 'UTC';
+      tzFirst = "UTC";
     }
 
     const timeSpendingLog = new TimeSpendingLog();
     timeSpendingLog.rawLogContents = timeSpendingLogContents;
     timeSpendingLog.tzFirst = tzFirst;
     const processedTimeSpendingLog = new ProcessedTimeSpendingLog(
-      timeSpendingLog
+      timeSpendingLog,
     );
     return processedTimeSpendingLog;
   }
 
   public correspondingCsvDataFilePath(timeSpendingLogPath) {
-    return str_replace('.tslog', '.csv', timeSpendingLogPath);
+    return str_replace(".tslog", ".csv", timeSpendingLogPath);
   }
 }
