@@ -1,3 +1,7 @@
+import { str_replace, strpos } from "locutus/php/strings";
+import { is_null } from "locutus/php/var";
+import { DateTime, DateTimeZone } from "./php-function-wrappers";
+
 // http://snippets.dzone.com/posts/show/2039
 
 function str_hex(string) {
@@ -103,6 +107,14 @@ class LogParser {
 
     return undefined;
   }
+  public contents;
+  public notParsedAddTimeMarkers;
+  public lastKnownDate;
+  public lastKnownTimeZone;
+  public lastUsedTimeZone;
+  public lastSetTsAndDateErrorMessage;
+  public tz_first;
+  public debugAddTimeMarkers;
   constructor() {
     this.contents = "";
     this.notParsedAddTimeMarkers = Array();
@@ -361,10 +373,10 @@ class LogParser {
       if (!!m && !!m[0]) {
         // var_dump($line, $m);
         if (this.collectDebugInfo) {
-          metadata["date_search_preg_debug:" + format] = compact(
-            "linefordatecheck",
-            "m",
-          );
+          metadata["date_search_preg_debug:" + format] = {
+            linefordatecheck,
+            m,
+          };
         }
 
         metadata.date_raw_format = format;

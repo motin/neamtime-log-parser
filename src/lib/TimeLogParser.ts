@@ -1408,9 +1408,8 @@ class TimeLogParser extends LogParser {
     rows_with_timemarkers_handled,
     not_parsed,
     probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp,
-    isNewRowWithTimeMarker, // Try to find a valid timestamp // Remove the pause specification before attempting to find a timestamp // @var DateTime $datetime // var_dump($ts, $date, $datetime);
-  ) // Check if the timestamp is later or same as previous row with time marker (if not, something is wrong)
-  {
+    isNewRowWithTimeMarker, // Try to find a valid timestamp // Remove the pause specification before attempting to find a timestamp // @var DateTime $datetime // var_dump($ts, $date, $datetime); // Check if the timestamp is later or same as previous row with time marker (if not, something is wrong)
+  ) {
     const methodName =
       "processNotTheFirstRowOfALogCommentAndProbableStartStopLine_notPauseWithWrittenDuration";
     let linefordatecheck = line;
