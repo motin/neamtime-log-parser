@@ -6,7 +6,6 @@
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
   "repository": "https://github.com/motin/neamtime-log-parser",
-  "license": "MIT",
   "keywords": [],
   "scripts": {
     "info": "npm-scripts-info",
