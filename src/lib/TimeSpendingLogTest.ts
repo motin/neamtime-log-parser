@@ -68,8 +68,8 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
 
     testStartsWithOptionallySuffixedTokenMethod(haystack, keyword, suffix, expectedReturnValue) {
         var tlp = new TimeLogParser();
-        var return = tlp.startsWithOptionallySuffixedToken(haystack, keyword, suffix);
-        this.assertEquals(expectedReturnValue, return, "TimeLogParser->startsWithOptionallySuffixedToken() behaves as expected");
+        var result = tlp.startsWithOptionallySuffixedToken(haystack, keyword, suffix);
+        this.assertEquals(expectedReturnValue, result, "TimeLogParser->startsWithOptionallySuffixedToken() behaves as expected");
     }
 
     static testSecondsToDurationProvider() {
@@ -78,8 +78,8 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
 
     testSecondsToDuration(seconds, expectedReturnValue) {
         var tlp = new TimeLogParser();
-        var return = tlp.secondsToDuration(seconds);
-        this.assertEquals(expectedReturnValue, return, "TimeLogParser->secondsToDuration() behaves as expected");
+        var result = tlp.secondsToDuration(seconds);
+        this.assertEquals(expectedReturnValue, result, "TimeLogParser->secondsToDuration() behaves as expected");
     }
 
     static testDurationToMinutesProvider() {
@@ -88,8 +88,8 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
 
     testDurationToMinutes(duration, expectedReturnValue) {
         var tlp = new TimeLogParser();
-        var return = tlp.durationToMinutes(duration);
-        this.assertEquals(expectedReturnValue, return, "TimeLogParser->durationToMinutes() behaves as expected");
+        var result = tlp.durationToMinutes(duration);
+        this.assertEquals(expectedReturnValue, result, "TimeLogParser->durationToMinutes() behaves as expected");
     }
 
     static testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneProvider() {
@@ -130,8 +130,8 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
 
     testAddZeroFilledDates(times, expectedReturnValue) {
         var tlp = new TimeLogParser();
-        var return = tlp.addZeroFilledDates(times);
-        this.assertEquals(expectedReturnValue, return, "TimeLogParser->addZeroFilledDates() behaves as expected");
+        var result = tlp.addZeroFilledDates(times);
+        this.assertEquals(expectedReturnValue, result, "TimeLogParser->addZeroFilledDates() behaves as expected");
     }
 
     static testDurationFromLastProvider() {
@@ -197,8 +197,8 @@ class TimeSpendingLogTest extends global.PHPUnit_Framework_TestCase {
 
     testDurationFromLast(ts, rows_with_timemarkers_handled, rows_with_timemarkers, expectedDurationFromLast) {
         var tlp = new TimeLogParser();
-        var return = tlp.durationFromLast(ts, rows_with_timemarkers_handled, rows_with_timemarkers);
-        this.assertEquals(expectedDurationFromLast, return, "TimeLogParser->testDurationFromLast() behaves as expected");
+        var result = tlp.durationFromLast(ts, rows_with_timemarkers_handled, rows_with_timemarkers);
+        this.assertEquals(expectedDurationFromLast, result, "TimeLogParser->testDurationFromLast() behaves as expected");
     }
 
     static testDetectStartStopLinesCorrectlyProvider() {

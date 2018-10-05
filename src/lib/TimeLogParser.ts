@@ -56,14 +56,14 @@ class TimeLogParser extends LogParser {
     }
 
     removeSuffixedToken(string, keyword, suffix) {
-        var return = string;
+        var forReturn = string;
         var tokens = this.tokens();
 
         for (var token of Object.values(tokens[keyword])) {
-            return = str_replace(token + suffix, "", return);
+            forReturn = str_replace(token + suffix, "", forReturn);
         }
 
-        return return;
+        return forReturn;
     }
 
     set_ts_and_date(date_raw, ts, date, linewithoutdate = undefined, datetime) //Invalidate strings that are clearly too large to be a timestamp
@@ -104,13 +104,13 @@ class TimeLogParser extends LogParser {
         var startsWithStartStopTokenFollowedByASpace = this.startsWithOptionallySuffixedToken(trimmedLine, "start-stop", " ");
         var startsWithPauseTokenFollowedByAnArrow = this.startsWithOptionallySuffixedToken(trimmedLine, "pause", "->");
         var startsWithStartStopTokenFollowedByAnArrow = this.startsWithOptionallySuffixedToken(trimmedLine, "start-stop", "->");
-        var return = (startsWithPauseTokenFollowedByASpace || startsWithStartStopTokenFollowedByASpace || startsWithPauseTokenFollowedByAnArrow || startsWithStartStopTokenFollowedByAnArrow || false) && strpos(trimmedLine, "[") !== 0 && strpos(trimmedLine, "_start") === false && strpos(trimmedLine, "_pause") === false && strpos(trimmedLine, " | ") === false && !this.isProbableCommitLogLine(trimmedLine) && strpos(trimmedLine, "#") !== 0 && true;
+        var forReturn = (startsWithPauseTokenFollowedByASpace || startsWithStartStopTokenFollowedByASpace || startsWithPauseTokenFollowedByAnArrow || startsWithStartStopTokenFollowedByAnArrow || false) && strpos(trimmedLine, "[") !== 0 && strpos(trimmedLine, "_start") === false && strpos(trimmedLine, "_pause") === false && strpos(trimmedLine, " | ") === false && !this.isProbableCommitLogLine(trimmedLine) && strpos(trimmedLine, "#") !== 0 && true;
 
         if (dump) {
-            console.log(trimmedLine, trimmedLine, str_hex(trimmedLine), return);
+            console.log(trimmedLine, trimmedLine, str_hex(trimmedLine), forReturn);
         }
 
-        return return;
+        return forReturn;
     }
 
     countDigits(str) {
@@ -1210,7 +1210,7 @@ class TimeLogParser extends LogParser {
             return "";
         }
 
-        var return = "\nSubversion commit messages:\n";
+        var forReturn = "\nSubversion commit messages:\n";
         var lines = this.constructor.textIntoLinesArray(str);
         var commitLogLines = Array();
 
@@ -1220,13 +1220,13 @@ class TimeLogParser extends LogParser {
             }
         }
 
-        return += this.constructor.linesArrayIntoText(commitLogLines);
+        forReturn += this.constructor.linesArrayIntoText(commitLogLines);
         var lower = str.toLowerCase();
         var words = str_word_count_utf8(lower, 1);
         var numWords = words.length;
         var word_count = array_count_values(words);
         arsort(word_count);
-        return += "\n\nCommon words:\n";
+        forReturn += "\n\nCommon words:\n";
         var k = 1;
 
         for (var key in word_count) {
@@ -1236,7 +1236,7 @@ class TimeLogParser extends LogParser {
             if (mb_strlen(key, "UTF-8") > 2 && !(-1 !== this.reserved_words.indexOf(key)) && strpos(key, "-") === false && !pausetoken) //utf8_encode
                 //($val)//number_format(($val/$numWords)*100)
                 {
-                    return += "" + key + ", ";
+                    forReturn += "" + key + ", ";
                     k++;
                 }
 
@@ -1245,7 +1245,7 @@ class TimeLogParser extends LogParser {
             }
         }
 
-        return return;
+        return forReturn;
     }
 
 };
