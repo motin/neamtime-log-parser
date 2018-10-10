@@ -1,6 +1,17 @@
-import { join, str_replace, strpos } from "locutus/php/strings";
+import { /*join,*/ str_replace /*, strpos*/ } from "locutus/php/strings";
+/*
 import { is_null } from "locutus/php/var";
 import { DateTime, DateTimeZone } from "./php-wrappers";
+*/
+
+export interface Metadata {
+  timeRaw?: string;
+  lastKnownDate?: string;
+  dateRaw?: string;
+  dateRawFormat?: string;
+  dateRawWasNonemptyBeforeDetectTimestamp?: string;
+  log?: string[];
+}
 
 export function newlineConvert(str, newline) {
   return str_replace(
@@ -26,7 +37,8 @@ export function linesArrayIntoText(lines) {
 export function readFirstNonEmptyLineOfText(text) {
   const lines = this.textIntoLinesArray(text);
 
-  for (const line of Object.values(lines)) {
+  for (const i of Object.keys(lines)) {
+    const line: string = lines[i];
     const trimmedLine = line.trim();
 
     if (!!trimmedLine) {
@@ -37,10 +49,6 @@ export function readFirstNonEmptyLineOfText(text) {
   return undefined;
 }
 
-// Main contents holders
-// Metadata arrays
-// Helper variables
-// Handle various types of newlines
 // Since strtotime is way to generous, leading to detected "timestamps" which are not actual timestamps
 //
 // @param $dateRaw
@@ -59,10 +67,10 @@ export function readFirstNonEmptyLineOfText(text) {
 // @throws InvalidDateTimeZoneException
 //
 export class LogParser {
+  // Handle various types of newlines
   public static NL_NIX = "\n";
   public static NL_WIN = "\r\n";
   public static NL_MAC = "\r";
-  public lastKnownTimeZone;
 
   /*
   public static newlineType(str) {
@@ -76,13 +84,19 @@ export class LogParser {
   }
   */
 
-  private contents;
-  private notParsedAddTimeMarkers;
-  private lastKnownDate;
-  private lastUsedTimeZone;
-  private lastSetTsAndDateErrorMessage;
-  private tzFirst;
-  private debugAddTimeMarkers;
+  // Main contents holders
+  public contents;
+  // Metadata arrays
+  public notParsedAddTimeMarkers;
+  // Helper variables
+  public lastKnownDate;
+  public lastKnownTimeZone;
+  public lastUsedTimeZone;
+  public lastSetTsAndDateErrorMessage;
+  public tzFirst;
+  public debugAddTimeMarkers;
+  public collectDebugInfo;
+
   constructor() {
     this.contents = "";
     this.notParsedAddTimeMarkers = Array();
@@ -94,6 +108,7 @@ export class LogParser {
     this.debugAddTimeMarkers = Array();
   }
 
+  /*
   public supportedTimestampFormats() // the minute-part may be omitted and instead an approx token will be found, which will be replaced before reaching createFromFormat
   // todo: dyn load appr-tokens
   {
@@ -218,14 +233,14 @@ export class LogParser {
   }
 
   public secondsToDuration(seconds, hoursPerDay = 24, daysPerWeek = 7) {
-    /* tslint:disable:object-literal-sort-keys */
+    /* tslint:disable:object-literal-sort-keys * /
     const vals = {
       w: +(seconds / (3600 * hoursPerDay) / daysPerWeek),
       d: (seconds / (3600 * hoursPerDay)) % daysPerWeek,
       h: (seconds / 3600) % hoursPerDay,
       min: (seconds / 60) % 60,
     };
-    /* tslint:enable:object-literal-sort-keys */
+    /* tslint:enable:object-literal-sort-keys * /
     const ret = Array();
     let added = false;
 
@@ -294,10 +309,11 @@ export class LogParser {
 
   public durationFromLast(ts, rowsWithTimemarkersHandled, rowsWithTimemarkers) {
     let previousRowWithTimeMarker;
+    let durationSinceLast;
 
     if (rowsWithTimemarkersHandled === 0) {
       previousRowWithTimeMarker = undefined;
-      const durationSinceLast = 0;
+      durationSinceLast = 0;
     } else {
       previousRowWithTimeMarker =
         rowsWithTimemarkers[rowsWithTimemarkersHandled - 1];
@@ -312,7 +328,7 @@ export class LogParser {
   }
 
   public detectTimeStamp(lineForDateCheck) {
-    let metadata;
+    const metadata: Metadata = {};
     metadata.lastKnownDate = this.lastKnownDate;
 
     if (!!metadata.dateRaw) {
@@ -399,25 +415,36 @@ export class LogParser {
     this.lastSetTsAndDateErrorMessage = "";
     dateRaw = str_replace(["maj", "okt"], ["may", "oct"], dateRaw).trim();
 
-    let ts, datetime, date;
+    let ts;
+    let datetime;
+    let date;
 
     try {
       const timeZone = this.interpretLastKnownTimeZone();
-      ts = this.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
+
+      const {
+        gmtTimestamp,
+        datetime: datetimeReturned,
+      } = this.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
         dateRaw,
         timeZone,
-        datetime,
       );
+      ts = gmtTimestamp;
+      datetime = datetimeReturned;
       this.lastUsedTimeZone = timeZone;
     } catch (e) {
       if (e instanceof InvalidDateTimeZoneException) {
         // If invalid timezone is encountered, use UTC and at least detect the timestamp correctly, but make a note about that the wrong timezone was used
-        ts = this.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
+        const {
+          gmtTimestamp,
+          datetime: datetimeReturned,
+        } = this.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
           dateRaw,
           "UTC",
-          datetime,
         );
-        this.lastSetTsAndDateErrorMessage = e.getMessage();
+        ts = gmtTimestamp;
+        datetime = datetimeReturned;
+        this.lastSetTsAndDateErrorMessage = e.message();
         this.lastUsedTimeZone = "UTC";
       }
     }
@@ -449,7 +476,7 @@ export class LogParser {
   }
 
   public interpretLastKnownTimeZone() {
-    /* tslint:disable:object-literal-sort-keys */
+    /* tslint:disable:object-literal-sort-keys * /
     const interpretationMap = {
       "GMT-6": "-06:00",
       "UTC-6": "-06:00",
@@ -459,7 +486,7 @@ export class LogParser {
       "Austin/GMT-6": "-06:00",
       "US/San Francisco": "America/Los_Angeles",
     };
-    /* tslint:enable:object-literal-sort-keys */
+    /* tslint:enable:object-literal-sort-keys * /
 
     if (undefined !== interpretationMap[this.lastKnownTimeZone]) {
       return interpretationMap[this.lastKnownTimeZone];
@@ -469,7 +496,8 @@ export class LogParser {
   }
 
   public parseGmtTimestampFromDateSpecifiedInSpecificTimezone(str, timezone) {
-    let gmtTimestamp, datetime;
+    let gmtTimestamp;
+    let datetime;
 
     try {
       timezone = new DateTimeZone(timezone);
@@ -505,13 +533,12 @@ export class LogParser {
       // die();
       gmtTimestamp = 0;
     } else {
-      const gmt_datetime = clone(datetime);
-      gmt_datetime.setTimezone(new DateTimeZone("UTC"));
-      gmtTimestamp = gmt_datetime.getTimestamp();
+      const gmtDatetime = clone(datetime);
+      gmtDatetime.setTimezone(new DateTimeZone("UTC"));
+      gmtTimestamp = gmtDatetime.getTimestamp();
     }
 
     return { gmtTimestamp: String(gmtTimestamp), datetime };
   }
+  */
 }
-
-class InvalidDateTimeZoneException extends Error {}

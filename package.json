@@ -54,7 +54,6 @@
     "node": ">=8.9"
   },
   "dependencies": {
-    "babel-preset-php": "^1.2.0",
     "locutus": "^2.0.10",
     "moment": "^2.22.2"
   },

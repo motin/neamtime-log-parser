@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import { writeFileSync } from "fs";
 
 export * from "./DateTime";
 export * from "./DateTimeZone";
@@ -22,7 +22,7 @@ export function glob(filePath): string[] {
 
 export function file_put_contents(filePath, contents) {
   console.log("TODO file_put_contents", filePath, contents);
-  fs.writeFileSync(filePath, contents, "utf-8");
+  writeFileSync(filePath, contents, "utf-8");
 }
 
 export function is_file(filePath): boolean {

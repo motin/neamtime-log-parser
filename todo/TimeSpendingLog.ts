@@ -1,7 +1,7 @@
 import { file_get_contents } from "locutus/php/filesystem";
 import { str_replace } from "locutus/php/strings";
 import { InvalidArgumentException } from "./exceptions/InvalidArgumentException";
-import { LogParser } from "./LogParser";
+import { readFirstNonEmptyLineOfText } from "./LogParser";
 
 interface TimeSpendingLogStdClass {
   tzFirst;
@@ -107,7 +107,7 @@ export class TimeSpendingLog {
     const name = str_replace(
       "#",
       "",
-      LogParser.readFirstNonEmptyLineOfText(this.rawLogContents),
+      readFirstNonEmptyLineOfText(this.rawLogContents),
     ).trim();
 
     if (!name) {

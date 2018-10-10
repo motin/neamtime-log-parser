@@ -1,7 +1,33 @@
-import test from "ava";
+import test, { ExecutionContext, Macro } from "ava";
 import { array_merge } from "locutus/php/array";
-import { clone, DateTime, DateTimeZone } from "./php-wrappers";
+// import { clone, DateTime, DateTimeZone } from "./php-wrappers";
 import { TimeLogParser } from "./TimeLogParser";
+
+const testStartsWithOptionallySuffixedTokenMethod: Macro = (
+  t: ExecutionContext,
+  haystack: string,
+  keyword: string,
+  suffix: string,
+  expectedReturnValue: string,
+) => {
+  const tlp = new TimeLogParser();
+  console.log(
+    "testStartsWithOptionallySuffixedTokenMethod",
+    haystack,
+    keyword,
+    suffix,
+  );
+  const result = tlp.startsWithOptionallySuffixedToken(
+    haystack,
+    keyword,
+    suffix,
+  );
+  t.is(
+    result,
+    expectedReturnValue,
+    "TimeLogParser->startsWithOptionallySuffixedToken() behaves as expected",
+  );
+};
 
 const testStartsWithOptionallySuffixedTokenMethodData = () => {
   let testDataMatrix = Array();
@@ -24,6 +50,37 @@ const testStartsWithOptionallySuffixedTokenMethodData = () => {
   return testDataMatrix;
 };
 
+test("testStartsWithOptionallySuffixedTokenMethodData returns data in the expected format", t => {
+  console.log(
+    "testStartsWithOptionallySuffixedTokenMethodData()",
+    testStartsWithOptionallySuffixedTokenMethodData(),
+  );
+  console.log(
+    "testStartsWithOptionallySuffixedTokenMethod",
+    testStartsWithOptionallySuffixedTokenMethod,
+  );
+  t.is(1, 1);
+});
+
+/*
+testStartsWithOptionallySuffixedTokenMethodData().forEach((testData, index) => {
+
+  test.skip("foo - " + index, testStartsWithOptionallySuffixedTokenMethod, testData[0], testData[1], testData[2], testData[3]);
+
+});
+*/
+
+/*
+const testSecondsToDuration = (seconds, expectedReturnValue) => {
+  const tlp = new TimeLogParser();
+  const result = tlp.secondsToDuration(seconds);
+  this.assertEquals(
+    expectedReturnValue,
+    result,
+    "TimeLogParser->secondsToDuration() behaves as expected",
+  );
+};
+
 const testSecondsToDurationData = () => {
   return [
     [60, "1min"],
@@ -39,6 +96,16 @@ const testSecondsToDurationData = () => {
   ];
 };
 
+const testDurationToMinutes = (duration, expectedReturnValue) => {
+  const tlp = new TimeLogParser();
+  const result = tlp.durationToMinutes(duration);
+  this.assertEquals(
+    expectedReturnValue,
+    result,
+    "TimeLogParser->durationToMinutes() behaves as expected",
+  );
+};
+
 const testDurationToMinutesData = () => {
   return [
     ["4min", "4"],
@@ -50,6 +117,45 @@ const testDurationToMinutesData = () => {
     ["5w3d1h17min", 4397 + (3600 * 24 * 7 * 5) / 60],
     ["13s", 13 / 60],
   ];
+};
+
+const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone = (
+  str,
+  timezone,
+  expectedGmtTimestamp,
+  expectedGmtTimestampFormattedAsNewDefaultDatetime,
+  expectedDateTimeTimeZone,
+  expectedTimestampInTimeZone,
+  transposeTimeZone,
+  expectedTransposedFormatted, // @var DateTime $datetime
+) => {
+  const tlp = new TimeLogParser();
+  const {
+    gmtTimestamp,
+    datetime,
+  } = tlp.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(str, timezone);
+  this.assertEquals(expectedGmtTimestamp, gmtTimestamp);
+  const gmtTimestampFormattedAsNewDefaultDatetime = new DateTime().setTimestamp(
+    gmtTimestamp,
+  );
+  this.assertEquals(
+    expectedGmtTimestampFormattedAsNewDefaultDatetime,
+    gmtTimestampFormattedAsNewDefaultDatetime.format("Y-m-d H:i"),
+  );
+  this.assertEquals(expectedDateTimeTimeZone, datetime.getTimezone().getName());
+  this.assertEquals(expectedGmtTimestamp, datetime.getTimestamp());
+  const timezoneDatetime = clone(datetime);
+  timezoneDatetime.setTimezone(new DateTimeZone(timezone));
+  this.assertEquals(
+    expectedTimestampInTimeZone,
+    timezoneDatetime.getTimestamp(),
+  );
+  const transposed = clone(datetime);
+  transposed.setTimezone(new DateTimeZone(transposeTimeZone));
+  this.assertEquals(
+    expectedTransposedFormatted,
+    transposed.format("Y-m-d H:i"),
+  );
 };
 
 const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
@@ -157,6 +263,16 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
   ];
 };
 
+const testAddZeroFilledDates = (times, expectedReturnValue) => {
+  const tlp = new TimeLogParser();
+  const result = tlp.addZeroFilledDates(times);
+  this.assertEquals(
+    expectedReturnValue,
+    result,
+    "TimeLogParser->addZeroFilledDates() behaves as expected",
+  );
+};
+
 const testAddZeroFilledDatesData = () => {
   return [
     [
@@ -176,8 +292,27 @@ const testAddZeroFilledDatesData = () => {
   ];
 };
 
+const testDurationFromLast = (
+  ts,
+  rowsWithTimemarkersHandled,
+  rowsWithTimemarkers,
+  expectedDurationFromLast,
+) => {
+  const tlp = new TimeLogParser();
+  const result = tlp.durationFromLast(
+    ts,
+    rowsWithTimemarkersHandled,
+    rowsWithTimemarkers,
+  );
+  this.assertEquals(
+    expectedDurationFromLast,
+    result,
+    "TimeLogParser->testDurationFromLast() behaves as expected",
+  );
+};
+
 const testDurationFromLastData = () => {
-  /* tslint:disable:object-literal-sort-keys */
+  /* tslint:disable:object-literal-sort-keys * /
   return [
     [
       1513096800,
@@ -243,8 +378,11 @@ const testDurationFromLastData = () => {
       480,
     ],
   ];
-  /* tslint:enable:object-literal-sort-keys */
+  /* tslint:enable:object-literal-sort-keys * /
 };
+
+// TODO: Test detection of start/stop-lines
+// Do not treat "stop paying the bills" as a stop-line...
 
 const testDetectStartStopLinesCorrectlyData = () => {
   return [
@@ -269,6 +407,86 @@ const testDetectStartStopLinesCorrectlyData = () => {
       false,
     ],
   ];
+};
+
+/**
+ * TODO: Test detection of start/stop-lines
+ * TODO: Do not treat "stop paying the bills" as a stop-line...
+ * @param lineForDateCheck
+ * @param expectedMetadataDateRaw
+ * @param expectedMetadataTimeRaw
+ * @param expectedMetadataDateRawFormat
+ * @param lastKnownTimeZone
+ * @param lastKnownDate
+ * @param expectedToBeValid
+ * @param expectedUtcDateString
+ * /
+const testDetectTimeStampAndSetTsAndDate = (
+  t,
+  lineForDateCheck,
+  expectedMetadataDateRaw,
+  expectedMetadataTimeRaw,
+  expectedMetadataDateRawFormat,
+  lastKnownTimeZone,
+  lastKnownDate,
+  expectedToBeValid,
+  expectedUtcDateString, // @var DateTime $datetime
+) => {
+  const tlp = new TimeLogParser();
+  tlp.lastKnownDate = lastKnownDate;
+  tlp.lastKnownTimeZone = lastKnownTimeZone;
+  const { metadata } = tlp.detectTimeStamp(lineForDateCheck);
+  t.log({ metadata });
+  this.assertEquals(
+    expectedMetadataDateRaw,
+    metadata.dateRaw,
+    "TimeLogParser->detectTimeStamp() detects dateRaw as expected",
+  );
+  this.assertEquals(
+    expectedMetadataTimeRaw,
+    metadata.timeRaw,
+    "TimeLogParser->detectTimeStamp() detects timeRaw as expected",
+  );
+  this.assertEquals(
+    expectedMetadataDateRawFormat,
+    metadata.dateRawFormat,
+    "TimeLogParser->detectTimeStamp() detects the datetime with the expected format",
+  );
+  const { ts, date, datetime } = tlp.set_ts_and_date(metadata.dateRaw);
+  const setTsAndDateError = tlp.lastSetTsAndDateErrorMessage;
+  t.log({ ts, date, datetime, setTsAndDateError });
+  const valid = !!date;
+  this.assertEquals(
+    expectedToBeValid,
+    valid,
+    "TimeLogParser->set_ts_and_date() detects valid datetimes as expected",
+  );
+  this.assertEquals(
+    lastKnownTimeZone,
+    tlp.lastKnownTimeZone,
+    "TimeLogParser->set_ts_and_date() does not change the last known timezone by parsing a timestamp string",
+  );
+
+  if (expectedToBeValid) {
+    this.assertEmpty(
+      setTsAndDateError,
+      "TimeLogParser->set_ts_and_date() does not set an error message where valid datetimes are expected",
+    );
+  } else {
+    this.assertNotEmpty(
+      setTsAndDateError,
+      "TimeLogParser->set_ts_and_date() sets an error message where valid datetimes are expected",
+    );
+  }
+
+  if (expectedToBeValid) {
+    datetime.setTimezone(new DateTimeZone("UTC"));
+    this.assertEquals(
+      expectedUtcDateString,
+      datetime.format("Y-m-d H:i:s"),
+      "TimeLogParser->set_ts_and_date() behaves as expected",
+    );
+  }
 };
 
 const testDetectTimeStampAndSetTsAndDateData = () => {
@@ -736,6 +954,61 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
   ];
 };
 
+/**
+ * Note: "lineWithoutDate" here refers to the part without the date-time-stamp, ie the actual log message
+ * TODO: Refactor code to reflect this more clearly
+ *
+ * @param line
+ * @param expectedLinewithoutdate
+ * @param lastKnownTimeZone
+ * @param lastKnownDate
+ * @param expectedToBeValidTimestampedLogComment
+ * @param expectedUtcDateString
+ * /
+const testParseLogComment = (
+  t,
+  line,
+  expectedLinewithoutdate,
+  lastKnownTimeZone,
+  lastKnownDate,
+  expectedToBeValidTimestampedLogComment,
+  expectedUtcDateString, // @var DateTime $datetime
+) => {
+  const tlp = new TimeLogParser();
+  tlp.lastKnownDate = lastKnownDate;
+  tlp.lastKnownTimeZone = lastKnownTimeZone;
+  const { ts, date, lineWithoutDate, invalid, datetime } = tlp.parseLogComment(
+    line,
+  );
+  t.log({ line, ts, date, datetime });
+  const valid = !invalid;
+  this.assertEquals(
+    expectedLinewithoutdate,
+    lineWithoutDate,
+    "TimeLogParser->parseLogComment() detects lines without datetime as expected",
+  );
+  t.log({ expectedToBeValidTimestampedLogComment, valid });
+  this.assertEquals(
+    expectedToBeValidTimestampedLogComment,
+    valid,
+    "TimeLogParser->parseLogComment() detects valid timestamped log content as expected",
+  );
+  this.assertEquals(
+    lastKnownTimeZone,
+    tlp.lastKnownTimeZone,
+    "TimeLogParser->set_ts_and_date() does not change the last known timezone by parsing a timestamp string",
+  );
+
+  if (expectedToBeValidTimestampedLogComment) {
+    datetime.setTimezone(new DateTimeZone("UTC"));
+    this.assertEquals(
+      expectedUtcDateString,
+      datetime.format("Y-m-d H:i:s"),
+      "TimeLogParser->parseLogComment() behaves as expected",
+    );
+  }
+};
+
 const testParseLogCommentData = () => {
   return [
     [
@@ -883,250 +1156,4 @@ const testParseLogCommentData = () => {
     ["2016-05-01, bar", "", "Europe/Stockholm", "2016-05-01", false, false],
   ];
 };
-
-const testStartsWithOptionallySuffixedTokenMethod = (
-  haystack,
-  keyword,
-  suffix,
-  expectedReturnValue,
-) => {
-  const tlp = new TimeLogParser();
-  const result = tlp.startsWithOptionallySuffixedToken(
-    haystack,
-    keyword,
-    suffix,
-  );
-  this.assertEquals(
-    expectedReturnValue,
-    result,
-    "TimeLogParser->startsWithOptionallySuffixedToken() behaves as expected",
-  );
-};
-
-test("foo", t => {
-  // t.is(actual, expected);
-  t.is(1, 1);
-});
-
-const testSecondsToDuration = (seconds, expectedReturnValue) => {
-  const tlp = new TimeLogParser();
-  const result = tlp.secondsToDuration(seconds);
-  this.assertEquals(
-    expectedReturnValue,
-    result,
-    "TimeLogParser->secondsToDuration() behaves as expected",
-  );
-};
-
-const testDurationToMinutes = (duration, expectedReturnValue) => {
-  const tlp = new TimeLogParser();
-  const result = tlp.durationToMinutes(duration);
-  this.assertEquals(
-    expectedReturnValue,
-    result,
-    "TimeLogParser->durationToMinutes() behaves as expected",
-  );
-};
-
-const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone = (
-  str,
-  timezone,
-  expectedGmtTimestamp,
-  expectedGmtTimestampFormattedAsNewDefaultDatetime,
-  expectedDateTimeTimeZone,
-  expectedTimestampInTimeZone,
-  transposeTimeZone,
-  expectedTransposedFormatted, // @var DateTime $datetime
-) => {
-  const tlp = new TimeLogParser();
-  const {
-    gmtTimestamp,
-    datetime,
-  } = tlp.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(str, timezone);
-  this.assertEquals(expectedGmtTimestamp, gmtTimestamp);
-  const gmtTimestampFormattedAsNewDefaultDatetime = new DateTime().setTimestamp(
-    gmtTimestamp,
-  );
-  this.assertEquals(
-    expectedGmtTimestampFormattedAsNewDefaultDatetime,
-    gmtTimestampFormattedAsNewDefaultDatetime.format("Y-m-d H:i"),
-  );
-  this.assertEquals(expectedDateTimeTimeZone, datetime.getTimezone().getName());
-  this.assertEquals(expectedGmtTimestamp, datetime.getTimestamp());
-  const timezoneDatetime = clone(datetime);
-  timezoneDatetime.setTimezone(new DateTimeZone(timezone));
-  this.assertEquals(
-    expectedTimestampInTimeZone,
-    timezoneDatetime.getTimestamp(),
-  );
-  const transposed = clone(datetime);
-  transposed.setTimezone(new DateTimeZone(transposeTimeZone));
-  this.assertEquals(
-    expectedTransposedFormatted,
-    transposed.format("Y-m-d H:i"),
-  );
-};
-
-const testAddZeroFilledDates = (times, expectedReturnValue) => {
-  const tlp = new TimeLogParser();
-  const result = tlp.addZeroFilledDates(times);
-  this.assertEquals(
-    expectedReturnValue,
-    result,
-    "TimeLogParser->addZeroFilledDates() behaves as expected",
-  );
-};
-
-const testDurationFromLast = (
-  ts,
-  rowsWithTimemarkersHandled,
-  rowsWithTimemarkers,
-  expectedDurationFromLast,
-) => {
-  const tlp = new TimeLogParser();
-  const result = tlp.durationFromLast(
-    ts,
-    rowsWithTimemarkersHandled,
-    rowsWithTimemarkers,
-  );
-  this.assertEquals(
-    expectedDurationFromLast,
-    result,
-    "TimeLogParser->testDurationFromLast() behaves as expected",
-  );
-};
-
-/**
- * TODO: Test detection of start/stop-lines
- * TODO: Do not treat "stop paying the bills" as a stop-line...
- * @param lineForDateCheck
- * @param expectedMetadataDateRaw
- * @param expectedMetadataTimeRaw
- * @param expectedMetadataDateRawFormat
- * @param lastKnownTimeZone
- * @param lastKnownDate
- * @param expectedToBeValid
- * @param expectedUtcDateString
- */
-const testDetectTimeStampAndSetTsAndDate = (
-  t,
-  lineForDateCheck,
-  expectedMetadataDateRaw,
-  expectedMetadataTimeRaw,
-  expectedMetadataDateRawFormat,
-  lastKnownTimeZone,
-  lastKnownDate,
-  expectedToBeValid,
-  expectedUtcDateString, // @var DateTime $datetime
-) => {
-  const tlp = new TimeLogParser();
-  tlp.lastKnownDate = lastKnownDate;
-  tlp.lastKnownTimeZone = lastKnownTimeZone;
-  const { metadata } = tlp.detectTimeStamp(lineForDateCheck);
-  t.log({ metadata });
-  this.assertEquals(
-    expectedMetadataDateRaw,
-    metadata.dateRaw,
-    "TimeLogParser->detectTimeStamp() detects dateRaw as expected",
-  );
-  this.assertEquals(
-    expectedMetadataTimeRaw,
-    metadata.timeRaw,
-    "TimeLogParser->detectTimeStamp() detects timeRaw as expected",
-  );
-  this.assertEquals(
-    expectedMetadataDateRawFormat,
-    metadata.dateRawFormat,
-    "TimeLogParser->detectTimeStamp() detects the datetime with the expected format",
-  );
-  const { ts, date, datetime } = tlp.set_ts_and_date(metadata.dateRaw);
-  const setTsAndDateError = tlp.lastSetTsAndDateErrorMessage;
-  t.log({ ts, date, datetime, setTsAndDateError });
-  const valid = !!date;
-  this.assertEquals(
-    expectedToBeValid,
-    valid,
-    "TimeLogParser->set_ts_and_date() detects valid datetimes as expected",
-  );
-  this.assertEquals(
-    lastKnownTimeZone,
-    tlp.lastKnownTimeZone,
-    "TimeLogParser->set_ts_and_date() does not change the last known timezone by parsing a timestamp string",
-  );
-
-  if (expectedToBeValid) {
-    this.assertEmpty(
-      setTsAndDateError,
-      "TimeLogParser->set_ts_and_date() does not set an error message where valid datetimes are expected",
-    );
-  } else {
-    this.assertNotEmpty(
-      setTsAndDateError,
-      "TimeLogParser->set_ts_and_date() sets an error message where valid datetimes are expected",
-    );
-  }
-
-  if (expectedToBeValid) {
-    datetime.setTimezone(new DateTimeZone("UTC"));
-    this.assertEquals(
-      expectedUtcDateString,
-      datetime.format("Y-m-d H:i:s"),
-      "TimeLogParser->set_ts_and_date() behaves as expected",
-    );
-  }
-};
-
-/**
- * Note: "lineWithoutDate" here refers to the part without the date-time-stamp, ie the actual log message
- * TODO: Refactor code to reflect this more clearly
- *
- * @param line
- * @param expectedLinewithoutdate
- * @param lastKnownTimeZone
- * @param lastKnownDate
- * @param expectedToBeValidTimestampedLogComment
- * @param expectedUtcDateString
- */
-const testParseLogComment = (
-  t,
-  line,
-  expectedLinewithoutdate,
-  lastKnownTimeZone,
-  lastKnownDate,
-  expectedToBeValidTimestampedLogComment,
-  expectedUtcDateString, // @var DateTime $datetime
-) => {
-  const tlp = new TimeLogParser();
-  tlp.lastKnownDate = lastKnownDate;
-  tlp.lastKnownTimeZone = lastKnownTimeZone;
-  const { ts, date, lineWithoutDate, invalid, datetime } = tlp.parseLogComment(
-    line,
-  );
-  t.log({ line, ts, date, datetime });
-  const valid = !invalid;
-  this.assertEquals(
-    expectedLinewithoutdate,
-    lineWithoutDate,
-    "TimeLogParser->parseLogComment() detects lines without datetime as expected",
-  );
-  t.log({ expectedToBeValidTimestampedLogComment, valid });
-  this.assertEquals(
-    expectedToBeValidTimestampedLogComment,
-    valid,
-    "TimeLogParser->parseLogComment() detects valid timestamped log content as expected",
-  );
-  this.assertEquals(
-    lastKnownTimeZone,
-    tlp.lastKnownTimeZone,
-    "TimeLogParser->set_ts_and_date() does not change the last known timezone by parsing a timestamp string",
-  );
-
-  if (expectedToBeValidTimestampedLogComment) {
-    datetime.setTimezone(new DateTimeZone("UTC"));
-    this.assertEquals(
-      expectedUtcDateString,
-      datetime.format("Y-m-d H:i:s"),
-      "TimeLogParser->parseLogComment() behaves as expected",
-    );
-  }
-};
+*/
