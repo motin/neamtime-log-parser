@@ -63,13 +63,16 @@ testStartsWithOptionallySuffixedTokenMethodData().forEach((testData, index) => {
   );
 });
 
-/*
-const testSecondsToDuration = (seconds, expectedReturnValue) => {
+const testSecondsToDuration: Macro = (
+  t: ExecutionContext,
+  seconds: string,
+  expectedReturnValue: string,
+) => {
   const tlp = new TimeLogParser();
   const result = tlp.secondsToDuration(seconds);
-  this.assertEquals(
-    expectedReturnValue,
+  t.is(
     result,
+    expectedReturnValue,
     "TimeLogParser->secondsToDuration() behaves as expected",
   );
 };
@@ -89,6 +92,16 @@ const testSecondsToDurationData = () => {
   ];
 };
 
+testSecondsToDurationData().forEach((testData, index) => {
+  test(
+    "testSecondsToDurationData - " + index,
+    testSecondsToDuration,
+    testData[0],
+    testData[1],
+  );
+});
+
+/*
 const testDurationToMinutes = (duration, expectedReturnValue) => {
   const tlp = new TimeLogParser();
   const result = tlp.durationToMinutes(duration);

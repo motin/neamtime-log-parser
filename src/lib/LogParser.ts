@@ -1,4 +1,4 @@
-import { /*join,*/ str_replace /*, strpos*/ } from "locutus/php/strings";
+import { join, str_replace /*, strpos*/ } from "locutus/php/strings";
 /*
 import { is_null } from "locutus/php/var";
 import { DateTime, DateTimeZone } from "./php-wrappers";
@@ -231,31 +231,32 @@ export class LogParser {
       },
     ];
   }
-
+  */
   public secondsToDuration(seconds, hoursPerDay = 24, daysPerWeek = 7) {
-    /* tslint:disable:object-literal-sort-keys * /
+    /* tslint:disable:object-literal-sort-keys */
     const vals = {
-      w: +(seconds / (3600 * hoursPerDay) / daysPerWeek),
+      w: seconds / (3600 * hoursPerDay) / daysPerWeek,
       d: (seconds / (3600 * hoursPerDay)) % daysPerWeek,
       h: (seconds / 3600) % hoursPerDay,
       min: (seconds / 60) % 60,
     };
-    /* tslint:enable:object-literal-sort-keys * /
+    /* tslint:enable:object-literal-sort-keys */
     const ret = Array();
     let added = false;
 
     for (const k of Object.keys(vals)) {
       const v = vals[k];
 
-      if (v > 0 || added || k === "min") {
+      if (v > 1 || added || k === "min") {
         added = true;
-        ret.push(Math.round(v) + k);
+        ret.push(Math.floor(v) + k);
       }
     }
 
     return join("", ret);
   }
 
+  /*
   public durationToSeconds(
     duration,
     hoursPerDay = 24,
