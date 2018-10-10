@@ -1,12 +1,27 @@
-class TimeSpendingLog {
-  public static createFromStdClass(timeSpendingLogStdClass: stdClass) {
+import { file_get_contents } from "locutus/php/filesystem";
+import { str_replace } from "locutus/php/strings";
+import { InvalidArgumentException } from "./exceptions/InvalidArgumentException";
+import { LogParser } from "./LogParser";
+
+interface TimeSpendingLogStdClass {
+  tzFirst;
+  rawLogContents;
+  inputContentTypeRef;
+  name;
+  firstRowsCommentIsTheName;
+}
+
+export class TimeSpendingLog {
+  public static createFromStdClass(
+    timeSpendingLogStdClass: TimeSpendingLogStdClass,
+  ) {
     const timeSpendingLog = new TimeSpendingLog();
     timeSpendingLog.setAttributesFromStdClass(timeSpendingLogStdClass);
     return timeSpendingLog;
   }
 
   public static createFromStdClassAndUseDefaultsForMissingAttributes(
-    timeSpendingLogStdClass: stdClass,
+    timeSpendingLogStdClass: TimeSpendingLogStdClass,
   ) {
     this.useDefaultsForMissingAttributesInStdClassRepresentation(
       timeSpendingLogStdClass,
@@ -18,7 +33,7 @@ class TimeSpendingLog {
 
   public static createFromPathAndStdClassAndUseDefaultsForMissingAttributes(
     timeSpendingLogPath,
-    timeSpendingLogStdClass: stdClass,
+    timeSpendingLogStdClass: TimeSpendingLogStdClass,
   ) {
     const timeSpendingLogContents = file_get_contents(timeSpendingLogPath);
     timeSpendingLogStdClass.rawLogContents = timeSpendingLogContents;
@@ -29,7 +44,7 @@ class TimeSpendingLog {
   }
 
   public static useDefaultsForMissingAttributesInStdClassRepresentation(
-    timeSpendingLogStdClass: stdClass,
+    timeSpendingLogStdClass: TimeSpendingLogStdClass,
   ) {
     if (!(undefined !== timeSpendingLogStdClass.tzFirst)) {
       timeSpendingLogStdClass.tzFirst = "UTC";
@@ -47,7 +62,7 @@ class TimeSpendingLog {
   }
 
   public static validateStdClassRepresentation(
-    timeSpendingLogStdClass: stdClass,
+    timeSpendingLogStdClass: TimeSpendingLogStdClass,
   ) {
     if (!(undefined !== timeSpendingLogStdClass.tzFirst)) {
       throw new InvalidArgumentException("Missing param: tzFirst");
@@ -62,7 +77,14 @@ class TimeSpendingLog {
     }
   }
 
-  public setAttributesFromStdClass(timeSpendingLogStdClass: stdClass) {
+  public tzFirst;
+  public rawLogContents;
+  public inputContentTypeRef;
+  public name;
+
+  public setAttributesFromStdClass(
+    timeSpendingLogStdClass: TimeSpendingLogStdClass,
+  ) {
     this.tzFirst = timeSpendingLogStdClass.tzFirst;
     this.rawLogContents = timeSpendingLogStdClass.rawLogContents;
 
@@ -70,11 +92,9 @@ class TimeSpendingLog {
       this.inputContentTypeRef = timeSpendingLogStdClass.inputContentTypeRef;
     }
 
-    if (!!timeSpendingLogStdClass.firstRowsCommentIsTheName) {
-      this.name = this.nameFromFirstRowOfRawLogContents();
-    } else {
-      this.name = timeSpendingLogStdClass.name;
-    }
+    this.name = !!timeSpendingLogStdClass.firstRowsCommentIsTheName
+      ? this.nameFromFirstRowOfRawLogContents()
+      : timeSpendingLogStdClass.name;
   }
 
   public nameFromFirstRowOfRawLogContents() {

@@ -4,10 +4,16 @@
 //    public $sessionMetadata;
 // }
 
-class ProcessedTimeSpendingLog {
-  private timeReportData: [];
-  private processingErrors: [];
-  private unprocessedTimeSpendingLog: TimeSpendingLog;
+import { TimeLogParser } from "./TimeLogParser";
+import { TimeSpendingLog } from "./TimeSpendingLog";
+
+export class ProcessedTimeSpendingLog {
+  public timeReportData: [];
+  public processingErrors: [];
+  public unprocessedTimeSpendingLog: TimeSpendingLog;
+  public timeReportCsv;
+
+  private TimeLogParser: TimeLogParser;
 
   constructor(unprocessedTimeSpendingLog: TimeSpendingLog) {
     this.timeReportData = [];
@@ -76,7 +82,7 @@ class ProcessedTimeSpendingLog {
     }
 
     const tlp = this.getTimeLogParser();
-    tlp.tz_first = this.unprocessedTimeSpendingLog.tzFirst;
+    tlp.tzFirst = this.unprocessedTimeSpendingLog.tzFirst;
     tlp.contents = this.unprocessedTimeSpendingLog.rawLogContents;
 
     try {
@@ -143,11 +149,11 @@ class ProcessedTimeSpendingLog {
     }
 
     const tlp_dummy = new TimeLogParser();
-    tlp_dummy.tz_first = this.unprocessedTimeSpendingLog.tzFirst;
+    tlp_dummy.tzFirst = this.unprocessedTimeSpendingLog.tzFirst;
     tlp_dummy.contents = tlp.preProcessedContents;
     tlp_dummy.preProcessContents();
 
-    if (tlp_dummy.preProcessedContents != tlp.preProcessedContents) {
+    if (tlp_dummy.preProcessedContents !== tlp.preProcessedContents) {
       this.addError("preProcessedContents", "Pre-processing is looping");
     }
 
@@ -157,7 +163,7 @@ class ProcessedTimeSpendingLog {
   }
 
   public addError(ref, message, data = undefined) {
-    this.processingErrors.push(compact("ref", "message", "data"));
+    this.processingErrors.push({ ref, message, data });
   }
 
   public getTroubleshootingInfo() {
@@ -175,19 +181,19 @@ class ProcessedTimeSpendingLog {
     for (const session of Object.values(tlp.sessions)) {
       const timeLogEntriesWithMetadataArray = session.timeReportSourceComments;
 
-      // if (empty($row_with_time_marker["duration_since_last"]))
-      // Clues needs a gmt_timestamp - we use date_raw since it is already in UTC
-      // TODO: Add a way to set the session_ref based on log contents in a way that doesn't result in duplicates after re-importing a session with changed start-line-date. Something like a convention to append "#previous-start-ref: start [date_raw]" or similar to the source line
+      // if (empty($row_with_time_marker["durationSinceLast"]))
+      // Clues needs a gmtTimestamp - we use dateRaw since it is already in UTC
+      // TODO: Add a way to set the session_ref based on log contents in a way that doesn't result in duplicates after re-importing a session with changed start-line-date. Something like a convention to append "#previous-start-ref: start [dateRaw]" or similar to the source line
       for (const timeLogEntryWithMetadata of Object.values(
         timeLogEntriesWithMetadataArray,
       )) {
         // for now skip rows without duration
-        const gmt_timestamp = timeLogEntryWithMetadata.date_raw.trim();
+        const gmtTimestamp = timeLogEntryWithMetadata.dateRaw.trim();
         const sessionMeta = new stdClass();
-        sessionMeta.tz_first = session.tz_first;
-        sessionMeta.session_ref = session.start.date_raw;
+        sessionMeta.tzFirst = session.tzFirst;
+        sessionMeta.session_ref = session.start.dateRaw;
         const timeLogEntryWithMetadata = Object(timeLogEntryWithMetadata);
-        timeLogEntryWithMetadata.gmt_timestamp = gmt_timestamp;
+        timeLogEntryWithMetadata.gmtTimestamp = gmtTimestamp;
         timeLogEntryWithMetadata.sessionMeta = sessionMeta;
         timeLogEntriesWithMetadata.push(timeLogEntryWithMetadata);
       }
@@ -208,7 +214,7 @@ class ProcessedTimeSpendingLog {
       {
         // var_dump($metadata);
         // Store the session metadata
-        if (starts.length == 1) {
+        if (starts.length === 1) {
           const sessionSpecificProcessedTimeSpendingLogTimeLogParser = tlp;
         } // Get the section of the pre-processed log that corresponds to this session
         else {
@@ -237,13 +243,13 @@ class ProcessedTimeSpendingLog {
 
         const timeReportSourceComments =
           sessionSpecificProcessedTimeSpendingLogTimeLogParser.timeReportSourceComments;
-        const tz_first =
-          sessionSpecificProcessedTimeSpendingLogTimeLogParser.tz_first;
+        const tzFirst =
+          sessionSpecificProcessedTimeSpendingLogTimeLogParser.tzFirst;
         const metadata = sessionSpecificProcessedTimeSpendingLogTimeLogParser.getTimeLogMetadata();
         tlp.sessions.push(
           compact(
             "timeReportSourceComments",
-            "tz_first",
+            "tzFirst",
             "metadata",
             "k",
             "start",

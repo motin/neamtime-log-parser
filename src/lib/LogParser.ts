@@ -1,39 +1,40 @@
-import { str_replace, strpos } from "locutus/php/strings";
+import { join, str_replace, strpos } from "locutus/php/strings";
 import { is_null } from "locutus/php/var";
-import { DateTime, DateTimeZone } from "./php-function-wrappers";
+import { DateTime, DateTimeZone } from "./php-wrappers";
 
-// http://snippets.dzone.com/posts/show/2039
-
-function str_hex(string) {
-  let hex = "";
-
-  for (let i = 0; i < string.length; i++) {
-    hex += dechex(string.charCodeAt(i));
-  }
-
-  return hex;
+export function newlineConvert(str, newline) {
+  return str_replace(
+    [LogParser.NL_WIN, LogParser.NL_MAC, LogParser.NL_NIX],
+    newline,
+    str,
+  );
 }
 
-const WORD_COUNT_MASK = "/\\p{L}[\\p{L}\\p{Mn}\\p{Pd}'\\x{2019}]*/u";
+export function textIntoLinesArray(
+  text, // Remove weird skype-produced spaces (hex c2a0 as opposed to hex 20 for ordinary spaces) // Normalize line-endings
+) {
+  text = str_replace("\xA0", " ", text);
+  text = this.newlineConvert(text, this.NL_NIX);
+  const lines = text.split(this.NL_NIX);
+  return lines;
+}
 
-function str_word_count_utf8(string, format = 0) {
-  switch (format) {
-    case 1:
-      preg_match_all(WORD_COUNT_MASK, string, matches);
-      return matches[0];
+export function linesArrayIntoText(lines) {
+  return lines.join(this.NL_NIX);
+}
 
-    case 2:
-      preg_match_all(WORD_COUNT_MASK, string, matches, PREG_OFFSET_CAPTURE);
-      const result = Array();
+export function readFirstNonEmptyLineOfText(text) {
+  const lines = this.textIntoLinesArray(text);
 
-      for (const match of Object.values(matches[0])) {
-        result[match[1]] = match[0];
-      }
+  for (const line of Object.values(lines)) {
+    const trimmedLine = line.trim();
 
-      return result;
+    if (!!trimmedLine) {
+      return trimmedLine;
+    }
   }
 
-  return preg_match_all(WORD_COUNT_MASK, string, matches);
+  return undefined;
 }
 
 // Main contents holders
@@ -42,10 +43,9 @@ function str_word_count_utf8(string, format = 0) {
 // Handle various types of newlines
 // Since strtotime is way to generous, leading to detected "timestamps" which are not actual timestamps
 //
-// @param $date_raw
+// @param $dateRaw
 // @param $ts
 // @param $date
-// @param null $linewithoutdate
 // @param $datetime Return by reference the DateTime object that contains the master timestamp information
 // @throws Exception
 // @throws InvalidDateTimeZoneException
@@ -58,63 +58,31 @@ function str_word_count_utf8(string, format = 0) {
 // @throws Exception
 // @throws InvalidDateTimeZoneException
 //
-class LogParser {
+export class LogParser {
   public static NL_NIX = "\n";
   public static NL_WIN = "\r\n";
   public static NL_MAC = "\r";
+  public lastKnownTimeZone;
 
-  public static newline_type(string) {
-    if (strpos(string, LogParser.NL_WIN) !== false) {
+  /*
+  public static newlineType(str) {
+    if (strpos(str, LogParser.NL_WIN) !== false) {
       return LogParser.NL_WIN;
-    } else if (strpos(string, LogParser.NL_MAC) !== false) {
+    } else if (strpos(str, LogParser.NL_MAC) !== false) {
       return LogParser.NL_MAC;
-    } else if (strpos(string, LogParser.NL_NIX) !== false) {
+    } else if (strpos(str, LogParser.NL_NIX) !== false) {
       return LogParser.NL_NIX;
     }
   }
+  */
 
-  public static newline_convert(string, newline) {
-    return str_replace(
-      [LogParser.NL_WIN, LogParser.NL_MAC, LogParser.NL_NIX],
-      newline,
-      string,
-    );
-  }
-
-  public static textIntoLinesArray(
-    text, // Remove weird skype-produced spaces (hex c2a0 as opposed to hex 20 for ordinary spaces) // Normalize line-endings
-  ) {
-    text = str_replace("\xA0", " ", text);
-    text = this.newline_convert(text, this.NL_NIX);
-    const lines = text.split(this.NL_NIX);
-    return lines;
-  }
-
-  public static linesArrayIntoText(lines) {
-    return lines.join(this.NL_NIX);
-  }
-
-  public static readFirstNonEmptyLineOfText(text) {
-    const lines = this.textIntoLinesArray(text);
-
-    for (const line of Object.values(lines)) {
-      const trimmedLine = line.trim();
-
-      if (!!trimmedLine) {
-        return trimmedLine;
-      }
-    }
-
-    return undefined;
-  }
-  public contents;
-  public notParsedAddTimeMarkers;
-  public lastKnownDate;
-  public lastKnownTimeZone;
-  public lastUsedTimeZone;
-  public lastSetTsAndDateErrorMessage;
-  public tz_first;
-  public debugAddTimeMarkers;
+  private contents;
+  private notParsedAddTimeMarkers;
+  private lastKnownDate;
+  private lastUsedTimeZone;
+  private lastSetTsAndDateErrorMessage;
+  private tzFirst;
+  private debugAddTimeMarkers;
   constructor() {
     this.contents = "";
     this.notParsedAddTimeMarkers = Array();
@@ -122,147 +90,149 @@ class LogParser {
     this.lastKnownTimeZone = "";
     this.lastUsedTimeZone = "";
     this.lastSetTsAndDateErrorMessage = "";
-    this.tz_first = undefined;
+    this.tzFirst = undefined;
     this.debugAddTimeMarkers = Array();
   }
 
   public supportedTimestampFormats() // the minute-part may be omitted and instead an approx token will be found, which will be replaced before reaching createFromFormat
   // todo: dyn load appr-tokens
   {
-    const Ymd_detect_regex =
+    const regexDetectYmd =
       "(1999|2000|2001|2002|2003|2004|2005|2006|2007|2008|2009|2010|2011|2012|2013|2014|2015|2016|2017|2018|2019|2020)-\\d+-\\d+";
-    const dmY_detect_regex =
+    const regexDetectdmY =
       "[^\\s\\>>]*-.*-(1999|2000|2001|2002|2003|2004|2005|2006|2007|2008|2009|2010|2011|2012|2013|2014|2015|2016|2017|2018|2019|2020)";
-    const His_detect_regex = "(\\d+:\\d+:\\d+)";
-    const Hcoloni_detect_regex_accept_approx_token =
+    const regexDetectHis = "(\\d+:\\d+:\\d+)";
+    const regexDetectHcoloniAcceptingApproxToken =
       "(\\d+:([^\\s\\-,:]*|ca|appr))";
-    const Hdoti_detect_regex_accept_approx_token =
+    const regexDetectHdotiAcceptingApproxToken =
       "(\\d+\\.([^\\s\\-,:]*|ca|appr))";
-    const Hcoloni_detect_regex = "(\\d+:[^\\s\\-,:]+)";
-    const Hdoti_detect_regex = "(\\d+\\.[^\\s\\-,:]+)";
-    const iso_timezone_detect_regex = "(Z|\\+\\d\\d:\\d\\d)";
-    const utc_timezone_detect_regex = "(\\+UTC)";
+    const regexDetectHcoloni = "(\\d+:[^\\s\\-,:]+)";
+    const regexDetectHdoti = "(\\d+\\.[^\\s\\-,:]+)";
+    const regexDetectIsoTimezone = "(Z|\\+\\d\\d:\\d\\d)";
+    const regexDetectUtcTimezone = "(\\+UTC)";
     return [
       {
-        format: DateTime.ISO8601,
-        accept_approx_token_instead_of_minutes: false,
-        detect_regex:
+        acceptApproxTokenInsteadOfMinutes: false,
+        detectRegex:
           "/" +
-          Ymd_detect_regex +
+          regexDetectYmd +
           "T" +
-          His_detect_regex +
-          iso_timezone_detect_regex +
+          regexDetectHis +
+          regexDetectIsoTimezone +
           "/",
-        detect_regex_date_raw_match_index: 0,
-        detect_regex_time_raw_match_index: 2,
+        detectRegexDateRawMatchIndex: 0,
+        detectRegexTimeRawMatchIndex: 2,
+        format: DateTime.ISO8601,
       },
       {
-        format: DateTime.ISO8601,
-        accept_approx_token_instead_of_minutes: false,
-        detect_regex:
+        acceptApproxTokenInsteadOfMinutes: false,
+        detectRegex:
           "/" +
-          Ymd_detect_regex +
+          regexDetectYmd +
           "T" +
-          His_detect_regex +
-          utc_timezone_detect_regex +
+          regexDetectHis +
+          regexDetectUtcTimezone +
           "/",
-        detect_regex_date_raw_match_index: 0,
-        detect_regex_time_raw_match_index: 2,
+        detectRegexDateRawMatchIndex: 0,
+        detectRegexTimeRawMatchIndex: 2,
+        format: DateTime.ISO8601,
         pre_datetime_parsing_callback: str => {
           return str_replace("+UTC", "Z", str);
         },
       },
       {
+        acceptApproxTokenInsteadOfMinutes: true,
+        detectRegex:
+          "/" +
+          regexDetectYmd +
+          "\\s" +
+          regexDetectHcoloniAcceptingApproxToken +
+          "/",
+        detectRegexDateRawMatchIndex: 0,
+        detectRegexTimeRawMatchIndex: 2,
         format: "Y-m-d H:i",
-        accept_approx_token_instead_of_minutes: true,
-        detect_regex:
-          "/" +
-          Ymd_detect_regex +
-          "\\s" +
-          Hcoloni_detect_regex_accept_approx_token +
-          "/",
-        detect_regex_date_raw_match_index: 0,
-        detect_regex_time_raw_match_index: 2,
       },
       {
+        acceptApproxTokenInsteadOfMinutes: true,
+        detectRegex:
+          "/" +
+          regexDetectYmd +
+          ",\\s" +
+          regexDetectHcoloniAcceptingApproxToken +
+          "/",
+        detectRegexDateRawMatchIndex: 0,
+        detectRegexTimeRawMatchIndex: 2,
         format: "Y-m-d, H:i",
-        accept_approx_token_instead_of_minutes: true,
-        detect_regex:
-          "/" +
-          Ymd_detect_regex +
-          ",\\s" +
-          Hcoloni_detect_regex_accept_approx_token +
-          "/",
-        detect_regex_date_raw_match_index: 0,
-        detect_regex_time_raw_match_index: 2,
       },
       {
+        acceptApproxTokenInsteadOfMinutes: true,
+        detectRegex:
+          "/" +
+          regexDetectYmd +
+          "\\s" +
+          regexDetectHdotiAcceptingApproxToken +
+          "/",
+        detectRegexDateRawMatchIndex: 0,
+        detectRegexTimeRawMatchIndex: 2,
         format: "Y-m-d H.i",
-        accept_approx_token_instead_of_minutes: true,
-        detect_regex:
-          "/" +
-          Ymd_detect_regex +
-          "\\s" +
-          Hdoti_detect_regex_accept_approx_token +
-          "/",
-        detect_regex_date_raw_match_index: 0,
-        detect_regex_time_raw_match_index: 2,
       },
       {
-        format: "Y-m-d, H.i",
-        accept_approx_token_instead_of_minutes: true,
-        detect_regex:
+        acceptApproxTokenInsteadOfMinutes: true,
+        detectRegex:
           "/" +
-          Ymd_detect_regex +
+          regexDetectYmd +
           ",\\s" +
-          Hdoti_detect_regex_accept_approx_token +
+          regexDetectHdotiAcceptingApproxToken +
           "/",
-        detect_regex_date_raw_match_index: 0,
-        detect_regex_time_raw_match_index: 2,
+        detectRegexDateRawMatchIndex: 0,
+        detectRegexTimeRawMatchIndex: 2,
+        format: "Y-m-d, H.i",
       },
       {
-        format: "d-m-Y H:i",
-        accept_approx_token_instead_of_minutes: true,
-        detect_regex:
+        acceptApproxTokenInsteadOfMinutes: true,
+        detectRegex:
           "/" +
-          dmY_detect_regex +
+          regexDetectdmY +
           "\\s" +
-          Hcoloni_detect_regex_accept_approx_token +
+          regexDetectHcoloniAcceptingApproxToken +
           "/",
-        detect_regex_date_raw_match_index: 0,
-        detect_regex_time_raw_match_index: 2,
+        detectRegexDateRawMatchIndex: 0,
+        detectRegexTimeRawMatchIndex: 2,
+        format: "d-m-Y H:i",
       },
       {
+        acceptApproxTokenInsteadOfMinutes: false,
+        detectRegex: "/" + regexDetectHcoloni + "/",
+        detectRegexDateRawMatchIndex: undefined,
+        detectRegexTimeRawMatchIndex: 0,
         format: "H:i",
-        accept_approx_token_instead_of_minutes: false,
-        detect_regex: "/" + Hcoloni_detect_regex + "/",
-        detect_regex_date_raw_match_index: undefined,
-        detect_regex_time_raw_match_index: 0,
       },
       {
+        acceptApproxTokenInsteadOfMinutes: false,
+        detectRegex: "/" + regexDetectHdoti + "/",
+        detectRegexDateRawMatchIndex: undefined,
+        detectRegexTimeRawMatchIndex: 0,
         format: "H.i",
-        accept_approx_token_instead_of_minutes: false,
-        detect_regex: "/" + Hdoti_detect_regex + "/",
-        detect_regex_date_raw_match_index: undefined,
-        detect_regex_time_raw_match_index: 0,
       },
     ];
   }
 
   public secondsToDuration(seconds, hoursPerDay = 24, daysPerWeek = 7) {
+    /* tslint:disable:object-literal-sort-keys */
     const vals = {
       w: +(seconds / (3600 * hoursPerDay) / daysPerWeek),
       d: (seconds / (3600 * hoursPerDay)) % daysPerWeek,
       h: (seconds / 3600) % hoursPerDay,
       min: (seconds / 60) % 60,
     };
+    /* tslint:enable:object-literal-sort-keys */
     const ret = Array();
     let added = false;
 
-    for (const k in vals) {
+    for (const k of Object.keys(vals)) {
       const v = vals[k];
 
-      if (v > 0 || added || k == "min") {
+      if (v > 0 || added || k === "min") {
         added = true;
         ret.push(Math.round(v) + k);
       }
@@ -322,125 +292,119 @@ class LogParser {
     return seconds / 60;
   }
 
-  public durationFromLast(
-    ts,
-    rows_with_timemarkers_handled,
-    rows_with_timemarkers,
-  ) {
+  public durationFromLast(ts, rowsWithTimemarkersHandled, rowsWithTimemarkers) {
     let previousRowWithTimeMarker;
 
-    if (rows_with_timemarkers_handled == 0) {
+    if (rowsWithTimemarkersHandled === 0) {
       previousRowWithTimeMarker = undefined;
-      const duration_since_last = 0;
+      const durationSinceLast = 0;
     } else {
       previousRowWithTimeMarker =
-        rows_with_timemarkers[rows_with_timemarkers_handled - 1];
-      duration_since_last = ts - previousRowWithTimeMarker.ts;
+        rowsWithTimemarkers[rowsWithTimemarkersHandled - 1];
+      durationSinceLast = ts - previousRowWithTimeMarker.ts;
     }
 
     if (!!previousRowWithTimeMarker && !previousRowWithTimeMarker.ts) {
-      duration_since_last = 0;
+      durationSinceLast = 0;
     }
 
-    return duration_since_last;
+    return durationSinceLast;
   }
 
-  public detectTimeStamp(
-    linefordatecheck,
-    metadata, // For debug // codecept_debug([__LINE__, compact("metadata")]);
-  ) {
+  public detectTimeStamp(lineForDateCheck) {
+    let metadata;
     metadata.lastKnownDate = this.lastKnownDate;
 
-    if (!!metadata.date_raw) {
-      metadata.date_raw_was_nonempty_before_detectTimeStamp = metadata.date_raw;
+    if (!!metadata.dateRaw) {
+      metadata.dateRawWasNonemptyBeforeDetectTimestamp = metadata.dateRaw;
     }
 
-    // codecept_debug([__LINE__, compact("detect_regex", "linefordatecheck", "m")]);
+    // codecept_debug([__LINE__, {detectRegex", "lineForDateCheck", "m")]);
     for (const supportedTimestampFormat of Object.values(
       this.supportedTimestampFormats(),
     )) {
       // The most straight-forward date format
       const format = supportedTimestampFormat.format;
-      const detect_regex = supportedTimestampFormat.detect_regex;
-      const accept_approx_token_instead_of_minutes =
-        supportedTimestampFormat.accept_approx_token_instead_of_minutes;
-      const detect_regex_date_raw_match_index =
-        supportedTimestampFormat.detect_regex_date_raw_match_index;
-      const detect_regex_time_raw_match_index =
-        supportedTimestampFormat.detect_regex_time_raw_match_index;
-      preg_match_all(detect_regex, linefordatecheck, m);
+      const detectRegex = supportedTimestampFormat.detectRegex;
+      const acceptApproxTokenInsteadOfMinutes =
+        supportedTimestampFormat.acceptApproxTokenInsteadOfMinutes;
+      const detectRegexDateRawMatchIndex =
+        supportedTimestampFormat.detectRegexDateRawMatchIndex;
+      const detectRegexTimeRawMatchIndex =
+        supportedTimestampFormat.detectRegexTimeRawMatchIndex;
+      const m = lineForDateCheck.match(detectRegex + "g");
 
       if (!!m && !!m[0]) {
         // var_dump($line, $m);
         if (this.collectDebugInfo) {
           metadata["date_search_preg_debug:" + format] = {
-            linefordatecheck,
+            lineForDateCheck,
             m,
           };
         }
 
-        metadata.date_raw_format = format;
+        metadata.dateRawFormat = format;
         metadata.log.push(`Found a supported timestamp ('${format}')`);
 
-        if (!is_null(detect_regex_date_raw_match_index)) {
-          metadata.date_raw = m[detect_regex_date_raw_match_index][0];
+        if (!is_null(detectRegexDateRawMatchIndex)) {
+          metadata.dateRaw = m[detectRegexDateRawMatchIndex][0];
         }
 
-        if (!is_null(detect_regex_time_raw_match_index)) {
+        if (!is_null(detectRegexTimeRawMatchIndex)) {
           // If this is a format with only time detection, we use the raw time as the raw date
-          metadata.time_raw = m[detect_regex_time_raw_match_index][0];
+          metadata.timeRaw = m[detectRegexTimeRawMatchIndex][0];
 
-          if (is_null(detect_regex_date_raw_match_index)) {
-            metadata.date_raw = metadata.time_raw;
+          if (is_null(detectRegexDateRawMatchIndex)) {
+            metadata.dateRaw = metadata.timeRaw;
           }
 
-          if (accept_approx_token_instead_of_minutes) {
+          if (acceptApproxTokenInsteadOfMinutes) {
             // In case we entered "approx" instead of minutes, shotgun to the exact hour change:
             if (
-              this.startsWithOptionallySuffixedToken(
-                metadata.time_raw,
-                "approx",
-              )
+              this.startsWithOptionallySuffixedToken(metadata.timeRaw, "approx")
             ) {
-              metadata.date_raw_with_approx_token_instead_of_minutes =
-                metadata.date_raw;
+              metadata.dateRaw_with_approx_token_instead_of_minutes =
+                metadata.dateRaw;
               const tokens = this.tokens();
-              metadata.date_raw = str_replace(
+              metadata.dateRaw = str_replace(
                 tokens.approx,
                 "00",
-                metadata.date_raw,
+                metadata.dateRaw,
               );
             }
           }
         } else {
-          metadata.time_raw = false;
+          metadata.timeRaw = false;
         }
 
         return;
       } else {
         if (this.collectDebugInfo) {
-          metadata["date_search_preg_debug:" + format] = compact(
-            "linefordatecheck",
-            "m",
-          );
+          metadata["date_search_preg_debug:" + format] = {
+            lineForDateCheck,
+            m,
+          };
         }
       }
     }
 
     metadata.log.push("Did not find a supported timestamp");
-    metadata.date_raw = false;
-    metadata.time_raw = false;
-    metadata.date_raw_format = false;
+    metadata.dateRaw = false;
+    metadata.timeRaw = false;
+    metadata.dateRawFormat = false;
+    return { metadata };
   }
 
-  public set_ts_and_date(date_raw, ts, date, linewithoutdate, datetime) {
+  public set_ts_and_date(dateRaw) {
     this.lastSetTsAndDateErrorMessage = "";
-    date_raw = str_replace(["maj", "okt"], ["may", "oct"], date_raw).trim();
+    dateRaw = str_replace(["maj", "okt"], ["may", "oct"], dateRaw).trim();
+
+    let ts, datetime, date;
 
     try {
       const timeZone = this.interpretLastKnownTimeZone();
       ts = this.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
-        date_raw,
+        dateRaw,
         timeZone,
         datetime,
       );
@@ -449,7 +413,7 @@ class LogParser {
       if (e instanceof InvalidDateTimeZoneException) {
         // If invalid timezone is encountered, use UTC and at least detect the timestamp correctly, but make a note about that the wrong timezone was used
         ts = this.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
-          date_raw,
+          dateRaw,
           "UTC",
           datetime,
         );
@@ -468,8 +432,8 @@ class LogParser {
       this.lastSetTsAndDateErrorMessage =
         "Timestamp found was more than 10 years old, not reasonably correct";
     } // new day starts at 06.00 in the morning - schablon
-    // TODO: Possibly restore this, but then based on date_raw lacking time-information instead of the parsed date object having time at midnight
-    // if (date("H:i:s", $ts) == "00:00:00") $midnightoffset = 0; // do not offset when we didn't specify a specific time (yes this takes 00:00-reported times as well - but I can live with that!)
+    // TODO: Possibly restore this, but then based on dateRaw lacking time-information instead of the parsed date object having time at midnight
+    // if (date("H:i:s", $ts) === "00:00:00") $midnightoffset = 0; // do not offset when we didn't specify a specific time (yes this takes 00:00-reported times as well - but I can live with that!)
     else {
       this.lastKnownDate = datetime.format("Y-m-d");
       const midnightoffset = 6 * 60;
@@ -480,9 +444,12 @@ class LogParser {
       semanticDateTime = semanticDateTime.sub(interval);
       date = semanticDateTime.format("Y-m-d");
     }
+
+    return { ts, date, datetime };
   }
 
   public interpretLastKnownTimeZone() {
+    /* tslint:disable:object-literal-sort-keys */
     const interpretationMap = {
       "GMT-6": "-06:00",
       "UTC-6": "-06:00",
@@ -492,6 +459,7 @@ class LogParser {
       "Austin/GMT-6": "-06:00",
       "US/San Francisco": "America/Los_Angeles",
     };
+    /* tslint:enable:object-literal-sort-keys */
 
     if (undefined !== interpretationMap[this.lastKnownTimeZone]) {
       return interpretationMap[this.lastKnownTimeZone];
@@ -500,12 +468,8 @@ class LogParser {
     return this.lastKnownTimeZone;
   }
 
-  public parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
-    str,
-    timezone,
-    datetime = undefined, // TODO: Remove expectation of string
-  ) {
-    let gmt_timestamp;
+  public parseGmtTimestampFromDateSpecifiedInSpecificTimezone(str, timezone) {
+    let gmtTimestamp, datetime;
 
     try {
       timezone = new DateTimeZone(timezone);
@@ -537,16 +501,16 @@ class LogParser {
 
     if (!datetime) {
       // TODO: Remove expectation of string and this setting of 0 on error
-      // var_dump(compact("str","gmt_timestamp"), strtotime($str));
+      // var_dump({str","gmtTimestamp"), strtotime($str));
       // die();
-      gmt_timestamp = 0;
+      gmtTimestamp = 0;
     } else {
       const gmt_datetime = clone(datetime);
       gmt_datetime.setTimezone(new DateTimeZone("UTC"));
-      gmt_timestamp = gmt_datetime.getTimestamp();
+      gmtTimestamp = gmt_datetime.getTimestamp();
     }
 
-    return String(gmt_timestamp);
+    return { gmtTimestamp: String(gmtTimestamp), datetime };
   }
 }
 

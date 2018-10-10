@@ -1,576 +1,75 @@
+import { str_replace, strpos } from "locutus/php/strings";
+import { array_count_values, arsort } from "locutus/php/strings";
+import { is_null } from "locutus/php/var";
+import { LogParser, textIntoLinesArray } from "./LogParser";
+import {
+  cloneVariable,
+  DateTime,
+  DateTimeZone,
+  mb_strlen,
+} from "./php-wrappers";
+import { str_hex, str_word_count_utf8 } from "./string-utils";
+
 // Main contents holders
 // Metadata arrays
 // Helper variables
 // var $notParsedAndNotStartStopLinesTimeReport = array();
 //
-// @param $date_raw
+// @param $dateRaw
 // @param $ts
 // @param $date
-// @param null $linewithoutdate
+// @param null $lineWithoutDate
 // @param $datetime
 // @throws Exception
 // @throws InvalidDateTimeZoneException
 //
 //
 // Requires that the ->sessions array is populated
+function utf8_decode(description: string): string {
+  return "";
+}
+
 //
-class TimeLogParser extends LogParser {
+export class TimeLogParser extends LogParser {
+  get contentsOfTimeReport() {
+    return this._contentsOfTimeReport;
+  }
+  public lastSetTsAndDateErrorMessage;
+  public lastKnownDate;
+
+  private contents;
+  private preProcessedContents;
+  private contentsWithTimeMarkers;
+  private _contentsOfTimeReport;
+  private timeReportData;
+  private notParsedTimeReport;
+  private sessionStarts;
+  private sessions;
+  private timeReportSourceComments;
+  private categories;
+  private collectDebugInfo;
+  private debugAddTimeMarkers;
+  private debugGenerateTimeReport;
+  private preProcessedContentsSourceLineContentsSourceLineMap;
+  private reservedWords;
+
   constructor() {
     super(...arguments);
     this.contents = undefined;
     this.preProcessedContents = "";
     this.contentsWithTimeMarkers = "";
-    this.contentsOfTimeReport = "";
-    this.timeReportData = Array();
-    this.notParsedTimeReport = Array();
+    this._contentsOfTimeReport = "";
+    this.timeReportData = [];
+    this.notParsedTimeReport = [];
     this.sessionStarts = Array();
     this.sessions = Array();
     this.timeReportSourceComments = Array();
     this.categories = Array();
     this.collectDebugInfo = false;
     this.debugAddTimeMarkers = Array();
-    this.debugGenerateTimeReport = Array();
-    this.preProcessedContentsSourceLineContentsSourceLineMap = Array();
-    this.reserved_words = [
-      "accessible",
-      "add",
-      "all",
-      "alter",
-      "analyze",
-      "and",
-      "as",
-      "asc",
-      "asensitive",
-      "before",
-      "between",
-      "bigint",
-      "binary",
-      "blob",
-      "both",
-      "by",
-      "call",
-      "cascade",
-      "case",
-      "change",
-      "char",
-      "character",
-      "check",
-      "collate",
-      "column",
-      "condition",
-      "connection",
-      "constraint",
-      "continue",
-      "convert",
-      "create",
-      "cross",
-      "current_date",
-      "current_time",
-      "current_timestamp",
-      "current_user",
-      "cursor",
-      "database",
-      "databases",
-      "day_hour",
-      "day_microsecond",
-      "day_minute",
-      "day_second",
-      "dec",
-      "decimal",
-      "declare",
-      "default",
-      "delayed",
-      "delete",
-      "desc",
-      "describe",
-      "deterministic",
-      "distinct",
-      "distinctrow",
-      "div",
-      "double",
-      "drop",
-      "dual",
-      "each",
-      "else",
-      "elseif",
-      "enclosed",
-      "escaped",
-      "exists",
-      "exit",
-      "explain",
-      "false",
-      "fetch",
-      "float",
-      "float4",
-      "float8",
-      "for",
-      "force",
-      "foreign",
-      "from",
-      "fulltext",
-      "goto",
-      "grant",
-      "group",
-      "having",
-      "high_priority",
-      "hour_microsecond",
-      "hour_minute",
-      "hour_second",
-      "if",
-      "ignore",
-      "in",
-      "index",
-      "infile",
-      "inner",
-      "inout",
-      "insensitive",
-      "insert",
-      "int",
-      "int1",
-      "int2",
-      "int3",
-      "int4",
-      "int8",
-      "integer",
-      "interval",
-      "into",
-      "is",
-      "iterate",
-      "join",
-      "key",
-      "keys",
-      "kill",
-      "label",
-      "leading",
-      "leave",
-      "left",
-      "like",
-      "limit",
-      "linear",
-      "lines",
-      "load",
-      "localtime",
-      "localtimestamp",
-      "lock",
-      "long",
-      "longblob",
-      "longtext",
-      "loop",
-      "low_priority",
-      "master_ssl_verify_server_cert",
-      "match",
-      "mediumblob",
-      "mediumint",
-      "mediumtext",
-      "middleint",
-      "minute_microsecond",
-      "minute_second",
-      "mod",
-      "modifies",
-      "natural",
-      "no_write_to_binlog",
-      "not",
-      "null",
-      "numeric",
-      "on",
-      "optimize",
-      "option",
-      "optionally",
-      "or",
-      "order",
-      "out",
-      "outer",
-      "outfile",
-      "precision",
-      "primary",
-      "procedure",
-      "purge",
-      "range",
-      "read",
-      "read_only",
-      "read_write",
-      "reads",
-      "real",
-      "references",
-      "regexp",
-      "release",
-      "rename",
-      "repeat",
-      "replace",
-      "require",
-      "reserved",
-      "restrict",
-      "return",
-      "revoke",
-      "right",
-      "rlike",
-      "schema",
-      "schemas",
-      "second_microsecond",
-      "select",
-      "sensitive",
-      "separator",
-      "set",
-      "show",
-      "smallint",
-      "spatial",
-      "specific",
-      "sql",
-      "sql_big_result",
-      "sql_calc_found_rows",
-      "sql_small_result",
-      "sqlexception",
-      "sqlstate",
-      "sqlwarning",
-      "ssl",
-      "starting",
-      "straight_join",
-      "table",
-      "terminated",
-      "then",
-      "tinyblob",
-      "tinyint",
-      "tinytext",
-      "to",
-      "trailing",
-      "trigger",
-      "true",
-      "undo",
-      "union",
-      "unique",
-      "unlock",
-      "unsigned",
-      "update",
-      "upgrade",
-      "usage",
-      "use",
-      "using",
-      "utc_date",
-      "utc_time",
-      "utc_timestamp",
-      "values",
-      "varbinary",
-      "varchar",
-      "varcharacter",
-      "varying",
-      "when",
-      "where",
-      "while",
-      "with",
-      "write",
-      "xor",
-      "year_month",
-      "zerofill",
-      "__class__",
-      "__compiler_halt_offset__",
-      "__dir__",
-      "__file__",
-      "__function__",
-      "__method__",
-      "__namespace__",
-      "abday_1",
-      "abday_2",
-      "abday_3",
-      "abday_4",
-      "abday_5",
-      "abday_6",
-      "abday_7",
-      "abmon_1",
-      "abmon_10",
-      "abmon_11",
-      "abmon_12",
-      "abmon_2",
-      "abmon_3",
-      "abmon_4",
-      "abmon_5",
-      "abmon_6",
-      "abmon_7",
-      "abmon_8",
-      "abmon_9",
-      "abstract",
-      "alt_digits",
-      "am_str",
-      "array",
-      "assert_active",
-      "assert_bail",
-      "assert_callback",
-      "assert_quiet_eval",
-      "assert_warning",
-      "break",
-      "case_lower",
-      "case_upper",
-      "catch",
-      "cfunction",
-      "char_max",
-      "class",
-      "clone",
-      "codeset",
-      "connection_aborted",
-      "connection_normal",
-      "connection_timeout",
-      "const",
-      "count_normal",
-      "count_recursive",
-      "credits_all",
-      "credits_docs",
-      "credits_fullpage",
-      "credits_general",
-      "credits_group",
-      "credits_modules",
-      "credits_qa",
-      "credits_sapi",
-      "crncystr",
-      "crypt_blowfish",
-      "crypt_ext_des",
-      "crypt_md5",
-      "crypt_salt_length",
-      "crypt_std_des",
-      "currency_symbol",
-      "d_fmt",
-      "d_t_fmt",
-      "day_1",
-      "day_2",
-      "day_3",
-      "day_4",
-      "day_5",
-      "day_6",
-      "day_7",
-      "decimal_point",
-      "default_include_path",
-      "die",
-      "directory_separator",
-      "do",
-      "e_all",
-      "e_compile_error",
-      "e_compile_warning",
-      "e_core_error",
-      "e_core_warning",
-      "e_deprecated",
-      "e_error",
-      "e_notice",
-      "e_parse",
-      "e_strict",
-      "e_user_deprecated",
-      "e_user_error",
-      "e_user_notice",
-      "e_user_warning",
-      "e_warning",
-      "echo",
-      "empty",
-      "enddeclare",
-      "endfor",
-      "endforeach",
-      "endif",
-      "endswitch",
-      "endwhile",
-      "ent_compat",
-      "ent_noquotes",
-      "ent_quotes",
-      "era",
-      "era_d_fmt",
-      "era_d_t_fmt",
-      "era_t_fmt",
-      "era_year",
-      "eval",
-      "extends",
-      "extr_if_exists",
-      "extr_overwrite",
-      "extr_prefix_all",
-      "extr_prefix_if_exists",
-      "extr_prefix_invalid",
-      "extr_prefix_same",
-      "extr_skip",
-      "final",
-      "foreach",
-      "frac_digits",
-      "function",
-      "global",
-      "grouping",
-      "html_entities",
-      "html_specialchars",
-      "implements",
-      "include",
-      "include_once",
-      "info_all",
-      "info_configuration",
-      "info_credits",
-      "info_environment",
-      "info_general",
-      "info_license",
-      "info_modules",
-      "info_variables",
-      "ini_all",
-      "ini_perdir",
-      "ini_system",
-      "ini_user",
-      "instanceof",
-      "int_curr_symbol",
-      "int_frac_digits",
-      "interface",
-      "isset",
-      "lc_all",
-      "lc_collate",
-      "lc_ctype",
-      "lc_messages",
-      "lc_monetary",
-      "lc_numeric",
-      "lc_time",
-      "list",
-      "lock_ex",
-      "lock_nb",
-      "lock_sh",
-      "lock_un",
-      "log_alert",
-      "log_auth",
-      "log_authpriv",
-      "log_cons",
-      "log_crit",
-      "log_cron",
-      "log_daemon",
-      "log_debug",
-      "log_emerg",
-      "log_err",
-      "log_info",
-      "log_kern",
-      "log_local0",
-      "log_local1",
-      "log_local2",
-      "log_local3",
-      "log_local4",
-      "log_local5",
-      "log_local6",
-      "log_local7",
-      "log_lpr",
-      "log_mail",
-      "log_ndelay",
-      "log_news",
-      "log_notice",
-      "log_nowait",
-      "log_odelay",
-      "log_perror",
-      "log_pid",
-      "log_syslog",
-      "log_user",
-      "log_uucp",
-      "log_warning",
-      "m_1_pi",
-      "m_2_pi",
-      "m_2_sqrtpi",
-      "m_e",
-      "m_ln10",
-      "m_ln2",
-      "m_log10e",
-      "m_log2e",
-      "m_pi",
-      "m_pi_2",
-      "m_pi_4",
-      "m_sqrt1_2",
-      "m_sqrt2",
-      "mon_1",
-      "mon_10",
-      "mon_11",
-      "mon_12",
-      "mon_2",
-      "mon_3",
-      "mon_4",
-      "mon_5",
-      "mon_6",
-      "mon_7",
-      "mon_8",
-      "mon_9",
-      "mon_decimal_point",
-      "mon_grouping",
-      "mon_thousands_sep",
-      "n_cs_precedes",
-      "n_sep_by_space",
-      "n_sign_posn",
-      "namespace",
-      "negative_sign",
-      "new",
-      "noexpr",
-      "nostr",
-      "old_function",
-      "p_cs_precedes",
-      "p_sep_by_space",
-      "p_sign_posn",
-      "path_separator",
-      "pathinfo_basename",
-      "pathinfo_dirname",
-      "pathinfo_extension",
-      "pear_extension_dir",
-      "pear_install_dir",
-      "php_bindir",
-      "php_config_file_path",
-      "php_config_file_scan_dir",
-      "php_datadir",
-      "php_debug",
-      "php_eol",
-      "php_extension_dir",
-      "php_extra_version",
-      "php_int_max",
-      "php_int_size",
-      "php_libdir",
-      "php_localstatedir",
-      "php_major_version",
-      "php_maxpathlen",
-      "php_minor_version",
-      "php_os",
-      "php_output_handler_cont",
-      "php_output_handler_end",
-      "php_output_handler_start",
-      "php_prefix",
-      "php_release_version",
-      "php_sapi",
-      "php_shlib_suffix",
-      "php_sysconfdir",
-      "php_version",
-      "php_version_id",
-      "php_windows_nt_domain_controller",
-      "php_windows_nt_server",
-      "php_windows_nt_workstation",
-      "php_windows_version_build",
-      "php_windows_version_major",
-      "php_windows_version_minor",
-      "php_windows_version_platform",
-      "php_windows_version_producttype",
-      "php_windows_version_sp_major",
-      "php_windows_version_sp_minor",
-      "php_windows_version_suitemask",
-      "php_zts",
-      "pm_str",
-      "positive_sign",
-      "print",
-      "private",
-      "protected",
-      "public",
-      "radixchar",
-      "require_once",
-      "seek_cur",
-      "seek_end",
-      "seek_set",
-      "sort_asc",
-      "sort_desc",
-      "sort_numeric",
-      "sort_regular",
-      "sort_string",
-      "static",
-      "str_pad_both",
-      "str_pad_left",
-      "str_pad_right",
-      "switch",
-      "t_fmt",
-      "t_fmt_ampm",
-      "thousands_sep",
-      "thousep",
-      "throw",
-      "try",
-      "unset",
-      "var",
-      "yesexpr",
-      "yesstr",
-      "commit",
-      "start",
-    ];
+    this.debugGenerateTimeReport = [];
+    this.preProcessedContentsSourceLineContentsSourceLineMap = [];
+    // this.reservedWords = [      "accessible",      "add",      "all",      "alter",      "analyze",      "and",      "as",      "asc",      "asensitive",      "before",      "between",      "bigint",      "binary",      "blob",      "both",      "by",      "call",      "cascade",      "case",      "change",      "char",      "character",      "check",      "collate",      "column",      "condition",      "connection",      "constraint",      "continue",      "convert",      "create",      "cross",      "current_date",      "current_time",      "current_timestamp",      "current_user",      "cursor",      "database",      "databases",      "day_hour",      "day_microsecond",      "day_minute",      "day_second",      "dec",      "decimal",      "declare",      "default",      "delayed",      "delete",      "desc",      "describe",      "deterministic",      "distinct",      "distinctrow",      "div",      "double",      "drop",      "dual",      "each",      "else",      "elseif",      "enclosed",      "escaped",      "exists",      "exit",      "explain",      "false",      "fetch",      "float",      "float4",      "float8",      "for",      "force",      "foreign",      "from",      "fulltext",      "goto",      "grant",      "group",      "having",      "high_priority",      "hour_microsecond",      "hour_minute",      "hour_second",      "if",      "ignore",      "in",      "index",      "infile",      "inner",      "inout",      "insensitive",      "insert",      "int",      "int1",      "int2",      "int3",      "int4",      "int8",      "integer",      "interval",      "into",      "is",      "iterate",      "join",      "key",      "keys",      "kill",      "label",      "leading",      "leave",      "left",      "like",      "limit",      "linear",      "lines",      "load",      "localtime",      "localtimestamp",      "lock",      "long",      "longblob",      "longtext",      "loop",      "low_priority",      "master_ssl_verify_server_cert",      "match",      "mediumblob",      "mediumint",      "mediumtext",      "middleint",      "minute_microsecond",      "minute_second",      "mod",      "modifies",      "natural",      "no_write_to_binlog",      "not",      "null",      "numeric",      "on",      "optimize",      "option",      "optionally",      "or",      "order",      "out",      "outer",      "outfile",      "precision",      "primary",      "procedure",      "purge",      "range",      "read",      "read_only",      "read_write",      "reads",      "real",      "references",      "regexp",      "release",      "rename",      "repeat",      "replace",      "require",      "reserved",      "restrict",      "return",      "revoke",      "right",      "rlike",      "schema",      "schemas",      "second_microsecond",      "select",      "sensitive",      "separator",      "set",      "show",      "smallint",      "spatial",      "specific",      "sql",      "sql_big_result",      "sql_calc_found_rows",      "sql_small_result",      "sqlexception",      "sqlstate",      "sqlwarning",      "ssl",      "starting",      "straight_join",      "table",      "terminated",      "then",      "tinyblob",      "tinyint",      "tinytext",      "to",      "trailing",      "trigger",      "true",      "undo",      "union",      "unique",      "unlock",      "unsigned",      "update",      "upgrade",      "usage",      "use",      "using",      "utc_date",      "utc_time",      "utc_timestamp",      "values",      "varbinary",      "varchar",      "varcharacter",      "varying",      "when",      "where",      "while",      "with",      "write",      "xor",      "year_month",      "zerofill",      "__class__",      "__compiler_halt_offset__",      "__dir__",      "__file__",      "__function__",      "__method__",      "__namespace__",      "abday_1",      "abday_2",      "abday_3",      "abday_4",      "abday_5",      "abday_6",      "abday_7",      "abmon_1",      "abmon_10",      "abmon_11",      "abmon_12",      "abmon_2",      "abmon_3",      "abmon_4",      "abmon_5",      "abmon_6",      "abmon_7",      "abmon_8",      "abmon_9",      "abstract",      "alt_digits",      "am_str",      "array",      "assert_active",      "assert_bail",      "assert_callback",      "assert_quiet_eval",      "assert_warning",      "break",      "case_lower",      "case_upper",      "catch",      "cfunction",      "char_max",      "class",      "clone",      "codeset",      "connection_aborted",      "connection_normal",      "connection_timeout",      "const",      "count_normal",      "count_recursive",      "credits_all",      "credits_docs",      "credits_fullpage",      "credits_general",      "credits_group",      "credits_modules",      "credits_qa",      "credits_sapi",      "crncystr",      "crypt_blowfish",      "crypt_ext_des",      "crypt_md5",      "crypt_salt_length",      "crypt_std_des",      "currency_symbol",      "d_fmt",      "d_t_fmt",      "day_1",      "day_2",      "day_3",      "day_4",      "day_5",      "day_6",      "day_7",      "decimal_point",      "default_include_path",      "die",      "directory_separator",      "do",      "e_all",      "e_compile_error",      "e_compile_warning",      "e_core_error",      "e_core_warning",      "e_deprecated",      "e_error",      "e_notice",      "e_parse",      "e_strict",      "e_user_deprecated",      "e_user_error",      "e_user_notice",      "e_user_warning",      "e_warning",      "echo",      "empty",      "enddeclare",      "endfor",      "endforeach",      "endif",      "endswitch",      "endwhile",      "ent_compat",      "ent_noquotes",      "ent_quotes",      "era",      "era_d_fmt",      "era_d_t_fmt",      "era_t_fmt",      "era_year",      "eval",      "extends",      "extr_if_exists",      "extr_overwrite",      "extr_prefix_all",      "extr_prefix_if_exists",      "extr_prefix_invalid",      "extr_prefix_same",      "extr_skip",      "final",      "foreach",      "frac_digits",      "function",      "global",      "grouping",      "html_entities",      "html_specialchars",      "implements",      "include",      "include_once",      "info_all",      "info_configuration",      "info_credits",      "info_environment",      "info_general",      "info_license",      "info_modules",      "info_variables",      "ini_all",      "ini_perdir",      "ini_system",      "ini_user",      "instanceof",      "int_curr_symbol",      "int_frac_digits",      "interface",      "isset",      "lc_all",      "lc_collate",      "lc_ctype",      "lc_messages",      "lc_monetary",      "lc_numeric",      "lc_time",      "list",      "lock_ex",      "lock_nb",      "lock_sh",      "lock_un",      "log_alert",      "log_auth",      "log_authpriv",      "log_cons",      "log_crit",      "log_cron",      "log_daemon",      "log_debug",      "log_emerg",      "log_err",      "log_info",      "log_kern",      "log_local0",      "log_local1",      "log_local2",      "log_local3",      "log_local4",      "log_local5",      "log_local6",      "log_local7",      "log_lpr",      "log_mail",      "log_ndelay",      "log_news",      "log_notice",      "log_nowait",      "log_odelay",      "log_perror",      "log_pid",      "log_syslog",      "log_user",      "log_uucp",      "log_warning",      "m_1_pi",      "m_2_pi",      "m_2_sqrtpi",      "m_e",      "m_ln10",      "m_ln2",      "m_log10e",      "m_log2e",      "m_pi",      "m_pi_2",      "m_pi_4",      "m_sqrt1_2",      "m_sqrt2",      "mon_1",      "mon_10",      "mon_11",      "mon_12",      "mon_2",      "mon_3",      "mon_4",      "mon_5",      "mon_6",      "mon_7",      "mon_8",      "mon_9",      "mon_decimal_point",      "mon_grouping",      "mon_thousands_sep",      "n_cs_precedes",      "n_sep_by_space",      "n_sign_posn",      "namespace",      "negative_sign",      "new",      "noexpr",      "nostr",      "old_function",      "p_cs_precedes",      "p_sep_by_space",      "p_sign_posn",      "path_separator",      "pathinfo_basename",      "pathinfo_dirname",      "pathinfo_extension",      "pear_extension_dir",      "pear_install_dir",      "php_bindir",      "php_config_file_path",      "php_config_file_scan_dir",      "php_datadir",      "php_debug",      "php_eol",      "php_extension_dir",      "php_extra_version",      "php_int_max",      "php_int_size",      "php_libdir",      "php_localstatedir",      "php_major_version",      "php_maxpathlen",      "php_minor_version",      "php_os",      "php_output_handler_cont",      "php_output_handler_end",      "php_output_handler_start",      "php_prefix",      "php_release_version",      "php_sapi",      "php_shlib_suffix",      "php_sysconfdir",      "php_version",      "php_version_id",      "php_windows_nt_domain_controller",      "php_windows_nt_server",      "php_windows_nt_workstation",      "php_windows_version_build",      "php_windows_version_major",      "php_windows_version_minor",      "php_windows_version_platform",      "php_windows_version_producttype",      "php_windows_version_sp_major",      "php_windows_version_sp_minor",      "php_windows_version_suitemask",      "php_zts",      "pm_str",      "positive_sign",      "print",      "private",      "protected",      "public",      "radixchar",      "require_once",      "seek_cur",      "seek_end",      "seek_set",      "sort_asc",      "sort_desc",      "sort_numeric",      "sort_regular",      "sort_string",      "static",      "str_pad_both",      "str_pad_left",      "str_pad_right",      "switch",      "t_fmt",      "t_fmt_ampm",      "thousands_sep",      "thousep",      "throw",      "try",      "unset",      "var",      "yesexpr",      "yesstr",      "commit",      "start",    ];
   }
 
   public tokens() {
@@ -605,22 +104,16 @@ class TimeLogParser extends LogParser {
     return forReturn;
   }
 
-  public set_ts_and_date(
-    date_raw,
-    ts,
-    date,
-    linewithoutdate,
-    datetime, // Invalidate strings that are clearly too large to be a timestamp // var_dump($date_raw,$m);
-  ) {
+  public set_ts_and_date(dateRaw) {
     this.lastSetTsAndDateErrorMessage = "";
 
-    if (date_raw.length > 50) {
+    if (dateRaw.length > 50) {
       this.lastSetTsAndDateErrorMessage =
         "Invalidate strings that are clearly too large to be a timestamp";
       return;
     }
 
-    preg_match("/[0-9]+/", date_raw, m);
+    const m = dateRaw.match(/[0-9]+/g);
 
     if (!m) {
       this.lastSetTsAndDateErrorMessage =
@@ -628,20 +121,32 @@ class TimeLogParser extends LogParser {
       return;
     }
 
-    if (date_raw.length < 8) {
-      // var_dump($date_raw);
-      date_raw = this.lastKnownDate + ` ${date_raw}`;
+    if (dateRaw.length < 8) {
+      // var_dump($dateRaw);
+      dateRaw = this.lastKnownDate + ` ${dateRaw}`;
     }
 
     const tokens = this.tokens();
-    date_raw = str_replace(tokens.approx, "", date_raw).trim();
-    super.set_ts_and_date(date_raw, ts, date, linewithoutdate, datetime);
+    dateRaw = str_replace(tokens.approx, "", dateRaw).trim();
+    const {
+      ts,
+      date,
+      datetime, // Invalidate strings that are clearly too large to be a timestamp // var_dump($dateRaw,$m);
+    } = super.set_ts_and_date(dateRaw);
+
+    return {
+      ts,
+      date,
+      datetime, // Invalidate strings that are clearly too large to be a timestamp // var_dump($dateRaw,$m);
+    };
   }
 
+  /*
   public loadContentsFromFile() {
     const tspath = _SERVER.argv[1];
     this.contents = file_get_contents(`${tspath}.txt`);
   }
+  */
 
   public isProbableStartStopLine(line, dump = false) {
     const trimmedLine = line.trim();
@@ -702,33 +207,32 @@ class TimeLogParser extends LogParser {
 
   public preProcessContents() {
     this.preProcessedContents = this.getPreProcessedContents(
-      this.tz_first,
+      this.tzFirst,
       this.contents,
     );
   }
 
   public getPreProcessedContents(
-    tz_first,
+    tzFirst,
     contents, // Phase 0 - skip lines after "#endts" // Phase 1 - paus-fixes // Phase 2 - missing start-lines
   ) {
-    this.lastKnownTimeZone = tz_first;
-    let processed = Array();
-    let lines = this.constructor.textIntoLinesArray(contents);
+    this.lastKnownTimeZone = tzFirst;
+    let processed = [];
+    const rawLines = textIntoLinesArray(contents);
     let nextNeedToBeStart = true;
-    const _lines = lines;
-    lines = Array();
+    const lines = [];
 
-    for (const k in _lines) {
-      const line = _lines[k];
+    for (const k in rawLines) {
+      const line = rawLines[k];
 
-      if (line.trim() == "#endts") {
+      if (line.trim() === "#endts") {
         break;
       }
 
       lines.push(line);
     }
 
-    const phase1_source_line_contents_source_line_map = Array();
+    const phase1_source_line_contents_source_line_map = {};
 
     // Actual source line is +1
     // Skip empty lines
@@ -763,37 +267,31 @@ class TimeLogParser extends LogParser {
         // Checking if a timestamp exists before the "->"
         const rowParts = trimmedLine.split("->");
         const tokens = this.tokens();
-        let trimmedLinefordatecheck = str_replace(
+        let trimmedLineForDateCheck = str_replace(
           tokens.pause,
           "",
           rowParts[0].trim(),
         );
-        trimmedLinefordatecheck = str_replace(
+        trimmedLineForDateCheck = str_replace(
           tokens.approx,
           "",
-          trimmedLinefordatecheck,
+          trimmedLineForDateCheck,
         );
 
         if (
-          trimmedLinefordatecheck.length > 1 &&
-          strpos(trimmedLinefordatecheck, "min") === false
+          trimmedLineForDateCheck.length > 1 &&
+          strpos(trimmedLineForDateCheck, "min") === false
         ) {
-          // var_dump($metadata["date_raw"], $trimmedLinefordatecheck, $ts, $date);
+          // var_dump($metadata["dateRaw"], $trimmedLineForDateCheck, $ts, $date);
           // $invalid = empty($date);
-          this.detectTimeStamp(trimmedLinefordatecheck, metadata);
+          this.detectTimeStamp(trimmedLineForDateCheck, metadata);
           let datetime;
-          this.set_ts_and_date(
-            metadata.date_raw,
-            ts,
-            date,
-            undefined,
-            datetime,
-          );
+          this.set_ts_and_date(metadata.dateRaw, ts, date, undefined, datetime);
 
-          if (!!metadata.date_raw) {
+          if (!!metadata.dateRaw) {
             // $formatted_date = gmdate("Y-m-d H:i", $ts); //:s
             const implicitMessage =
-              trimmedLinefordatecheck + `, <just before ${token}>`;
+              trimmedLineForDateCheck + `, <just before ${token}>`;
             processed.push(implicitMessage);
             phase1_source_line_contents_source_line_map[
               processed.length
@@ -814,16 +312,16 @@ class TimeLogParser extends LogParser {
     }
 
     lines = processed;
-    processed = Array();
+    processed = [];
 
     // Actual source line is +1
     // Get raw source line
     // Skip empty lines
-    for (const phase_1_processed_line_index in lines) {
+    for (const phase1ProcessedLineIndex in lines) {
       // always use trimmed line for comparisons
-      const line = lines[phase_1_processed_line_index];
+      const line = lines[phase1ProcessedLineIndex];
       trimmedLine = line.trim();
-      const phase_1_processed_line = phase_1_processed_line_index + 1;
+      const phase_1_processed_line = phase1ProcessedLineIndex + 1;
       source_line =
         phase1_source_line_contents_source_line_map[phase_1_processed_line];
       testempty = trimmedLine;
@@ -843,7 +341,7 @@ class TimeLogParser extends LogParser {
       if (nextNeedToBeStart) {
         // We have a certain syntax that can recover a missing start line, let's check for that:
         // @var DateTime $datetime
-        let date_raw;
+        let dateRaw;
         let ts;
         let date;
         let trimmedLinewithoutdate;
@@ -851,7 +349,7 @@ class TimeLogParser extends LogParser {
         datetime = undefined;
         this.parseLogComment(
           trimmedLine,
-          date_raw,
+          dateRaw,
           ts,
           date,
           trimmedLinewithoutdate,
@@ -886,7 +384,7 @@ class TimeLogParser extends LogParser {
             // gmdate("Y-m-d H:i", $ts - $minutes * 60);
             // var_dump(__LINE__, $probableStart, $date, $minutes, $this->lastKnownTimeZone);
             // note: timestamp generated from duration info in line below;
-            // $processed[] = "start MISSING? asdasdas: ".$trimmedLinewithoutdate.print_r(array($trimmedLine, $date_raw, $date, $trimmedLinewithoutdate, $notTheFirstRowOfALogComment), true).print_r($m, true);
+            // $processed[] = "start MISSING? asdasdas: ".$trimmedLinewithoutdate.print_r(array($trimmedLine, $dateRaw, $date, $trimmedLinewithoutdate, $notTheFirstRowOfALogComment), true).print_r($m, true);
             const interval = DateInterval.createFromDateString(
               minutes + " minutes",
             );
@@ -960,22 +458,22 @@ class TimeLogParser extends LogParser {
     return this.constructor.linesArrayIntoText(processed);
   }
 
-  public parseLogComment(
-    line,
-    date_raw,
-    ts,
-    date,
-    linewithoutdate,
-    notTheFirstRowOfALogComment,
-    datetime, // "," is the main separator between date and any written comment...
-  ) {
-    this.parseLogCommentWithSeparator(
-      ",",
-      line,
-      date_raw,
+  // datetime: "," is the main separator between date and any written comment...
+  public parseLogComment(line) {
+    const {
+      dateRaw,
       ts,
       date,
-      linewithoutdate,
+      lineWithoutDate,
+      notTheFirstRowOfALogComment,
+      datetime,
+    } = this.parseLogCommentWithSeparator(
+      ",",
+      line,
+      dateRaw,
+      ts,
+      date,
+      lineWithoutDate,
       notTheFirstRowOfALogComment,
       datetime,
     );
@@ -987,10 +485,10 @@ class TimeLogParser extends LogParser {
     this.parseLogCommentWithSeparator(
       " -",
       line,
-      date_raw,
+      dateRaw,
       ts,
       date,
-      linewithoutdate,
+      lineWithoutDate,
       notTheFirstRowOfALogComment,
       datetime,
     );
@@ -1002,10 +500,10 @@ class TimeLogParser extends LogParser {
     this.parseLogCommentWithSeparator(
       ": ",
       line,
-      date_raw,
+      dateRaw,
       ts,
       date,
-      linewithoutdate,
+      lineWithoutDate,
       notTheFirstRowOfALogComment,
       datetime,
     );
@@ -1013,42 +511,51 @@ class TimeLogParser extends LogParser {
     if (!notTheFirstRowOfALogComment) {
       return;
     }
+
+    return {
+      dateRaw,
+      ts,
+      date,
+      lineWithoutDate,
+      invalid: notTheFirstRowOfALogComment,
+      datetime,
+    };
   }
 
   public parseLogCommentWithSeparator(
     separator,
     line,
-    date_raw,
+    dateRaw,
     ts,
     date,
-    linewithoutdate,
+    lineWithoutDate,
     notTheFirstRowOfALogComment,
-    datetime, // Check if we have a valid date already // If not, allow one more separated chunk into the date_raw and try again // since some timestamp formats may include the seperator (at most once)
+    datetime, // Check if we have a valid date already // If not, allow one more separated chunk into the dateRaw and try again // since some timestamp formats may include the seperator (at most once)
   ) {
     const parts = line.split(separator);
-    date_raw = parts.shift();
+    dateRaw = parts.shift();
     date = undefined;
-    linewithoutdate = parts.join(separator);
+    lineWithoutDate = parts.join(separator);
     datetime = undefined;
     this.parseLogCommentDateRawCandidate(
-      date_raw,
+      dateRaw,
       ts,
       date,
-      linewithoutdate,
+      lineWithoutDate,
       notTheFirstRowOfALogComment,
       datetime,
     );
 
     if (notTheFirstRowOfALogComment && parts.length > 1) {
-      date_raw += separator + parts.shift();
+      dateRaw += separator + parts.shift();
       date = undefined;
-      linewithoutdate = parts.join(separator);
+      lineWithoutDate = parts.join(separator);
       datetime = undefined;
       this.parseLogCommentDateRawCandidate(
-        date_raw,
+        dateRaw,
         ts,
         date,
-        linewithoutdate,
+        lineWithoutDate,
         notTheFirstRowOfALogComment,
         datetime,
       );
@@ -1056,23 +563,23 @@ class TimeLogParser extends LogParser {
   }
 
   public parseLogCommentDateRawCandidate(
-    date_raw,
+    dateRaw,
     ts,
     date,
-    linewithoutdate,
+    lineWithoutDate,
     notTheFirstRowOfALogComment,
     datetime, // invalidate pure numbers (including those with fractional parts) if there is no comment on the other side - probably not a real log comment // invalidate lines without a valid date
   ) {
-    preg_match("/[0-9\\.\\,]+/", date_raw, m);
+    preg_match("/[0-9\\.\\,]+/", dateRaw, m);
 
     if (!!m[0]) {
       const firstMatch = m[0];
-      const trimmedDateRaw = date_raw.trim();
+      const trimmedDateRaw = dateRaw.trim();
 
       if (
         str_replace([".", ","], "", firstMatch) ===
           str_replace([".", ","], "", trimmedDateRaw) &&
-        !linewithoutdate.trim()
+        !lineWithoutDate.trim()
       ) {
         // Due to some odd logic in some other file, we also can't set ts and date for this row
         notTheFirstRowOfALogComment = true;
@@ -1080,43 +587,43 @@ class TimeLogParser extends LogParser {
       }
     }
 
-    this.set_ts_and_date(date_raw, ts, date, linewithoutdate, datetime);
+    this.set_ts_and_date(dateRaw, ts, date, lineWithoutDate, datetime);
     notTheFirstRowOfALogComment = !date;
   }
 
   public addTimeMarkers() {
-    this.lastKnownTimeZone = this.tz_first;
+    this.lastKnownTimeZone = this.tzFirst;
     this.preProcessContents();
-    const rows_with_timemarkers = Array();
-    const not_parsed = Array();
+    const rowsWithTimemarkers = [];
+    const not_parsed = [];
 
     if (this.collectDebugInfo) {
-      this.debugAddTimeMarkers = Array();
+      this.debugAddTimeMarkers = [];
     }
 
     this.parsePreProcessedContents(
       this.preProcessedContents,
-      rows_with_timemarkers,
+      rowsWithTimemarkers,
       not_parsed,
     );
     this.contentsWithTimeMarkers = this.generateStructuredTimeMarkedOutputBasedOnParsedRowsWithTimeMarkers(
-      rows_with_timemarkers,
+      rowsWithTimemarkers,
       not_parsed,
     );
 
     if (this.collectDebugInfo) {
-      this.debugAddTimeMarkers.rows_with_timemarkers = rows_with_timemarkers;
+      this.debugAddTimeMarkers.rowsWithTimemarkers = rowsWithTimemarkers;
       this.debugAddTimeMarkers.not_parsed = not_parsed;
     }
   }
 
   public parsePreProcessedContents(
     preProcessedContents,
-    rows_with_timemarkers,
+    rowsWithTimemarkers,
     not_parsed,
   ) {
-    const original_unsorted_rows = Array();
-    let rows_with_timemarkers_handled = 0;
+    const original_unsorted_rows = [];
+    let rowsWithTimemarkersHandled = 0;
     const lines = this.constructor.textIntoLinesArray(preProcessedContents);
 
     // skip empty rows
@@ -1138,7 +645,7 @@ class TimeLogParser extends LogParser {
       const preprocessed_contents_source_line =
         preprocessed_contents_source_line_index + 1;
 
-      if (trimmedLine == "") {
+      if (trimmedLine === "") {
         continue;
       }
 
@@ -1152,22 +659,22 @@ class TimeLogParser extends LogParser {
         continue;
       }
 
-      const line_with_comment = trimmedLine;
+      const lineWithComment = trimmedLine;
       trimmedLine = trimmedLine.replace(/#.*/g, "").trim();
-      trimmedLine = this.constructor.newline_convert(trimmedLine, "");
+      trimmedLine = this.constructor.newlineConvert(trimmedLine, "");
       const line = trimmedLine;
-      let date_raw;
+      let dateRaw;
       let ts;
       let date;
-      let linewithoutdate;
+      let lineWithoutDate;
       let notTheFirstRowOfALogComment;
       let datetime;
       this.parseLogComment(
         line,
-        date_raw,
+        dateRaw,
         ts,
         date,
-        linewithoutdate,
+        lineWithoutDate,
         notTheFirstRowOfALogComment,
         datetime,
       );
@@ -1176,17 +683,17 @@ class TimeLogParser extends LogParser {
       datetime.setTimezone(timezone);
       datetime.setTimestamp(ts);
       const formatted_date = datetime.format("Y-m-d H:i");
-      const log = Array();
+      const log = [];
       const lastKnownTimeZone = this.lastKnownTimeZone;
       const lastUsedTimeZone = this.lastUsedTimeZone;
       const lastSetTsAndDateErrorMessage = this.lastSetTsAndDateErrorMessage;
       const metadata = compact(
-        "rows_with_timemarkers_handled",
+        "rowsWithTimemarkersHandled",
         "line",
-        "line_with_comment",
+        "lineWithComment",
         "formatted_date",
         "date",
-        "date_raw",
+        "dateRaw",
         "ts",
         "log",
         "source_line",
@@ -1210,37 +717,37 @@ class TimeLogParser extends LogParser {
       let isNewRowWithTimeMarker = false;
       const notTheFirstRowOfALogCommentAndProbableStartStopLine =
         notTheFirstRowOfALogComment && this.isProbableStartStopLine(line);
-      const isTheFirstRowWithTimeMarker = !rows_with_timemarkers[
-        rows_with_timemarkers_handled - 1
+      const isTheFirstRowWithTimeMarker = !rowsWithTimemarkers[
+        rowsWithTimemarkersHandled - 1
       ];
       const hasAPreviousRowWithTimemarker = !isTheFirstRowWithTimeMarker;
       const previousRowWithTimemarkerHasTheSameDate =
         hasAPreviousRowWithTimemarker &&
-        rows_with_timemarkers[rows_with_timemarkers_handled - 1]
-          .formatted_date == formatted_date;
+        rowsWithTimemarkers[rowsWithTimemarkersHandled - 1].formatted_date ==
+          formatted_date;
 
       if (notTheFirstRowOfALogCommentAndProbableStartStopLine) {
         isNewRowWithTimeMarker = true;
         this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine(
           line,
           metadata,
-          rows_with_timemarkers,
-          rows_with_timemarkers_handled,
+          rowsWithTimemarkers,
+          rowsWithTimemarkersHandled,
           not_parsed,
           isNewRowWithTimeMarker,
         );
       } else if (notTheFirstRowOfALogComment) {
         this.processAdditionalLogCommentRowUntilNextLogComment(
           line,
-          rows_with_timemarkers,
-          rows_with_timemarkers_handled,
+          rowsWithTimemarkers,
+          rowsWithTimemarkersHandled,
         );
         isNewRowWithTimeMarker = false;
       } else if (previousRowWithTimemarkerHasTheSameDate) {
         this.processAdditionalLogCommentRowUntilNextLogComment(
           line,
-          rows_with_timemarkers,
-          rows_with_timemarkers_handled,
+          rowsWithTimemarkers,
+          rowsWithTimemarkersHandled,
         );
         isNewRowWithTimeMarker = false;
       } else {
@@ -1249,20 +756,20 @@ class TimeLogParser extends LogParser {
           ts,
           isNewRowWithTimeMarker,
           metadata,
-          rows_with_timemarkers,
-          rows_with_timemarkers_handled,
+          rowsWithTimemarkers,
+          rowsWithTimemarkersHandled,
           not_parsed,
         );
       }
 
       if (isNewRowWithTimeMarker) {
-        rows_with_timemarkers[rows_with_timemarkers_handled] = metadata;
-        rows_with_timemarkers_handled++;
+        rowsWithTimemarkers[rowsWithTimemarkersHandled] = metadata;
+        rowsWithTimemarkersHandled++;
       }
 
       original_unsorted_rows.push(metadata);
 
-      if (rows_with_timemarkers_handled >= 100000) {
+      if (rowsWithTimemarkersHandled >= 100000) {
         throw new TimeLogParsingException(
           "Time log exceeds maximum allowed size",
         );
@@ -1278,8 +785,8 @@ class TimeLogParser extends LogParser {
   public processNotTheFirstRowOfALogCommentAndProbableStartStopLine(
     line,
     metadata,
-    rows_with_timemarkers,
-    rows_with_timemarkers_handled,
+    rowsWithTimemarkers,
+    rowsWithTimemarkersHandled,
     not_parsed,
     isNewRowWithTimeMarker, // Assume true // Check if it's a pause with written duration
   ) {
@@ -1287,8 +794,8 @@ class TimeLogParser extends LogParser {
       line,
       "pause",
     );
-    const isTheFirstRowWithTimeMarker = !rows_with_timemarkers[
-      rows_with_timemarkers_handled - 1
+    const isTheFirstRowWithTimeMarker = !rowsWithTimemarkers[
+      rowsWithTimemarkersHandled - 1
     ];
     const probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = true;
     const pauseWithWrittenDuration =
@@ -1297,8 +804,8 @@ class TimeLogParser extends LogParser {
     if (pauseWithWrittenDuration) {
       this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration(
         metadata,
-        rows_with_timemarkers,
-        rows_with_timemarkers_handled,
+        rowsWithTimemarkers,
+        rowsWithTimemarkersHandled,
         not_parsed,
         probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp,
       );
@@ -1307,8 +814,8 @@ class TimeLogParser extends LogParser {
         line,
         startsWithPauseToken,
         metadata,
-        rows_with_timemarkers,
-        rows_with_timemarkers_handled,
+        rowsWithTimemarkers,
+        rowsWithTimemarkersHandled,
         not_parsed,
         probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp,
         isNewRowWithTimeMarker,
@@ -1321,7 +828,7 @@ class TimeLogParser extends LogParser {
         throw new TimeLogParsingException("No valid start of log file");
       }
 
-      metadata.ts = rows_with_timemarkers[rows_with_timemarkers_handled - 1].ts;
+      metadata.ts = rowsWithTimemarkers[rowsWithTimemarkersHandled - 1].ts;
       metadata.ts_is_faked = true;
       const timezone = new DateTimeZone("UTC");
       const datetime = new DateTime();
@@ -1346,15 +853,15 @@ class TimeLogParser extends LogParser {
 
   public processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration(
     metadata,
-    rows_with_timemarkers,
-    rows_with_timemarkers_handled,
+    rowsWithTimemarkers,
+    rowsWithTimemarkersHandled,
     not_parsed,
-    probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp, // preg_match('/([^-]-[^-]-2009) ([^:]*):([^c ]*)/', $linefordatecheck, $m); // $metadata["duration_search_preg_debug"] = compact("linefordurationcheck","m");
+    probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp, // preg_match('/([^-]-[^-]-2009) ([^:]*):([^c ]*)/', $lineForDateCheck, $m); // $metadata["duration_search_preg_debug"] = {linefordurationcheck","m");
   ) {
     const methodName =
       "processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration";
     metadata.log.push("found a pause with written duration");
-    metadata.ts = rows_with_timemarkers[rows_with_timemarkers_handled - 1].ts;
+    metadata.ts = rowsWithTimemarkers[rowsWithTimemarkersHandled - 1].ts;
     metadata.ts_is_faked = true;
     const timezone = new DateTimeZone("UTC");
 
@@ -1371,18 +878,16 @@ class TimeLogParser extends LogParser {
     preg_match_all("/(([0-9])*h)?([0-9]*)min/", linefordurationcheck, m);
 
     if (!!m && !!m[0]) {
-      // var_dump($line, $m, $rows_with_timemarkers_handled, $rows_with_timemarkers);
+      // var_dump($line, $m, $rowsWithTimemarkersHandled, $rowsWithTimemarkers);
       metadata.log.push(
         "found pause duration, adding to accumulated pause duration (if any)",
       );
 
       if (
-        !!rows_with_timemarkers[rows_with_timemarkers_handled - 1]
-          .pause_duration
+        !!rowsWithTimemarkers[rowsWithTimemarkersHandled - 1].pause_duration
       ) {
         metadata.pause_duration = Math.round(
-          rows_with_timemarkers[rows_with_timemarkers_handled - 1]
-            .pause_duration,
+          rowsWithTimemarkers[rowsWithTimemarkersHandled - 1].pause_duration,
         );
       } else {
         metadata.pause_duration = 0;
@@ -1404,52 +909,52 @@ class TimeLogParser extends LogParser {
     line,
     startsWithPauseToken,
     metadata,
-    rows_with_timemarkers,
-    rows_with_timemarkers_handled,
+    rowsWithTimemarkers,
+    rowsWithTimemarkersHandled,
     not_parsed,
     probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp,
     isNewRowWithTimeMarker, // Try to find a valid timestamp // Remove the pause specification before attempting to find a timestamp // @var DateTime $datetime // var_dump($ts, $date, $datetime); // Check if the timestamp is later or same as previous row with time marker (if not, something is wrong)
   ) {
     const methodName =
       "processNotTheFirstRowOfALogCommentAndProbableStartStopLine_notPauseWithWrittenDuration";
-    let linefordatecheck = line;
+    let lineForDateCheck = line;
 
     if (startsWithPauseToken) {
-      linefordatecheck = this.removeSuffixedToken(
-        linefordatecheck,
+      lineForDateCheck = this.removeSuffixedToken(
+        lineForDateCheck,
         "pause",
         "->",
       );
-      linefordatecheck = this.removeSuffixedToken(
-        linefordatecheck,
+      lineForDateCheck = this.removeSuffixedToken(
+        lineForDateCheck,
         "pause",
         " ",
       );
-      linefordatecheck = this.removeSuffixedToken(
-        linefordatecheck,
+      lineForDateCheck = this.removeSuffixedToken(
+        lineForDateCheck,
         "pause",
         "",
       );
     }
 
-    this.detectTimeStamp(linefordatecheck, metadata);
+    this.detectTimeStamp(lineForDateCheck, metadata);
     let datetime;
     let ts;
     let date;
-    this.set_ts_and_date(metadata.date_raw, ts, date, undefined, datetime);
+    this.set_ts_and_date(metadata.dateRaw, ts, date, undefined, datetime);
     const validTimestampFound = !!date;
     let thisTimestampIsLaterOrSameAsPreviousRowWithTimeMarker;
-    let duration_since_last;
+    let durationSinceLast;
 
     if (validTimestampFound === true) {
       // Get duration from last count
-      duration_since_last = this.durationFromLast(
+      durationSinceLast = this.durationFromLast(
         ts,
-        rows_with_timemarkers_handled,
-        rows_with_timemarkers,
+        rowsWithTimemarkersHandled,
+        rowsWithTimemarkers,
       );
 
-      if (duration_since_last < 0) {
+      if (durationSinceLast < 0) {
         thisTimestampIsLaterOrSameAsPreviousRowWithTimeMarker = false;
       } else {
         thisTimestampIsLaterOrSameAsPreviousRowWithTimeMarker = true;
@@ -1470,8 +975,8 @@ class TimeLogParser extends LogParser {
         );
         this.processAdditionalLogCommentRowUntilNextLogComment(
           line,
-          rows_with_timemarkers,
-          rows_with_timemarkers_handled,
+          rowsWithTimemarkers,
+          rowsWithTimemarkersHandled,
         );
         isNewRowWithTimeMarker = false;
       } // To easily see patterns amongst these lines
@@ -1488,11 +993,11 @@ class TimeLogParser extends LogParser {
       );
       metadata.log.push(`Line: ${line}`);
       const last = clone(datetime);
-      last.add(new DateInterval("PT" + Math.abs(duration_since_last) + "S"));
+      last.add(new DateInterval("PT" + Math.abs(durationSinceLast) + "S"));
       metadata.log.push(
         `Timestamp found: ${datetime.format(
           "Y-m-d H:i:s",
-        )} vs last found (based on duration since last which is ${duration_since_last}): ${last.format(
+        )} vs last found (based on duration since last which is ${durationSinceLast}): ${last.format(
           "Y-m-d H:i:s",
         )}`,
       );
@@ -1525,36 +1030,33 @@ class TimeLogParser extends LogParser {
 
   public processAdditionalLogCommentRowUntilNextLogComment(
     line,
-    rows_with_timemarkers,
-    rows_with_timemarkers_handled,
+    rowsWithTimemarkers,
+    rowsWithTimemarkersHandled,
   ) {
-    if (
-      !(undefined !== rows_with_timemarkers[rows_with_timemarkers_handled - 1])
-    ) {
+    if (!(undefined !== rowsWithTimemarkers[rowsWithTimemarkersHandled - 1])) {
       throw new TimeLogParsingException(
         "Incorrect parsing state: For some reason we are attempting to collect additional log comment rows until new log comment but we have no previous log comments",
       );
     }
 
-    rows_with_timemarkers[rows_with_timemarkers_handled - 1].line +=
-      " | " + line;
+    rowsWithTimemarkers[rowsWithTimemarkersHandled - 1].line += " | " + line;
   }
 
   public processTheFirstRowOfALogComment(
     ts,
     isNewRowWithTimeMarker,
     metadata,
-    rows_with_timemarkers,
-    rows_with_timemarkers_handled,
+    rowsWithTimemarkers,
+    rowsWithTimemarkersHandled,
     not_parsed, // Get duration from last count
   ) {
-    const duration_since_last = this.durationFromLast(
+    const durationSinceLast = this.durationFromLast(
       ts,
-      rows_with_timemarkers_handled,
-      rows_with_timemarkers,
+      rowsWithTimemarkersHandled,
+      rowsWithTimemarkers,
     );
 
-    if (duration_since_last < 0) {
+    if (durationSinceLast < 0) {
       // Debug log info
       metadata.log.push("negative duration since last");
       isNewRowWithTimeMarker = false;
@@ -1563,16 +1065,16 @@ class TimeLogParser extends LogParser {
       datetime.setTimezone(timezone);
       datetime.setTimestamp(ts);
       const last = clone(datetime);
-      last.add(new DateInterval("PT" + Math.abs(duration_since_last) + "S"));
+      last.add(new DateInterval("PT" + Math.abs(durationSinceLast) + "S"));
       metadata.log.push(
         `Timestamp found: ${datetime.format(
           "Y-m-d H:i:s",
-        )} vs last found (based on duration since last which is ${duration_since_last}): ${last.format(
+        )} vs last found (based on duration since last which is ${durationSinceLast}): ${last.format(
           "Y-m-d H:i:s",
         )}`,
       );
       const previousRowWithTimeMarker =
-        rows_with_timemarkers[rows_with_timemarkers_handled - 1];
+        rowsWithTimemarkers[rowsWithTimemarkersHandled - 1];
       metadata.log.push(
         `$previousRowWithTimeMarker line: ${previousRowWithTimeMarker.line}`,
       );
@@ -1580,52 +1082,52 @@ class TimeLogParser extends LogParser {
         "sent to not_parsed in processTheFirstRowOfALogComment",
       );
       not_parsed.push(metadata);
-    } else if (duration_since_last > 24 * 60 * 60) {
+    } else if (durationSinceLast > 24 * 60 * 60) {
       // Warn on unlikely large entries (> 24h) - likely typos
       // TODO: Make limit configurable
       metadata.log.push(
         "excessive duration since last: " +
-          this.secondsToDuration(duration_since_last),
+          this.secondsToDuration(durationSinceLast),
       );
       not_parsed.push(metadata);
       isNewRowWithTimeMarker = true;
     } else {
-      metadata.duration_since_last = duration_since_last;
+      metadata.durationSinceLast = durationSinceLast;
       isNewRowWithTimeMarker = true;
     }
   }
 
   public generateStructuredTimeMarkedOutputBasedOnParsedRowsWithTimeMarkers(
-    rows_with_timemarkers,
+    rowsWithTimemarkers,
     not_parsed, // Generate structured log output
   ) {
-    if (!rows_with_timemarkers) {
+    if (!rowsWithTimemarkers) {
       throw new TimeLogParsingException("No rows parsed...");
     }
 
-    const last = rows_with_timemarkers.pop();
+    const last = rowsWithTimemarkers.pop();
 
     if (false) {
       // The last pause was started some time after the last log message
     } else {
-      rows_with_timemarkers.push(last);
+      rowsWithTimemarkers.push(last);
     }
 
     return this.generateStructuredTimeMarkedOutput(
-      rows_with_timemarkers,
+      rowsWithTimemarkers,
       not_parsed,
     );
   }
 
   public generateStructuredTimeMarkedOutput(
-    rows_with_timemarkers,
+    rowsWithTimemarkers,
     not_parsed, // Remove "paus->" from not_parsed array
   ) {
     let contentsWithTimeMarkers = "";
     contentsWithTimeMarkers += ".:: Uncategorized\n";
 
-    for (const k in rows_with_timemarkers) {
-      const metadata = rows_with_timemarkers[k];
+    for (const k in rowsWithTimemarkers) {
+      const metadata = rowsWithTimemarkers[k];
 
       if (
         undefined !== metadata.highlight_with_newlines &&
@@ -1637,16 +1139,16 @@ class TimeLogParser extends LogParser {
       contentsWithTimeMarkers += "\t";
 
       if (
-        undefined !== metadata.duration_since_last &&
-        !is_null(metadata.duration_since_last)
+        undefined !== metadata.durationSinceLast &&
+        !is_null(metadata.durationSinceLast)
       ) {
         // Remove any known pause durations
-        if (!!rows_with_timemarkers[k - 1].pause_duration) {
-          metadata.duration_since_last -=
-            rows_with_timemarkers[k - 1].pause_duration;
+        if (!!rowsWithTimemarkers[k - 1].pause_duration) {
+          metadata.durationSinceLast -=
+            rowsWithTimemarkers[k - 1].pause_duration;
         }
 
-        if (metadata.duration_since_last < 0) {
+        if (metadata.durationSinceLast < 0) {
           metadata.log.push("negative duration since last");
           metadata.log.push(
             "sent to not_parsed in generateStructuredTimeMarkedOutput",
@@ -1658,15 +1160,15 @@ class TimeLogParser extends LogParser {
         parts.shift();
         contentsWithTimeMarkers += metadata.formatted_date;
         contentsWithTimeMarkers +=
-          ", " + this.secondsToDuration(metadata.duration_since_last);
+          ", " + this.secondsToDuration(metadata.durationSinceLast);
 
         if (
-          !!rows_with_timemarkers[k - 1] &&
-          !!rows_with_timemarkers[k - 1].ts_is_faked
+          !!rowsWithTimemarkers[k - 1] &&
+          !!rowsWithTimemarkers[k - 1].ts_is_faked
         ) {
           // Treat this situation as invalid
           contentsWithTimeMarkers += " {!} ";
-          const previousRow = rows_with_timemarkers[k - 1];
+          const previousRow = rowsWithTimemarkers[k - 1];
           metadata.log.push(
             "duration since last is based on fake/interpolated timestamp",
           );
@@ -1719,7 +1221,7 @@ class TimeLogParser extends LogParser {
       );
     }
 
-    const summary = Array();
+    const summary = {};
 
     for (const v of Object.values(not_parsed)) {
       if (Array.isArray(v) && !!v.source_line) {
@@ -1742,7 +1244,7 @@ class TimeLogParser extends LogParser {
       );
     }
 
-    const summary = Array();
+    const summary = {};
 
     for (const v of Object.values(not_parsed)) {
       summary.push(v);
@@ -1752,7 +1254,7 @@ class TimeLogParser extends LogParser {
   }
 
   public detectCategories() {
-    this.categories = Array();
+    this.categories = {};
     const lines = this.constructor.textIntoLinesArray(
       this.contentsWithTimeMarkers,
     );
@@ -1761,7 +1263,7 @@ class TimeLogParser extends LogParser {
       // skip empty rows
       const trimmedLine = line.trim();
 
-      if (trimmedLine == "") {
+      if (trimmedLine === "") {
         continue;
       }
 
@@ -1776,10 +1278,10 @@ class TimeLogParser extends LogParser {
   // print in a csv-format:
   // var_dump($times);
   {
-    this.lastKnownTimeZone = this.tz_first;
+    this.lastKnownTimeZone = this.tzFirst;
     let contentsOfTimeReport = "";
-    let times = Array();
-    const not_parsed = Array();
+    let times = [];
+    const not_parsed = [];
 
     if (!this.categories) {
       this.detectCategories(this.contentsWithTimeMarkers);
@@ -1801,7 +1303,7 @@ class TimeLogParser extends LogParser {
       const line = lines[lineno];
       const trimmedLine = line.trim();
 
-      if (trimmedLine == "") {
+      if (trimmedLine === "") {
         continue;
       }
 
@@ -1814,7 +1316,7 @@ class TimeLogParser extends LogParser {
         }
       }
 
-      if (category == "Ignored") {
+      if (category === "Ignored") {
         continue;
       }
 
@@ -1824,12 +1326,12 @@ class TimeLogParser extends LogParser {
       }
 
       let parts = line.split(",");
-      const date_raw = parts.shift();
-      const linewithoutdate = parts.join(",");
+      const dateRaw = parts.shift();
+      const lineWithoutDate = parts.join(",");
       let datetime;
       const _ = this.lastKnownTimeZone;
       this.lastKnownTimeZone = "UTC";
-      this.set_ts_and_date(date_raw, ts, date, linewithoutdate, datetime);
+      this.set_ts_and_date(dateRaw, ts, date, lineWithoutDate, datetime);
       this.lastKnownTimeZone = _;
       parts = line.split(" | ");
       const beforeVertLine = parts[0];
@@ -1840,7 +1342,7 @@ class TimeLogParser extends LogParser {
 
       let invalid =
         !date ||
-        strpos(linewithoutdate, "min") === false ||
+        strpos(lineWithoutDate, "min") === false ||
         ts < time() - 24 * 3600 * 365 * 10;
 
       if (invalid) {
@@ -1848,7 +1350,7 @@ class TimeLogParser extends LogParser {
         continue;
       }
 
-      parts = linewithoutdate.split("min");
+      parts = lineWithoutDate.split("min");
       const tokens = this.tokens();
       const duration = str_replace(tokens.approx, "", parts[0]).trim() + "min";
       const time = this.durationToMinutes(duration);
@@ -1872,11 +1374,11 @@ class TimeLogParser extends LogParser {
       }
 
       if (!times[date]) {
-        times[date] = Array();
+        times[date] = [];
       }
 
       if (!times[date].text) {
-        times[date].text = Array();
+        times[date].text = [];
       }
 
       times[date].text.push(trim(text, " ,\t\r\n"));
@@ -1890,9 +1392,9 @@ class TimeLogParser extends LogParser {
       const sourceComment = compact(
         "category",
         "timemarker",
-        "linewithoutdate",
+        "lineWithoutDate",
         "ts",
-        "date_raw",
+        "dateRaw",
         "date",
         "hours_rounded",
         "hours",
@@ -1919,7 +1421,7 @@ class TimeLogParser extends LogParser {
       // Gotta limit the amount of data
       const hours = times[date];
       let activities = Array.from(hours.text).join(" | ");
-      activities = this.constructor.newline_convert(activities, "");
+      activities = this.constructor.newlineConvert(activities, "");
       activities = str_replace([";", "\t"], [",", "   "], activities);
       activities = mb_substr(activities, 0, 1024, "UTF-8").trim();
       let hours_by_category_rounded = "";
@@ -1952,19 +1454,19 @@ class TimeLogParser extends LogParser {
       // maybe attempt to add some debugging metadata here?
     }
 
-    this.contentsOfTimeReport = contentsOfTimeReport;
+    this._contentsOfTimeReport = contentsOfTimeReport;
   }
 
   public addZeroFilledDates(
-    times, // Find time span: // codecept_debug(compact("period", "firstdatefound", "lastdatefound", "interval"));
+    times, // Find time span: // codecept_debug({period", "firstdatefound", "lastdatefound", "interval"));
   ) {
     let firstdatefound;
     let lastdatefound;
-    let times_ = times;
-    times = Array();
+    let times_ = cloneVariable(times);
+    times = {};
     const timezone = new DateTimeZone("UTC");
 
-    for (const date in times_) {
+    for (const date of Object.keys(times_)) {
       const hours = times_[date];
       const datetime = DateTime.createFromFormat(
         "Y-m-d H:i:s",
@@ -1994,22 +1496,22 @@ class TimeLogParser extends LogParser {
     }
 
     if (this.collectDebugInfo) {
-      this.debugGenerateTimeReport = compact(
-        "firstdatefound",
-        "lastdatefound",
-        "times",
-      );
+      this.debugGenerateTimeReport = {
+        firstdatefound,
+        lastdatefound,
+        times,
+      };
     }
 
     if (!firstdatefound) {
-      return Array();
+      return [];
     }
 
     const interval = DateInterval.createFromDateString("1 day");
     lastdatefound = lastdatefound.add(interval);
     const period = new DatePeriod(firstdatefound, interval, lastdatefound);
     times_ = times;
-    times = Array();
+    times = [];
 
     for (const dt of Object.values(period)) {
       const xday = dt.format("Y-m-d");
@@ -2023,19 +1525,18 @@ class TimeLogParser extends LogParser {
   // } while (!$last["ts_is_faked"]);
   {
     if (!this.contentsWithTimeMarkers) {
-      return Array();
+      return [];
     }
 
-    if (!this.debugAddTimeMarkers.rows_with_timemarkers) {
-      return Array();
+    if (!this.debugAddTimeMarkers.rowsWithTimemarkers) {
+      return [];
     }
 
-    const rows_with_timemarkers = this.debugAddTimeMarkers
-      .rows_with_timemarkers;
-    const start = rows_with_timemarkers.shift();
+    const rowsWithTimemarkers = this.debugAddTimeMarkers.rowsWithTimemarkers;
+    const start = rowsWithTimemarkers.shift();
     const startts = start.ts;
-    const name = start.date_raw;
-    const last = rows_with_timemarkers.pop();
+    const name = start.dateRaw;
+    const last = rowsWithTimemarkers.pop();
     const lastts = last.ts;
     const leadtime = lastts - startts;
     const times = this.debugGenerateTimeReport.times;
@@ -2096,7 +1597,7 @@ class TimeLogParser extends LogParser {
 
       // var_dump($session["metadata"]);
       // Inactivating until have a solution for timezone split issues
-      for (const k in _tmp_0) {
+      for (const k of Object.keys(_tmp_0)) {
         // Only sessions with work hours
         const session = _tmp_0[k];
 
@@ -2104,7 +1605,7 @@ class TimeLogParser extends LogParser {
           continue;
         }
 
-        const vevents = Array();
+        const vevents = [];
         let start = gmdate("H:i", session.metadata.startts);
         let last = gmdate("H:i", session.metadata.lastts);
         const startdate = gmdate("Y-m-d", session.metadata.startts);
@@ -2112,7 +1613,7 @@ class TimeLogParser extends LogParser {
         let startts = session.metadata.startts;
         let lastts = session.metadata.lastts;
 
-        if (false && startdate != lastdate) {
+        if (false && startdate !== lastdate) {
           const days =
             (strtotime(lastdate) - strtotime(startdate)) / (24 * 3600);
           start = gmdate("Y-m-d H:i", session.metadata.startts);
@@ -2121,10 +1622,10 @@ class TimeLogParser extends LogParser {
           for (let i = 0; i <= days; i++) {
             const idate = gmdate("Y-m-d", startts + 24 * 3600 * i);
 
-            if (idate == startdate) {
+            if (idate === startdate) {
               startts = startts;
               lastts = strtotime(idate + " 23:59");
-            } else if (idate == lastdate) {
+            } else if (idate === lastdate) {
               startts = strtotime(idate + " 00:00");
               lastts = lastts;
             } else {
@@ -2132,10 +1633,10 @@ class TimeLogParser extends LogParser {
               lastts = strtotime(idate + " 23:59");
             }
 
-            vevents.push(compact("startts", "lastts"));
+            vevents.push({ startts, lastts });
           }
         } else {
-          vevents.push(compact("startts", "lastts"));
+          vevents.push({ startts, lastts });
         }
 
         let summary =
@@ -2227,7 +1728,7 @@ class TimeLogParser extends LogParser {
 
     let forReturn = "\nSubversion commit messages:\n";
     const lines = this.constructor.textIntoLinesArray(str);
-    const commitLogLines = Array();
+    const commitLogLines = [];
 
     for (const line of Object.values(lines)) {
       if (this.isProbableCommitLogLine(line)) {
@@ -2244,13 +1745,13 @@ class TimeLogParser extends LogParser {
     forReturn += "\n\nCommon words:\n";
     let k = 1;
 
-    for (const key in word_count) {
+    for (const key of Object.keys(word_count)) {
       const val = word_count[key];
       const pausetoken = this.startsWithOptionallySuffixedToken(key, "pause");
 
       if (
         mb_strlen(key, "UTF-8") > 2 &&
-        !(-1 !== this.reserved_words.indexOf(key)) &&
+        !(-1 !== this.reservedWords.indexOf(key)) &&
         strpos(key, "-") === false &&
         !pausetoken
       ) {
@@ -2268,5 +1769,3 @@ class TimeLogParser extends LogParser {
     return forReturn;
   }
 }
-
-class TimeLogParsingException extends Error {}

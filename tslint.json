@@ -2,6 +2,7 @@
   "extends": ["tslint:latest", "tslint-config-prettier", "tslint-immutable"],
   "rules": {
     "interface-name": [true, "never-prefix"],
+    "no-submodule-imports": false, // TODO: re-enable and instead only allow relative imports
     // TODO: allow devDependencies only in **/*.spec.ts files:
     // waiting on https://github.com/palantir/tslint/pull/3708
     "no-implicit-dependencies": [true, "dev"]
