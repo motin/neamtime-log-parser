@@ -1,4 +1,4 @@
-import { join, str_replace /*, strpos*/ } from "locutus/php/strings";
+import { join, str_replace, strpos } from "locutus/php/strings";
 /*
 import { is_null } from "locutus/php/var";
 import { DateTime, DateTimeZone } from "./php-wrappers";
@@ -256,7 +256,6 @@ export class LogParser {
     return join("", ret);
   }
 
-  /*
   public durationToSeconds(
     duration,
     hoursPerDay = 24,
@@ -264,8 +263,9 @@ export class LogParser {
   ) {
     let total = 0;
 
+    let p;
     if (strpos(duration, "w") !== false) {
-      const p = duration.split("w");
+      p = duration.split("w");
       const weeks = p[0];
       total += weeks * (3600 * hoursPerDay) * daysPerWeek;
       duration = p[1];
@@ -297,7 +297,7 @@ export class LogParser {
       p = duration.split("s");
       const seconds = p[0];
       total += seconds;
-      duration = p[1];
+      // duration = p[1];
     }
 
     return total;
@@ -308,6 +308,7 @@ export class LogParser {
     return seconds / 60;
   }
 
+  /*
   public durationFromLast(ts, rowsWithTimemarkersHandled, rowsWithTimemarkers) {
     let previousRowWithTimeMarker;
     let durationSinceLast;

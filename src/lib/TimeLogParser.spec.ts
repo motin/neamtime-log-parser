@@ -101,22 +101,25 @@ testSecondsToDurationData().forEach((testData, index) => {
   );
 });
 
-/*
-const testDurationToMinutes = (duration, expectedReturnValue) => {
+const testDurationToMinutes: Macro = (
+  t: ExecutionContext,
+  duration: string,
+  expectedReturnValue: number,
+) => {
   const tlp = new TimeLogParser();
   const result = tlp.durationToMinutes(duration);
-  this.assertEquals(
-    expectedReturnValue,
+  t.is(
     result,
+    expectedReturnValue,
     "TimeLogParser->durationToMinutes() behaves as expected",
   );
 };
 
 const testDurationToMinutesData = () => {
   return [
-    ["4min", "4"],
-    ["99min", "99"],
-    ["200min", "200"],
+    ["4min", 4],
+    ["99min", 99],
+    ["200min", 200],
     ["3h4min", 184],
     ["1h10min", 70],
     ["3d1h17min", 4397],
@@ -125,6 +128,16 @@ const testDurationToMinutesData = () => {
   ];
 };
 
+testDurationToMinutesData().forEach((testData, index) => {
+  test(
+    "testDurationToMinutes - " + index,
+    testDurationToMinutes,
+    testData[0],
+    testData[1],
+  );
+});
+
+/*
 const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone = (
   str,
   timezone,
