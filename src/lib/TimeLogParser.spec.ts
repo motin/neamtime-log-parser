@@ -11,12 +11,6 @@ const testStartsWithOptionallySuffixedTokenMethod: Macro = (
   expectedReturnValue: string,
 ) => {
   const tlp = new TimeLogParser();
-  console.log(
-    "testStartsWithOptionallySuffixedTokenMethod",
-    haystack,
-    keyword,
-    suffix,
-  );
   const result = tlp.startsWithOptionallySuffixedToken(
     haystack,
     keyword,
@@ -28,6 +22,14 @@ const testStartsWithOptionallySuffixedTokenMethod: Macro = (
     "TimeLogParser->startsWithOptionallySuffixedToken() behaves as expected",
   );
 };
+testStartsWithOptionallySuffixedTokenMethod.title = (
+  providedTitle: string,
+  haystack: string,
+  keyword: string,
+  suffix: string,
+  expectedReturnValue: string,
+) =>
+  `: ${providedTitle} ${keyword} with suffix "${suffix}" in "${haystack}" = ${expectedReturnValue}`.trim();
 
 const testStartsWithOptionallySuffixedTokenMethodData = () => {
   let testDataMatrix = Array();
@@ -50,25 +52,16 @@ const testStartsWithOptionallySuffixedTokenMethodData = () => {
   return testDataMatrix;
 };
 
-test("testStartsWithOptionallySuffixedTokenMethodData returns data in the expected format", t => {
-  console.log(
-    "testStartsWithOptionallySuffixedTokenMethodData()",
-    testStartsWithOptionallySuffixedTokenMethodData(),
-  );
-  console.log(
-    "testStartsWithOptionallySuffixedTokenMethod",
-    testStartsWithOptionallySuffixedTokenMethod,
-  );
-  t.is(1, 1);
-});
-
-/*
 testStartsWithOptionallySuffixedTokenMethodData().forEach((testData, index) => {
-
-  test.skip("foo - " + index, testStartsWithOptionallySuffixedTokenMethod, testData[0], testData[1], testData[2], testData[3]);
-
+  test(
+    "testStartsWithOptionallySuffixedTokenMethod - " + index,
+    testStartsWithOptionallySuffixedTokenMethod,
+    testData[0],
+    testData[1],
+    testData[2],
+    testData[3],
+  );
 });
-*/
 
 /*
 const testSecondsToDuration = (seconds, expectedReturnValue) => {
