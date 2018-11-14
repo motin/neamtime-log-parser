@@ -1,4 +1,5 @@
 import { join, str_replace, strpos } from "locutus/php/strings";
+import { DateTime, DateTimeZone } from "./php-wrappers";
 /*
 import { is_null } from "locutus/php/var";
 import { DateTime, DateTimeZone } from "./php-wrappers";
@@ -108,7 +109,6 @@ export class LogParser {
     this.debugAddTimeMarkers = Array();
   }
 
-  /*
   public supportedTimestampFormats() // the minute-part may be omitted and instead an approx token will be found, which will be replaced before reaching createFromFormat
   // todo: dyn load appr-tokens
   {
@@ -231,7 +231,7 @@ export class LogParser {
       },
     ];
   }
-  */
+
   public secondsToDuration(seconds, hoursPerDay = 24, daysPerWeek = 7) {
     /* tslint:disable:object-literal-sort-keys */
     const vals = {
@@ -496,13 +496,18 @@ export class LogParser {
 
     return this.lastKnownTimeZone;
   }
+  */
 
-  public parseGmtTimestampFromDateSpecifiedInSpecificTimezone(str, timezone) {
-    let gmtTimestamp;
+  public parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
+    str: string,
+    timezoneString: string,
+  ) {
+    let gmtTimestamp: number;
     let datetime;
+    let timezone;
 
     try {
-      timezone = new DateTimeZone(timezone);
+      timezone = new DateTimeZone(timezoneString);
     } catch (e) {
       if (strpos(e.getMessage(), "Unknown or bad timezone") !== false) {
         throw new InvalidDateTimeZoneException(e.getMessage(), undefined, e);
@@ -535,12 +540,10 @@ export class LogParser {
       // die();
       gmtTimestamp = 0;
     } else {
-      const gmtDatetime = clone(datetime);
-      gmtDatetime.setTimezone(new DateTimeZone("UTC"));
+      const gmtDatetime = datetime.setTimezone(new DateTimeZone("UTC"));
       gmtTimestamp = gmtDatetime.getTimestamp();
     }
 
     return { gmtTimestamp: String(gmtTimestamp), datetime };
   }
-  */
 }

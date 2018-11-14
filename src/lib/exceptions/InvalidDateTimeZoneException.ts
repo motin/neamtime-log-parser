@@ -1,1 +1,5 @@
-class InvalidDateTimeZoneException extends Error {}
+class InvalidDateTimeZoneException extends Error {
+  constructor(message, _errCode, _previous) {
+    super(message);
+  }
+}

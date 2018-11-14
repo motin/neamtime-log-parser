@@ -6,6 +6,8 @@
     "no-console": {
       "severity": "warning"
     },
+    "no-unused-variable": false, // [deprecation] no-unused-variable is deprecated because typescript now covers most of its functionality
+    "variable-name": [true, "ban-keywords", "check-format", "allow-leading-underscore"],
     // TODO: allow devDependencies only in **/*.spec.ts files:
     // waiting on https://github.com/palantir/tslint/pull/3708
     "no-implicit-dependencies": [true, "dev"]

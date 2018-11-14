@@ -1,5 +1,6 @@
 import test, { ExecutionContext, Macro } from "ava";
 import { array_merge } from "locutus/php/array";
+import { DateTime, DateTimeZone } from "./php-wrappers";
 // import { clone, DateTime, DateTimeZone } from "./php-wrappers";
 import { TimeLogParser } from "./TimeLogParser";
 
@@ -137,7 +138,6 @@ testDurationToMinutesData().forEach((testData, index) => {
   );
 });
 
-/*
 const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone = (
   str,
   timezone,
@@ -154,8 +154,8 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone = (
     datetime,
   } = tlp.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(str, timezone);
   this.assertEquals(expectedGmtTimestamp, gmtTimestamp);
-  const gmtTimestampFormattedAsNewDefaultDatetime = new DateTime().setTimestamp(
-    gmtTimestamp,
+  const gmtTimestampFormattedAsNewDefaultDatetime = DateTime.createFromUnixTimestamp(
+    parseInt(gmtTimestamp, 10),
   );
   this.assertEquals(
     expectedGmtTimestampFormattedAsNewDefaultDatetime,
@@ -163,14 +163,12 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone = (
   );
   this.assertEquals(expectedDateTimeTimeZone, datetime.getTimezone().getName());
   this.assertEquals(expectedGmtTimestamp, datetime.getTimestamp());
-  const timezoneDatetime = clone(datetime);
-  timezoneDatetime.setTimezone(new DateTimeZone(timezone));
+  const timezoneDatetime = datetime.setTimezone(new DateTimeZone(timezone));
   this.assertEquals(
     expectedTimestampInTimeZone,
     timezoneDatetime.getTimestamp(),
   );
-  const transposed = clone(datetime);
-  transposed.setTimezone(new DateTimeZone(transposeTimeZone));
+  const transposed = datetime.setTimezone(new DateTimeZone(transposeTimeZone));
   this.assertEquals(
     expectedTransposedFormatted,
     transposed.format("Y-m-d H:i"),
@@ -282,6 +280,18 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
   ];
 };
 
+testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData().forEach(
+  (testData, index) => {
+    test(
+      "testParseGmtTimestampFromDateSpecifiedInSpecificTimezone - " + index,
+      testParseGmtTimestampFromDateSpecifiedInSpecificTimezone,
+      testData[0],
+      testData[1],
+    );
+  },
+);
+
+/*
 const testAddZeroFilledDates = (times, expectedReturnValue) => {
   const tlp = new TimeLogParser();
   const result = tlp.addZeroFilledDates(times);

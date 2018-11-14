@@ -54,8 +54,9 @@
     "node": ">=8.9"
   },
   "dependencies": {
-    "locutus": "^2.0.10",
-    "moment": "^2.22.2"
+    "date-fns": "^2.0.0-alpha.25",
+    "date-fns-tz": "^0.1.1",
+    "locutus": "^2.0.10"
   },
   "devDependencies": {
     "ava": "1.0.0-beta.7",
