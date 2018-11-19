@@ -529,7 +529,7 @@ export class LogParser {
 
       datetime = DateTime.createFromFormat(format, str, timezone);
 
-      if (datetime) {
+      if (datetime.isValid()) {
         break;
       }
     }

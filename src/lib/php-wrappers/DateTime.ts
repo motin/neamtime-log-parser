@@ -1,76 +1,103 @@
-import {} from "date-fns";
-import { format, toDate, zonedTimeToUtc } from "date-fns-tz";
+import { parse } from "date-fns";
+import { format, toDate /*, zonedTimeToUtc*/ } from "date-fns-tz";
 import { DateTimeZone } from "./DateTimeZone";
 
 export class DateTime {
-  public static ISO8601 = "foo";
+  public static ISO8601 = "Y-m-dTH:i:sO";
+
+  public static isValidDate(d) {
+    return d instanceof Date && !isNaN(Number(d));
+  }
+
   public static createFromFormat(
-    formatRecipe: string,
-    str: string = null,
+    phpFormatString: string,
+    dateString: string = null,
     timeZone: DateTimeZone = null,
   ): DateTime {
-    console.log(
-      "toMoment, format",
-      toMoment(formatRecipe),
-      formatRecipe,
-      str,
-      timeZone,
-      toDate,
-      format,
-      zonedTimeToUtc,
-    );
+    const formatString = phpToJsFormatString(phpFormatString);
+    console.log("createFromFormat", phpFormatString, formatString, dateString);
+
+    if (!timeZone) {
+      timeZone = new DateTimeZone("UTC");
+    }
+
+    let parsedDate;
+    const formatContainsTimezone = formatString.indexOf("ZZ") > -1;
+    if (formatContainsTimezone) {
+      parsedDate = DateTimeZone.parseZonedString(dateString, formatString);
+      // TODO: Throw exception if the zoned timezone differs from the supplied timezone argument??
+    } else {
+      const parsedDateWithoutTimezoneInformation = parse(
+        dateString,
+        formatString,
+        new Date(),
+        { awareOfUnicodeTokens: true },
+      );
+      // Set time zone to timeZone
+      parsedDate = toDate(parsedDateWithoutTimezoneInformation, {
+        timeZone: timeZone.toString(),
+      });
+    }
+
+    console.log("parsedDate", parsedDate);
 
     /*
     // Since toDate simply clones a Date instance timeZone option is effectively ignored in this case
-const date = new Date('2014-10-25T13:46:20Z')
-const clonedDate = toDate(date, { timeZone: 'Europe/Paris' })
-assert(date.valueOf() === clonedDate.valueOf())
-
-    const utcDate = zonedTimeToUtc(str, timeZone)  // In June 10am in Los Angeles is 5pm UTC
+    const date = new Date('2014-10-25T13:46:20Z')
+    const clonedDate = toDate(date, { timeZone: 'Europe/Paris' })
+    assert(date.valueOf() === clonedDate.valueOf())
+    const utcDate = zonedTimeToUtc(dateString, timeZone)  // In June 10am in Los Angeles is 5pm UTC
     const dateTime = new DateTime(date);
     return dateTime;
-
     // const timeZone = getTimeZoneValue()   // e.g. America/Los_Angeles
-
-    //
-
-postToServer(utcDate.toISOString(), timeZone) // post 2014-06-25T17:00:00.000Z, America/Los_Angeles
-*/
-
-    return new DateTime(new Date());
+    */
+    // toDate();
+    return new DateTime(parsedDate);
   }
+
   public static createFromUnixTimestamp(unixTimestamp: number): DateTime {
-    console.log("createFromUnixTimestamp", unixTimestamp);
+    // console.log("createFromUnixTimestamp", unixTimestamp);
     return new DateTime(new Date(unixTimestamp * 1000));
   }
-  private date: Date;
-  private timeZone;
-  constructor(date: Date) {
+
+  private readonly date: Date;
+  private readonly timeZone;
+
+  constructor(date: Date, timeZone = null) {
     this.date = date;
+    this.timeZone = timeZone;
   }
-  public setTimestamp(unixTimestamp) {
-    this.date.setTime(unixTimestamp * 1000);
+
+  public isValid() {
+    return DateTime.isValidDate(this.date);
   }
+
+  public setTimestamp(unixTimestamp): DateTime {
+    return new DateTime(new Date(unixTimestamp * 1000));
+  }
+
   public getTimestamp() {
     return this.date.getTime() / 1000;
   }
-  public setTimezone(timeZone) {
-    this.timeZone = timeZone;
+
+  public setTimezone(timeZone): DateTime {
+    return new DateTime(this.date, timeZone);
   }
+
   public getTimezone() {
     return this.timeZone;
   }
-  public format(formatRecipe, timeZone = null) {
-    console.log("TODO format", formatRecipe, timeZone);
-    /* {
-      timeZone: "Europe/Berlin",
-    }*/
 
-    return format(this.date, formatRecipe, timeZone);
+  public format(phpFormatString) {
+    const formatString = phpToJsFormatString(phpFormatString);
+    console.log("TODO format", this.date, phpFormatString, formatString);
+    return format(this.date, formatString, {
+      timeZone: this.timeZone.toString(),
+    });
   }
 }
 
-const phpToMomentConversions = {
+const phpToFormatStringConversions = {
   /* tslint:disable:object-literal-sort-keys */
   d: "DD",
   D: "ddd",
@@ -112,21 +139,13 @@ const phpToMomentConversions = {
   /* tslint:enable:object-literal-sort-keys */
 };
 
-/*
-const toMoment2 = function (phpFormat) {
-  return phpFormat.replace(/[A-Za-z]+/g, function (match) {
-    return phpToMomentConversions[match] || match;
-  });
-};
-*/
-
-const toMoment = phpFormat => {
+const phpToJsFormatString = phpFormat => {
   const items = phpFormat.split("");
   let returnItem = "";
 
   for (const item in items) {
-    if (phpToMomentConversions[items[item]] !== undefined) {
-      returnItem += phpToMomentConversions[items[item]];
+    if (phpToFormatStringConversions[items[item]] !== undefined) {
+      returnItem += phpToFormatStringConversions[items[item]];
     } else {
       returnItem += items[item];
     }

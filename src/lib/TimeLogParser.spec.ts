@@ -138,7 +138,8 @@ testDurationToMinutesData().forEach((testData, index) => {
   );
 });
 
-const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone = (
+const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone: Macro = (
+  t: ExecutionContext,
   str,
   timezone,
   expectedGmtTimestamp,
@@ -146,33 +147,38 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone = (
   expectedDateTimeTimeZone,
   expectedTimestampInTimeZone,
   transposeTimeZone,
-  expectedTransposedFormatted, // @var DateTime $datetime
+  expectedTransposedFormatted,
 ) => {
+  console.log(
+    "TEST TZ started",
+    str,
+    timezone,
+    expectedGmtTimestamp,
+    expectedGmtTimestampFormattedAsNewDefaultDatetime,
+    expectedDateTimeTimeZone,
+    expectedTimestampInTimeZone,
+    transposeTimeZone,
+    expectedTransposedFormatted,
+  );
   const tlp = new TimeLogParser();
   const {
     gmtTimestamp,
     datetime,
   } = tlp.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(str, timezone);
-  this.assertEquals(expectedGmtTimestamp, gmtTimestamp);
+  t.is(expectedGmtTimestamp, gmtTimestamp);
   const gmtTimestampFormattedAsNewDefaultDatetime = DateTime.createFromUnixTimestamp(
     parseInt(gmtTimestamp, 10),
   );
-  this.assertEquals(
+  t.is(
     expectedGmtTimestampFormattedAsNewDefaultDatetime,
     gmtTimestampFormattedAsNewDefaultDatetime.format("Y-m-d H:i"),
   );
-  this.assertEquals(expectedDateTimeTimeZone, datetime.getTimezone().getName());
-  this.assertEquals(expectedGmtTimestamp, datetime.getTimestamp());
+  t.is(expectedDateTimeTimeZone, datetime.getTimezone().getName());
+  t.is(expectedGmtTimestamp, datetime.getTimestamp());
   const timezoneDatetime = datetime.setTimezone(new DateTimeZone(timezone));
-  this.assertEquals(
-    expectedTimestampInTimeZone,
-    timezoneDatetime.getTimestamp(),
-  );
+  t.is(expectedTimestampInTimeZone, timezoneDatetime.getTimestamp());
   const transposed = datetime.setTimezone(new DateTimeZone(transposeTimeZone));
-  this.assertEquals(
-    expectedTransposedFormatted,
-    transposed.format("Y-m-d H:i"),
-  );
+  t.is(expectedTransposedFormatted, transposed.format("Y-m-d H:i"));
 };
 
 const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
@@ -287,6 +293,12 @@ testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData().forEach(
       testParseGmtTimestampFromDateSpecifiedInSpecificTimezone,
       testData[0],
       testData[1],
+      testData[2],
+      testData[3],
+      testData[4],
+      testData[5],
+      testData[6],
+      testData[7],
     );
   },
 );
@@ -295,7 +307,7 @@ testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData().forEach(
 const testAddZeroFilledDates = (times, expectedReturnValue) => {
   const tlp = new TimeLogParser();
   const result = tlp.addZeroFilledDates(times);
-  this.assertEquals(
+  t.is(
     expectedReturnValue,
     result,
     "TimeLogParser->addZeroFilledDates() behaves as expected",
@@ -333,7 +345,7 @@ const testDurationFromLast = (
     rowsWithTimemarkersHandled,
     rowsWithTimemarkers,
   );
-  this.assertEquals(
+  t.is(
     expectedDurationFromLast,
     result,
     "TimeLogParser->testDurationFromLast() behaves as expected",
@@ -466,17 +478,17 @@ const testDetectTimeStampAndSetTsAndDate = (
   tlp.lastKnownTimeZone = lastKnownTimeZone;
   const { metadata } = tlp.detectTimeStamp(lineForDateCheck);
   t.log({ metadata });
-  this.assertEquals(
+  t.is(
     expectedMetadataDateRaw,
     metadata.dateRaw,
     "TimeLogParser->detectTimeStamp() detects dateRaw as expected",
   );
-  this.assertEquals(
+  t.is(
     expectedMetadataTimeRaw,
     metadata.timeRaw,
     "TimeLogParser->detectTimeStamp() detects timeRaw as expected",
   );
-  this.assertEquals(
+  t.is(
     expectedMetadataDateRawFormat,
     metadata.dateRawFormat,
     "TimeLogParser->detectTimeStamp() detects the datetime with the expected format",
@@ -485,12 +497,12 @@ const testDetectTimeStampAndSetTsAndDate = (
   const setTsAndDateError = tlp.lastSetTsAndDateErrorMessage;
   t.log({ ts, date, datetime, setTsAndDateError });
   const valid = !!date;
-  this.assertEquals(
+  t.is(
     expectedToBeValid,
     valid,
     "TimeLogParser->set_ts_and_date() detects valid datetimes as expected",
   );
-  this.assertEquals(
+  t.is(
     lastKnownTimeZone,
     tlp.lastKnownTimeZone,
     "TimeLogParser->set_ts_and_date() does not change the last known timezone by parsing a timestamp string",
@@ -510,7 +522,7 @@ const testDetectTimeStampAndSetTsAndDate = (
 
   if (expectedToBeValid) {
     datetime.setTimezone(new DateTimeZone("UTC"));
-    this.assertEquals(
+    t.is(
       expectedUtcDateString,
       datetime.format("Y-m-d H:i:s"),
       "TimeLogParser->set_ts_and_date() behaves as expected",
@@ -1011,18 +1023,18 @@ const testParseLogComment = (
   );
   t.log({ line, ts, date, datetime });
   const valid = !invalid;
-  this.assertEquals(
+  t.is(
     expectedLinewithoutdate,
     lineWithoutDate,
     "TimeLogParser->parseLogComment() detects lines without datetime as expected",
   );
   t.log({ expectedToBeValidTimestampedLogComment, valid });
-  this.assertEquals(
+  t.is(
     expectedToBeValidTimestampedLogComment,
     valid,
     "TimeLogParser->parseLogComment() detects valid timestamped log content as expected",
   );
-  this.assertEquals(
+  t.is(
     lastKnownTimeZone,
     tlp.lastKnownTimeZone,
     "TimeLogParser->set_ts_and_date() does not change the last known timezone by parsing a timestamp string",
@@ -1030,7 +1042,7 @@ const testParseLogComment = (
 
   if (expectedToBeValidTimestampedLogComment) {
     datetime.setTimezone(new DateTimeZone("UTC"));
-    this.assertEquals(
+    t.is(
       expectedUtcDateString,
       datetime.format("Y-m-d H:i:s"),
       "TimeLogParser->parseLogComment() behaves as expected",
