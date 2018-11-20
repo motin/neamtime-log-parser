@@ -193,7 +193,6 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
       "Europe/Berlin",
       "1970-01-01 13:00",
     ],
-    /*
     [
       "1970-01-01 06:00",
       "UTC",
@@ -204,7 +203,6 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
       "Europe/Berlin",
       "1970-01-01 07:00",
     ],
-    /*
     [
       "1970-01-01 06:00",
       "Europe/Berlin",
@@ -215,6 +213,7 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
       "Europe/Berlin",
       "1970-01-01 06:00",
     ],
+    /*
     [
       "1970-01-01 06:00",
       "Europe/Berlin",

@@ -97,14 +97,17 @@ export class DateTime {
     // Convert a date to a specific time zone: { year, month, day, dayOfWeek,
     // hours, minutes, seconds, milliseconds, epoch, zone: { abbreviation, offset } }
     const zonedParsedDate = getZonedTime(
-      initiallyParsedDate.getTime() -
-        initiallyParsedDate.getTimezoneOffset() * 1000 * 60,
+      initiallyParsedDate,
       timeZone.getTimeZoneInfo(),
     );
     console.log("zonedParsedDate", zonedParsedDate);
 
     // Convert a time from a specific time zone to a native Date object
-    parsedDate = new Date(getUnixTime(zonedParsedDate));
+    parsedDate = new Date(
+      getUnixTime(zonedParsedDate) -
+        initiallyParsedDate.getTimezoneOffset() * 1000 * 60 +
+        zonedParsedDate.zone.offset * 1000 * 60,
+    );
 
     /*
     // 2. Now we can adjust the incorrectly parsed local time
