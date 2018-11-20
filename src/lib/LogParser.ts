@@ -527,10 +527,17 @@ export class LogParser {
         str = supportedTimestampFormat.pre_datetime_parsing_callback(str);
       }
 
-      datetime = DateTime.createFromFormat(format, str, timezone);
-
-      if (datetime.isValid()) {
-        break;
+      try {
+        datetime = DateTime.createFromFormat(format, str, timezone);
+        if (datetime.isValid()) {
+          break;
+        }
+      } catch (e) {
+        if (e.message === "DateTime parse error") {
+          // ignore
+        } else {
+          throw e;
+        }
       }
     }
 
@@ -544,6 +551,6 @@ export class LogParser {
       gmtTimestamp = gmtDatetime.getTimestamp();
     }
 
-    return { gmtTimestamp: String(gmtTimestamp), datetime };
+    return { gmtTimestamp, datetime };
   }
 }

@@ -1,29 +1,38 @@
 import {
-  convertTimeToDate,
+  // convertTimeToDate,
   findTimeZone,
   getUnixTime,
+  // getUTCOffset,
   getZonedTime,
   // parseZonedTime,
   listTimeZones,
 } from "timezone-support";
-import { parseZonedTime } from "timezone-support/dist/parse-format";
+// import { parseZonedTime } from "timezone-support/dist/parse-format";
 
 export class DateTimeZone {
   // https://github.com/prantlf/date-fns-timezone/blob/master/src/parseFromString.js
+  /*
   public static parseZonedString(dateString, formatString) {
     const time = parseZonedTime(dateString, formatString);
     return convertTimeToDate(time);
   }
+  */
   private readonly timeZone: string;
   private readonly timeZoneInfo: any;
   constructor(timeZone) {
     this.timeZone = timeZone;
     this.timeZoneInfo = findTimeZone(timeZone);
     // TODO: Unknown or bad timezone
-    console.log("timeZone, timeZoneInfo", timeZone, typeof this.timeZoneInfo);
+    // console.log("timeZone, timeZoneInfo", timeZone, this.timeZoneInfo);
   }
   public toString() {
     return this.timeZone;
+  }
+  public getName() {
+    return this.timeZone;
+  }
+  public getTimeZoneInfo() {
+    return this.timeZoneInfo;
   }
   public foo() {
     // List canonical time zone names: [ 'Africa/Abidjan', ... ]
