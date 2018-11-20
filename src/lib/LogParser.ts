@@ -1,4 +1,5 @@
 import { join, str_replace, strpos } from "locutus/php/strings";
+import { InvalidDateTimeZoneException } from "./exceptions/InvalidDateTimeZoneException";
 import { DateTime, DateTimeZone } from "./php-wrappers";
 /*
 import { is_null } from "locutus/php/var";
@@ -476,25 +477,11 @@ export class LogParser {
 
     return { ts, date, datetime };
   }
+  */
 
+  /*
   public interpretLastKnownTimeZone() {
-    /* tslint:disable:object-literal-sort-keys * /
-    const interpretationMap = {
-      "GMT-6": "-06:00",
-      "UTC-6": "-06:00",
-      "UTC-06": "-06:00",
-      Orlando: "America/New_York",
-      "Las Vegas/GMT-8": "-08:00",
-      "Austin/GMT-6": "-06:00",
-      "US/San Francisco": "America/Los_Angeles",
-    };
-    /* tslint:enable:object-literal-sort-keys * /
-
-    if (undefined !== interpretationMap[this.lastKnownTimeZone]) {
-      return interpretationMap[this.lastKnownTimeZone];
-    }
-
-    return this.lastKnownTimeZone;
+    return this.interpretTimezoneString(this.lastKnownTimeZone);
   }
   */
 
@@ -509,8 +496,9 @@ export class LogParser {
     try {
       timezone = new DateTimeZone(timezoneString);
     } catch (e) {
-      if (strpos(e.getMessage(), "Unknown or bad timezone") !== false) {
-        throw new InvalidDateTimeZoneException(e.getMessage(), undefined, e);
+      console.error(e);
+      if (strpos(e.message, "Unknown time zone") !== false) {
+        throw new InvalidDateTimeZoneException(e.message, undefined, e);
       }
 
       throw e;

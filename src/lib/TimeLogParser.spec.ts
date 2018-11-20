@@ -213,7 +213,6 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
       "Europe/Berlin",
       "1970-01-01 06:00",
     ],
-    /*
     [
       "1970-01-01 06:00",
       "Europe/Berlin",
@@ -249,7 +248,7 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
       "GMT-6",
       12 * 3600,
       "1970-01-01 12:00",
-      "-06:00",
+      "Etc/GMT+6",
       12 * 3600,
       "Europe/Berlin",
       "1970-01-01 13:00",
@@ -259,7 +258,7 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
       "-06:00",
       12 * 3600,
       "1970-01-01 12:00",
-      "-06:00",
+      "Etc/GMT+6",
       12 * 3600,
       "Europe/Berlin",
       "1970-01-01 13:00",
@@ -267,10 +266,10 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
     [
       "1970-01-01 06:00",
       "Etc/GMT-6",
-      0 * 3600,
+      0,
       "1970-01-01 00:00",
       "Etc/GMT-6",
-      0 * 3600,
+      0,
       "Europe/Berlin",
       "1970-01-01 01:00",
     ],
@@ -284,7 +283,6 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
       "Europe/Berlin",
       "1970-01-01 13:00",
     ],
-    */
   ];
 };
 
