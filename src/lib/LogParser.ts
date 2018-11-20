@@ -496,7 +496,6 @@ export class LogParser {
     try {
       timezone = new DateTimeZone(timezoneString);
     } catch (e) {
-      console.error(e);
       if (strpos(e.message, "Unknown time zone") !== false) {
         throw new InvalidDateTimeZoneException(e.message, undefined, e);
       }

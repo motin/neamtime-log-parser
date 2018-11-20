@@ -55,7 +55,6 @@
   },
   "dependencies": {
     "date-fns": "^2.0.0-alpha.25",
-    "date-fns-tz": "^0.1.1",
     "locutus": "^2.0.10",
     "timezone-support": "^1.8.0"
   },

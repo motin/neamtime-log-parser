@@ -1,35 +1,6 @@
-import { parse } from "date-fns";
-import { format, zonedTimeToUtc } from "date-fns-tz";
+import { format, parse } from "date-fns";
 import { getUnixTime, getZonedTime } from "timezone-support";
 import { DateTimeZone } from "./DateTimeZone";
-
-/*
-function createUTCDateFromWhatIsCurrentlyDefinedAsTheLocalDateTime(date) {
-  return new Date(
-    Date.UTC(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate(),
-      date.getHours(),
-      date.getMinutes(),
-      date.getSeconds(),
-    ),
-  );
-}
-*/
-
-/*
-function convertDateToUTC(date) {
-  return new Date(
-    date.getUTCFullYear(),
-    date.getUTCMonth(),
-    date.getUTCDate(),
-    date.getUTCHours(),
-    date.getUTCMinutes(),
-    date.getUTCSeconds(),
-  );
-}
-*/
 
 export class DateTime {
   public static ISO8601 = "Y-m-d\\TH:i:sO";
@@ -43,13 +14,6 @@ export class DateTime {
     dateString: string = null,
     timeZone: DateTimeZone = null,
   ): DateTime {
-    console.log(
-      "createFromFormat",
-      phpFormatString,
-      dateString,
-      timeZone.toString(),
-    );
-
     if (!timeZone) {
       timeZone = new DateTimeZone("UTC");
     }
@@ -74,68 +38,31 @@ export class DateTime {
     // Timezone handling in javascript is silly requiring this dance
 
     // 1. When we parse a date using date-fns, it will be assumed that we are parsing in the local timezone
-    // Thus, we get a UTC date representation that is off by
-    /*
-    const d = new Date();
-    const n = d.getTimezoneOffset();
-    console.log("TZ n", n);
-    */
-
     const formatString = phpToDateFnsFormatString(phpFormatString);
-    console.log("formatString", formatString);
     const initiallyParsedDate = parse(dateString, formatString, new Date(), {
       awareOfUnicodeTokens: false,
     });
-    console.log(
-      "initiallyParsedDate",
-      initiallyParsedDate,
-      initiallyParsedDate.getTimezoneOffset(),
-    );
     if (!DateTime.isValidDate(initiallyParsedDate)) {
       throw new Error("DateTime parse error");
     }
-    // Convert a date to a specific time zone: { year, month, day, dayOfWeek,
-    // hours, minutes, seconds, milliseconds, epoch, zone: { abbreviation, offset } }
+
     const zonedParsedDate = getZonedTime(
       initiallyParsedDate,
       timeZone.getTimeZoneInfo(),
     );
-    console.log("zonedParsedDate", zonedParsedDate);
 
-    // Convert a time from a specific time zone to a native Date object
+    // 2. Now we can adjust the incorrectly parsed local time
     parsedDate = new Date(
       getUnixTime(zonedParsedDate) -
         initiallyParsedDate.getTimezoneOffset() * 1000 * 60 +
         zonedParsedDate.zone.offset * 1000 * 60,
     );
 
-    /*
-    // 2. Now we can adjust the incorrectly parsed local time
-    const parsedDateAsUtc = createUTCDateFromWhatIsCurrentlyDefinedAsTheLocalDateTime(
-      parsedDateInLocalTimeZone,
-    );
-    console.log(
-      "parsedDateAsUtc",
-      parsedDateAsUtc,
-    );
-    */
-    /*
-      const parsedDateInUtc = convertDateToUTC(parsedDateAsUtc);
-      console.log("parsedDateInUtc", parsedDateInUtc, zonedTimeToUtc(parsedDateInUtc));
-      * /
-    // Set time zone to timeZone
-    parsedDate = utcToZonedTime(parsedDateAsUtc, timeZone.toString());
-     */
-
-    console.log("parsedDate", parsedDate, parsedDate.getTimezoneOffset());
-
     return new DateTime(parsedDate, timeZone);
   }
 
   public static createFromUnixTimestamp(unixTimestamp: number): DateTime {
-    // console.log("createFromUnixTimestamp", unixTimestamp);
     const createdDate = new Date(unixTimestamp * 1000);
-    console.log("createdDate", createdDate);
     return new DateTime(createdDate);
   }
 
@@ -172,35 +99,16 @@ export class DateTime {
 
   public format(phpFormatString) {
     const formatString = phpToDateFnsFormatString(phpFormatString);
-    console.log(
-      "TODO format",
-      this.date,
-      zonedTimeToUtc(this.date),
-      phpFormatString,
-      formatString,
-      this.getTimezone().toString(),
-    );
     const zonedParsedDate = getZonedTime(
       this.date.getTime(),
       this.getTimezone().getTimeZoneInfo(),
     );
-    console.log("zonedParsedDate", zonedParsedDate);
-
     const dateForFormatting = new Date(
       this.date.getTime() +
         this.date.getTimezoneOffset() * 1000 * 60 -
         zonedParsedDate.zone.offset * 1000 * 60,
     );
-
-    const formatted = format(dateForFormatting, formatString, {
-      timeZone: this.getTimezone().toString(),
-    });
-    const formatted2 = format(this.date, formatString);
-
-    console.log("dateForFormatting", dateForFormatting);
-    console.log("formatted", formatted);
-    console.log("this.date", this.date);
-    console.log("formatted2", formatted2);
+    const formatted = format(dateForFormatting, formatString);
     return formatted;
   }
 }

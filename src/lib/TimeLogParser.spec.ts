@@ -149,17 +149,6 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone: Macro = (
   transposeTimeZone,
   expectedTransposedFormatted,
 ) => {
-  console.log(
-    "TEST TZ started",
-    str,
-    timezone,
-    expectedGmtTimestamp,
-    expectedGmtTimestampFormattedAsNewDefaultDatetime,
-    expectedDateTimeTimeZone,
-    expectedTimestampInTimeZone,
-    transposeTimeZone,
-    expectedTransposedFormatted,
-  );
   const tlp = new TimeLogParser();
   const {
     gmtTimestamp,
