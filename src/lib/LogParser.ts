@@ -3,15 +3,15 @@ import { InvalidDateTimeZoneException } from "./exceptions/InvalidDateTimeZoneEx
 import { DateTime, DateTimeZone } from "./php-wrappers";
 /*
 import { is_null } from "locutus/php/var";
-import { DateTime, DateTimeZone } from "./php-wrappers";
 */
 
 export interface Metadata {
-  timeRaw?: string;
+  timeRaw?: string | false;
   lastKnownDate?: string;
-  dateRaw?: string;
-  dateRawFormat?: string;
+  dateRaw?: string | false;
+  dateRawFormat?: string | false;
   dateRawWasNonemptyBeforeDetectTimestamp?: string;
+  dateRaw_with_approx_token_instead_of_minutes?: string | false;
   log?: string[];
 }
 
@@ -310,109 +310,6 @@ export class LogParser {
   }
 
   /*
-  public durationFromLast(ts, rowsWithTimemarkersHandled, rowsWithTimemarkers) {
-    let previousRowWithTimeMarker;
-    let durationSinceLast;
-
-    if (rowsWithTimemarkersHandled === 0) {
-      previousRowWithTimeMarker = undefined;
-      durationSinceLast = 0;
-    } else {
-      previousRowWithTimeMarker =
-        rowsWithTimemarkers[rowsWithTimemarkersHandled - 1];
-      durationSinceLast = ts - previousRowWithTimeMarker.ts;
-    }
-
-    if (!!previousRowWithTimeMarker && !previousRowWithTimeMarker.ts) {
-      durationSinceLast = 0;
-    }
-
-    return durationSinceLast;
-  }
-
-  public detectTimeStamp(lineForDateCheck) {
-    const metadata: Metadata = {};
-    metadata.lastKnownDate = this.lastKnownDate;
-
-    if (!!metadata.dateRaw) {
-      metadata.dateRawWasNonemptyBeforeDetectTimestamp = metadata.dateRaw;
-    }
-
-    // codecept_debug([__LINE__, {detectRegex", "lineForDateCheck", "m")]);
-    for (const supportedTimestampFormat of Object.values(
-      this.supportedTimestampFormats(),
-    )) {
-      // The most straight-forward date format
-      const format = supportedTimestampFormat.format;
-      const detectRegex = supportedTimestampFormat.detectRegex;
-      const acceptApproxTokenInsteadOfMinutes =
-        supportedTimestampFormat.acceptApproxTokenInsteadOfMinutes;
-      const detectRegexDateRawMatchIndex =
-        supportedTimestampFormat.detectRegexDateRawMatchIndex;
-      const detectRegexTimeRawMatchIndex =
-        supportedTimestampFormat.detectRegexTimeRawMatchIndex;
-      const m = lineForDateCheck.match(detectRegex + "g");
-
-      if (!!m && !!m[0]) {
-        // var_dump($line, $m);
-        if (this.collectDebugInfo) {
-          metadata["date_search_preg_debug:" + format] = {
-            lineForDateCheck,
-            m,
-          };
-        }
-
-        metadata.dateRawFormat = format;
-        metadata.log.push(`Found a supported timestamp ('${format}')`);
-
-        if (!is_null(detectRegexDateRawMatchIndex)) {
-          metadata.dateRaw = m[detectRegexDateRawMatchIndex][0];
-        }
-
-        if (!is_null(detectRegexTimeRawMatchIndex)) {
-          // If this is a format with only time detection, we use the raw time as the raw date
-          metadata.timeRaw = m[detectRegexTimeRawMatchIndex][0];
-
-          if (is_null(detectRegexDateRawMatchIndex)) {
-            metadata.dateRaw = metadata.timeRaw;
-          }
-
-          if (acceptApproxTokenInsteadOfMinutes) {
-            // In case we entered "approx" instead of minutes, shotgun to the exact hour change:
-            if (
-              this.startsWithOptionallySuffixedToken(metadata.timeRaw, "approx")
-            ) {
-              metadata.dateRaw_with_approx_token_instead_of_minutes =
-                metadata.dateRaw;
-              const tokens = this.tokens();
-              metadata.dateRaw = str_replace(
-                tokens.approx,
-                "00",
-                metadata.dateRaw,
-              );
-            }
-          }
-        } else {
-          metadata.timeRaw = false;
-        }
-
-        return;
-      } else {
-        if (this.collectDebugInfo) {
-          metadata["date_search_preg_debug:" + format] = {
-            lineForDateCheck,
-            m,
-          };
-        }
-      }
-    }
-
-    metadata.log.push("Did not find a supported timestamp");
-    metadata.dateRaw = false;
-    metadata.timeRaw = false;
-    metadata.dateRawFormat = false;
-    return { metadata };
-  }
 
   public set_ts_and_date(dateRaw) {
     this.lastSetTsAndDateErrorMessage = "";
