@@ -1,5 +1,6 @@
 import test, { ExecutionContext, Macro } from "ava";
 import { array_merge } from "locutus/php/array";
+import { DateTime, DateTimeZone } from "./php-wrappers";
 import { TimeLogParser } from "./TimeLogParser";
 
 const testStartsWithOptionallySuffixedTokenMethod: Macro = (
@@ -207,8 +208,7 @@ testDurationFromLastData().forEach((testData, index) => {
 
 /*
 // TODO: Test detection of start/stop-lines
-// Do not treat "stop paying the bills" as a stop-line...
-
+// TODO: Do not treat "stop paying the bills" as a stop-line...
 const testDetectStartStopLinesCorrectlyData = () => {
   return [
     [
@@ -233,19 +233,8 @@ const testDetectStartStopLinesCorrectlyData = () => {
     ],
   ];
 };
+*/
 
-/**
- * TODO: Test detection of start/stop-lines
- * TODO: Do not treat "stop paying the bills" as a stop-line...
- * @param lineForDateCheck
- * @param expectedMetadataDateRaw
- * @param expectedMetadataTimeRaw
- * @param expectedMetadataDateRawFormat
- * @param lastKnownTimeZone
- * @param lastKnownDate
- * @param expectedToBeValid
- * @param expectedUtcDateString
- * /
 const testDetectTimeStampAndSetTsAndDate: Macro = (
   t: ExecutionContext,
   lineForDateCheck,
@@ -255,7 +244,7 @@ const testDetectTimeStampAndSetTsAndDate: Macro = (
   lastKnownTimeZone,
   lastKnownDate,
   expectedToBeValid,
-  expectedUtcDateString, // @var DateTime $datetime
+  expectedUtcDateString,
 ) => {
   const tlp = new TimeLogParser();
   tlp.lastKnownDate = lastKnownDate;
@@ -293,14 +282,16 @@ const testDetectTimeStampAndSetTsAndDate: Macro = (
   );
 
   if (expectedToBeValid) {
-    this.assertEmpty(
-      setTsAndDateError,
+    t.true(
+      setTsAndDateError === "",
       "TimeLogParser->set_ts_and_date() does not set an error message where valid datetimes are expected",
     );
   } else {
-    this.assertNotEmpty(
-      setTsAndDateError,
-      "TimeLogParser->set_ts_and_date() sets an error message where valid datetimes are expected",
+    t.true(
+      typeof setTsAndDateError !== "undefined" &&
+        setTsAndDateError !== null &&
+        setTsAndDateError !== "",
+      "TimeLogParser->set_ts_and_date() sets an error message where invalid datetimes are expected",
     );
   }
 
@@ -326,6 +317,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       true,
       "2016-05-25 14:50:00",
     ],
+    /*
     [
       "foo 2016-05-25T14:50:00+03:00 bar",
       "2016-05-25T14:50:00+03:00",
@@ -776,8 +768,24 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       true,
       "2017-03-01 07:15:00",
     ],
+    */
   ];
 };
+
+testDetectTimeStampAndSetTsAndDateData().forEach((testData, index) => {
+  test(
+    "testDetectTimeStampAndSetTsAndDate - " + index,
+    testDetectTimeStampAndSetTsAndDate,
+    testData[0],
+    testData[1],
+    testData[2],
+    testData[3],
+    testData[4],
+    testData[5],
+    testData[6],
+    testData[7],
+  );
+});
 
 /*
 /**

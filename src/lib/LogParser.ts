@@ -1,3 +1,4 @@
+import { subMinutes } from "date-fns";
 import { join, str_replace, strpos } from "locutus/php/strings";
 import { InvalidDateTimeZoneException } from "./exceptions/InvalidDateTimeZoneException";
 import { DateTime, DateTimeZone } from "./php-wrappers";
@@ -130,12 +131,7 @@ export class LogParser {
       {
         acceptApproxTokenInsteadOfMinutes: false,
         detectRegex:
-          "/" +
-          regexDetectYmd +
-          "T" +
-          regexDetectHis +
-          regexDetectIsoTimezone +
-          "/",
+          regexDetectYmd + "T" + regexDetectHis + regexDetectIsoTimezone,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
         format: DateTime.ISO8601,
@@ -143,12 +139,7 @@ export class LogParser {
       {
         acceptApproxTokenInsteadOfMinutes: false,
         detectRegex:
-          "/" +
-          regexDetectYmd +
-          "T" +
-          regexDetectHis +
-          regexDetectUtcTimezone +
-          "/",
+          regexDetectYmd + "T" + regexDetectHis + regexDetectUtcTimezone,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
         format: DateTime.ISO8601,
@@ -159,11 +150,7 @@ export class LogParser {
       {
         acceptApproxTokenInsteadOfMinutes: true,
         detectRegex:
-          "/" +
-          regexDetectYmd +
-          "\\s" +
-          regexDetectHcoloniAcceptingApproxToken +
-          "/",
+          regexDetectYmd + "\\s" + regexDetectHcoloniAcceptingApproxToken,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
         format: "Y-m-d H:i",
@@ -171,11 +158,7 @@ export class LogParser {
       {
         acceptApproxTokenInsteadOfMinutes: true,
         detectRegex:
-          "/" +
-          regexDetectYmd +
-          ",\\s" +
-          regexDetectHcoloniAcceptingApproxToken +
-          "/",
+          regexDetectYmd + ",\\s" + regexDetectHcoloniAcceptingApproxToken,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
         format: "Y-m-d, H:i",
@@ -183,11 +166,7 @@ export class LogParser {
       {
         acceptApproxTokenInsteadOfMinutes: true,
         detectRegex:
-          "/" +
-          regexDetectYmd +
-          "\\s" +
-          regexDetectHdotiAcceptingApproxToken +
-          "/",
+          regexDetectYmd + "\\s" + regexDetectHdotiAcceptingApproxToken,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
         format: "Y-m-d H.i",
@@ -195,11 +174,7 @@ export class LogParser {
       {
         acceptApproxTokenInsteadOfMinutes: true,
         detectRegex:
-          "/" +
-          regexDetectYmd +
-          ",\\s" +
-          regexDetectHdotiAcceptingApproxToken +
-          "/",
+          regexDetectYmd + ",\\s" + regexDetectHdotiAcceptingApproxToken,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
         format: "Y-m-d, H.i",
@@ -207,26 +182,22 @@ export class LogParser {
       {
         acceptApproxTokenInsteadOfMinutes: true,
         detectRegex:
-          "/" +
-          regexDetectdmY +
-          "\\s" +
-          regexDetectHcoloniAcceptingApproxToken +
-          "/",
+          regexDetectdmY + "\\s" + regexDetectHcoloniAcceptingApproxToken,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
         format: "d-m-Y H:i",
       },
       {
         acceptApproxTokenInsteadOfMinutes: false,
-        detectRegex: "/" + regexDetectHcoloni + "/",
-        detectRegexDateRawMatchIndex: undefined,
+        detectRegex: regexDetectHcoloni,
+        detectRegexDateRawMatchIndex: null,
         detectRegexTimeRawMatchIndex: 0,
         format: "H:i",
       },
       {
         acceptApproxTokenInsteadOfMinutes: false,
-        detectRegex: "/" + regexDetectHdoti + "/",
-        detectRegexDateRawMatchIndex: undefined,
+        detectRegex: regexDetectHdoti,
+        detectRegexDateRawMatchIndex: null,
         detectRegexTimeRawMatchIndex: 0,
         format: "H.i",
       },
@@ -309,15 +280,16 @@ export class LogParser {
     return seconds / 60;
   }
 
-  /*
-
-  public set_ts_and_date(dateRaw) {
+  public set_ts_and_date(
+    dateRaw: string,
+  ): { ts: number; date: string | false; datetime: DateTime } {
     this.lastSetTsAndDateErrorMessage = "";
     dateRaw = str_replace(["maj", "okt"], ["may", "oct"], dateRaw).trim();
 
-    let ts;
-    let datetime;
-    let date;
+    let ts: number;
+    let datetime: DateTime;
+    let datetimeParseResult: DateTime | false;
+    let date: string | false;
 
     try {
       const timeZone = this.interpretLastKnownTimeZone();
@@ -330,7 +302,7 @@ export class LogParser {
         timeZone,
       );
       ts = gmtTimestamp;
-      datetime = datetimeReturned;
+      datetimeParseResult = datetimeReturned;
       this.lastUsedTimeZone = timeZone;
     } catch (e) {
       if (e instanceof InvalidDateTimeZoneException) {
@@ -343,8 +315,8 @@ export class LogParser {
           "UTC",
         );
         ts = gmtTimestamp;
-        datetime = datetimeReturned;
-        this.lastSetTsAndDateErrorMessage = e.message();
+        datetimeParseResult = datetimeReturned;
+        this.lastSetTsAndDateErrorMessage = e.message;
         this.lastUsedTimeZone = "UTC";
       }
     }
@@ -353,41 +325,42 @@ export class LogParser {
       ts = 0;
       date = false;
       this.lastSetTsAndDateErrorMessage = "Timestamp not found";
-    } else if (ts > 0 && ts < UTC.gmtime() - 24 * 3600 * 365 * 10) {
+    } else if (
+      ts > 0 &&
+      ts < new Date().getTime() / 1000 - 24 * 3600 * 365 * 10
+    ) {
       ts = 0;
       date = false;
       this.lastSetTsAndDateErrorMessage =
         "Timestamp found was more than 10 years old, not reasonably correct";
-    } // new day starts at 06.00 in the morning - schablon
-    // TODO: Possibly restore this, but then based on dateRaw lacking time-information instead of the parsed date object having time at midnight
-    // if (date("H:i:s", $ts) === "00:00:00") $midnightoffset = 0; // do not offset when we didn't specify a specific time (yes this takes 00:00-reported times as well - but I can live with that!)
-    else {
-      this.lastKnownDate = datetime.format("Y-m-d");
-      const midnightoffset = 6 * 60;
-      const interval = DateInterval.createFromDateString(
-        midnightoffset + " minutes",
-      );
-      let semanticDateTime = clone(datetime);
-      semanticDateTime = semanticDateTime.sub(interval);
-      date = semanticDateTime.format("Y-m-d");
+    } else {
+      if (datetimeParseResult instanceof DateTime) {
+        datetime = datetimeParseResult;
+        this.lastKnownDate = datetime.format("Y-m-d");
+        // new day starts at 06.00 in the morning - arbitrarily decided as such TODO: Make configurable
+        const midnightOffset = 6 * 60;
+        // TODO: Possibly restore this, but then based on dateRaw lacking time-information instead of the parsed date object having time at midnight
+        // if (date("H:i:s", $ts) === "00:00:00") $midnightoffset = 0; // do not offset when we didn't specify a specific time (yes this takes 00:00-reported times as well - but I can live with that!)
+        const semanticDate = subMinutes(datetime.getDate(), midnightOffset);
+        const semanticDateTime = new DateTime(semanticDate);
+        date = semanticDateTime.format("Y-m-d");
+      }
     }
 
     return { ts, date, datetime };
   }
-  */
 
-  /*
   public interpretLastKnownTimeZone() {
-    return this.interpretTimezoneString(this.lastKnownTimeZone);
+    return DateTimeZone.interpretTimezoneString(this.lastKnownTimeZone);
   }
-  */
 
   public parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
     str: string,
     timezoneString: string,
-  ) {
+  ): { gmtTimestamp: number; datetime: DateTime } {
     let gmtTimestamp: number;
-    let datetime;
+    let datetimeParseResult: DateTime | false;
+    let datetime: DateTime;
     let timezone;
 
     try {
@@ -405,15 +378,16 @@ export class LogParser {
     )) {
       const format = supportedTimestampFormat.format;
 
-      if (
-        undefined !== supportedTimestampFormat.pre_datetime_parsing_callback
-      ) {
+      if (supportedTimestampFormat.pre_datetime_parsing_callback) {
         str = supportedTimestampFormat.pre_datetime_parsing_callback(str);
       }
 
       try {
-        datetime = DateTime.createFromFormat(format, str, timezone);
-        if (datetime.isValid()) {
+        datetimeParseResult = DateTime.createFromFormat(format, str, timezone);
+        if (datetimeParseResult.isValid()) {
+          if (datetimeParseResult instanceof DateTime) {
+            datetime = datetimeParseResult;
+          }
           break;
         }
       } catch (e) {
@@ -426,9 +400,7 @@ export class LogParser {
     }
 
     if (!datetime) {
-      // TODO: Remove expectation of string and this setting of 0 on error
-      // var_dump({str","gmtTimestamp"), strtotime($str));
-      // die();
+      // TODO: Remove expectation of number and this setting of 0 on error
       gmtTimestamp = 0;
     } else {
       const gmtDatetime = datetime.setTimezone(new DateTimeZone("UTC"));

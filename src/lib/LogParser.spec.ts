@@ -92,6 +92,7 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone: Macro = (
     gmtTimestamp,
     datetime,
   } = tlp.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(str, timezone);
+  t.true(typeof datetime !== "undefined");
   t.is(expectedGmtTimestamp, gmtTimestamp);
   const gmtTimestampFormattedAsNewDefaultDatetime = DateTime.createFromUnixTimestamp(
     gmtTimestamp,
@@ -209,6 +210,16 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
       12 * 3600,
       "Europe/Berlin",
       "1970-01-01 13:00",
+    ],
+    [
+      "2016-05-25T14:50:00Z",
+      "UTC",
+      1464187800,
+      "2016-05-25 14:50",
+      "UTC",
+      1464187800,
+      "Europe/Berlin",
+      "2016-05-25 16:50", // verified using https://www.timeanddate.com/worldclock/converter.html?iso=20160625T145000&p1=1440&p2=37
     ],
   ];
 };

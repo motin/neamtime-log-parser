@@ -129,14 +129,15 @@ export class TimeLogParser extends LogParser {
   */
 
   public detectTimeStamp(lineForDateCheck) {
-    const metadata: Metadata = {};
+    const metadata: Metadata = {
+      log: [],
+    };
     metadata.lastKnownDate = this.lastKnownDate;
 
-    if (!!metadata.dateRaw) {
+    if (metadata.dateRaw) {
       metadata.dateRawWasNonemptyBeforeDetectTimestamp = metadata.dateRaw;
     }
 
-    // codecept_debug([__LINE__, {detectRegex", "lineForDateCheck", "m")]);
     for (const supportedTimestampFormat of Object.values(
       this.supportedTimestampFormats(),
     )) {
@@ -149,10 +150,33 @@ export class TimeLogParser extends LogParser {
         supportedTimestampFormat.detectRegexDateRawMatchIndex;
       const detectRegexTimeRawMatchIndex =
         supportedTimestampFormat.detectRegexTimeRawMatchIndex;
-      const m = lineForDateCheck.match(detectRegex + "g");
 
-      if (!!m && !!m[0]) {
-        // var_dump($line, $m);
+      // TODO: Try case-insensitive flag as well: g -> ig
+
+      const regexp = new RegExp(detectRegex, "g");
+
+      const m: RegExpExecArray = regexp.exec(lineForDateCheck);
+      /*
+      TODO: If multiple matches is necessary to detect - use below instead
+      const m = [];
+      let currentMatchArray: RegExpExecArray;
+      while ((currentMatchArray = regexp.exec(lineForDateCheck)) !== null) {
+        m.push(currentMatchArray);
+      }
+      */
+
+      console.debug("{detectRegex, lineForDateCheck, m, regexp}", {
+        detectRegex,
+        lineForDateCheck,
+        m,
+        regexp,
+      });
+
+      if (m) {
+        console.debug("MATCHED: {lineForDateCheck, m}", {
+          lineForDateCheck,
+          m,
+        });
         if (this.collectDebugInfo) {
           metadata["date_search_preg_debug:" + format] = {
             lineForDateCheck,
@@ -164,12 +188,12 @@ export class TimeLogParser extends LogParser {
         metadata.log.push(`Found a supported timestamp ('${format}')`);
 
         if (!is_null(detectRegexDateRawMatchIndex)) {
-          metadata.dateRaw = m[detectRegexDateRawMatchIndex][0];
+          metadata.dateRaw = m[detectRegexDateRawMatchIndex];
         }
 
         if (!is_null(detectRegexTimeRawMatchIndex)) {
           // If this is a format with only time detection, we use the raw time as the raw date
-          metadata.timeRaw = m[detectRegexTimeRawMatchIndex][0];
+          metadata.timeRaw = m[detectRegexTimeRawMatchIndex];
 
           if (is_null(detectRegexDateRawMatchIndex)) {
             metadata.dateRaw = metadata.timeRaw;
@@ -194,7 +218,7 @@ export class TimeLogParser extends LogParser {
           metadata.timeRaw = false;
         }
 
-        return null;
+        return { metadata };
       } else {
         if (this.collectDebugInfo) {
           metadata["date_search_preg_debug:" + format] = {
@@ -232,7 +256,6 @@ export class TimeLogParser extends LogParser {
     return durationSinceLast;
   }
 
-  /*
   public set_ts_and_date(dateRaw) {
     this.lastSetTsAndDateErrorMessage = "";
 
@@ -240,7 +263,7 @@ export class TimeLogParser extends LogParser {
     if (dateRaw.length > 50) {
       this.lastSetTsAndDateErrorMessage =
         "Invalidate strings that are clearly too large to be a timestamp";
-      return;
+      return null;
     }
 
     const m = dateRaw.match(/[0-9]+/g);
@@ -248,11 +271,11 @@ export class TimeLogParser extends LogParser {
     if (!m) {
       this.lastSetTsAndDateErrorMessage =
         "Invalidate strings that do not contain numbers, since they can not be a timestamp";
-      return;
+      return null;
     }
 
     if (dateRaw.length < 8) {
-      // var_dump($dateRaw);
+      // console.debug({dateRaw});
       dateRaw = this.lastKnownDate + ` ${dateRaw}`;
     }
 
@@ -272,8 +295,9 @@ export class TimeLogParser extends LogParser {
     const tspath = _SERVER.argv[1];
     this.contents = file_get_contents(`${tspath}.txt`);
   }
-  * /
+  */
 
+  /*
   public isProbableStartStopLine(line, dump = false) {
     const trimmedLine = line.trim();
     const startsWithPauseTokenFollowedByASpace = this.startsWithOptionallySuffixedToken(
@@ -410,7 +434,7 @@ export class TimeLogParser extends LogParser {
         ) {
           // var_dump($metadata["dateRaw"], $trimmedLineForDateCheck, $ts, $date);
           // $invalid = empty($date);
-          this.detectTimeStamp(trimmedLineForDateCheck, metadata);
+          const {metadata} = this.detectTimeStamp(trimmedLineForDateCheck);
           let datetime;
           this.set_ts_and_date(metadata.dateRaw, ts, date, undefined, datetime);
 
@@ -1063,7 +1087,7 @@ export class TimeLogParser extends LogParser {
       );
     }
 
-    this.detectTimeStamp(lineForDateCheck, metadata);
+    const {metadata} = this.detectTimeStamp(lineForDateCheck);
     let datetime;
     let ts;
     let date;

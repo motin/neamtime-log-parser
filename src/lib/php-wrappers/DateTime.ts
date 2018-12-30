@@ -4,6 +4,7 @@ import { DateTimeZone } from "./DateTimeZone";
 
 export class DateTime {
   public static ISO8601 = "Y-m-d\\TH:i:sO";
+  public static YMDHI = "Y-m-d H:i";
 
   public static isValidDate(d) {
     return d instanceof Date && !isNaN(Number(d));
@@ -37,26 +38,41 @@ export class DateTime {
 
     // Timezone handling in javascript is silly requiring this dance
 
-    // 1. When we parse a date using date-fns, it will be assumed that we are parsing in the local timezone
-    const formatString = phpToDateFnsFormatString(phpFormatString);
+    const {
+      formatString,
+      formatStringIncludesTimezone,
+    } = phpToDateFnsFormatString(phpFormatString);
     const initiallyParsedDate = parse(dateString, formatString, new Date(), {
       awareOfUnicodeTokens: false,
     });
+    // console.debug("{phpFormatString, formatString, dateString, initiallyParsedDate}", {phpFormatString, formatString, dateString, initiallyParsedDate},);
+
     if (!DateTime.isValidDate(initiallyParsedDate)) {
       throw new Error("DateTime parse error");
     }
+
+    if (formatStringIncludesTimezone) {
+      return new DateTime(initiallyParsedDate, timeZone);
+    }
+
+    // When we parse a date without timezone information using date-fns, it will
+    // be assumed that we are parsing in the local timezone, which means that we need to
+    // adjust the parsed time here
 
     const zonedParsedDate = getZonedTime(
       initiallyParsedDate,
       timeZone.getTimeZoneInfo(),
     );
 
-    // 2. Now we can adjust the incorrectly parsed local time
+    // Adjust the incorrectly parsed local time
+    const timezoneOffset = initiallyParsedDate.getTimezoneOffset();
     parsedDate = new Date(
       getUnixTime(zonedParsedDate) -
-        initiallyParsedDate.getTimezoneOffset() * 1000 * 60 +
+        timezoneOffset * 1000 * 60 +
         zonedParsedDate.zone.offset * 1000 * 60,
     );
+
+    // console.debug("{timezoneOffset, zonedParsedDate, parsedDate}", {timezoneOffset, zonedParsedDate, parsedDate});
 
     return new DateTime(parsedDate, timeZone);
   }
@@ -86,6 +102,10 @@ export class DateTime {
     return this.date.getTime() / 1000;
   }
 
+  public getDate() {
+    return this.date;
+  }
+
   public setTimezone(timeZone): DateTime {
     return new DateTime(this.date, timeZone);
   }
@@ -98,7 +118,7 @@ export class DateTime {
   }
 
   public format(phpFormatString) {
-    const formatString = phpToDateFnsFormatString(phpFormatString);
+    const { formatString } = phpToDateFnsFormatString(phpFormatString);
     const zonedParsedDate = getZonedTime(
       this.date.getTime(),
       this.getTimezone().getTimeZoneInfo(),
@@ -192,32 +212,40 @@ const phpToDateFnsFormatStringConversions = {
   s: "ss",
   u: "SSS",
   e: "xxx",
-  O: "xxx",
+  O: "X",
   P: "xxx",
   T: "xxx",
   /* tslint:enable:object-literal-sort-keys */
 };
 
-const phpToDateFnsFormatString = phpFormat => {
+const phpToDateFnsFormatString = (
+  phpFormat,
+): { formatString: string; formatStringIncludesTimezone: boolean } => {
   const items = phpFormat.split("");
-  let returnItem = "";
+  let formatString = "";
+  let formatStringIncludesTimezone = false;
 
-  let ignoreNext;
+  const timezoneTokens = ["e", "O", "P", "T"];
+
+  let literalNext;
   for (const item of items) {
-    if (
-      !ignoreNext &&
-      phpToDateFnsFormatStringConversions[item] !== undefined
-    ) {
-      returnItem += phpToDateFnsFormatStringConversions[item];
+    if (literalNext) {
+      formatString += "'" + item + "'";
+      literalNext = false;
     } else {
-      returnItem += item;
-    }
-    if (ignoreNext) {
-      ignoreNext = false;
-    }
-    if (item === "\\") {
-      ignoreNext = true;
+      if (phpToDateFnsFormatStringConversions[item] !== undefined) {
+        formatString += phpToDateFnsFormatStringConversions[item];
+        if (timezoneTokens.indexOf(item) > -1) {
+          formatStringIncludesTimezone = true;
+        }
+      } else {
+        if (item === "\\") {
+          literalNext = true;
+        } else {
+          formatString += item;
+        }
+      }
     }
   }
-  return returnItem;
+  return { formatString, formatStringIncludesTimezone };
 };
