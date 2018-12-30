@@ -56,7 +56,7 @@
     "node": ">=8.9"
   },
   "dependencies": {
-    "date-fns": "^2.0.0-alpha.25",
+    "date-fns": "^2.0.0-alpha.26",
     "locutus": "^2.0.10",
     "timezone-support": "^1.8.0"
   },
