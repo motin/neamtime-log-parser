@@ -1,7 +1,6 @@
 import test, { ExecutionContext, Macro } from "ava";
 import { array_merge } from "locutus/php/array";
 import { DateTime, DateTimeZone } from "./php-wrappers";
-// import { clone, DateTime, DateTimeZone } from "./php-wrappers";
 import { TimeLogParser } from "./TimeLogParser";
 
 const testStartsWithOptionallySuffixedTokenMethod: Macro = (
@@ -292,11 +291,14 @@ testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData().forEach(
   },
 );
 
-/*
-const testAddZeroFilledDates = (times, expectedReturnValue) => {
+const testAddZeroFilledDates: Macro = (
+  t: ExecutionContext,
+  times,
+  expectedReturnValue,
+) => {
   const tlp = new TimeLogParser();
   const result = tlp.addZeroFilledDates(times);
-  t.is(
+  t.deepEqual(
     expectedReturnValue,
     result,
     "TimeLogParser->addZeroFilledDates() behaves as expected",
@@ -322,7 +324,18 @@ const testAddZeroFilledDatesData = () => {
   ];
 };
 
-const testDurationFromLast = (
+testAddZeroFilledDatesData().forEach((testData, index) => {
+  test(
+    "testAddZeroFilledDates - " + index,
+    testAddZeroFilledDates,
+    testData[0],
+    testData[1],
+  );
+});
+
+/*
+const testDurationFromLast: Macro = (
+  t: ExecutionContext,
   ts,
   rowsWithTimemarkersHandled,
   rowsWithTimemarkers,
@@ -451,8 +464,8 @@ const testDetectStartStopLinesCorrectlyData = () => {
  * @param expectedToBeValid
  * @param expectedUtcDateString
  * /
-const testDetectTimeStampAndSetTsAndDate = (
-  t,
+const testDetectTimeStampAndSetTsAndDate: Macro = (
+  t: ExecutionContext,
   lineForDateCheck,
   expectedMetadataDateRaw,
   expectedMetadataTimeRaw,
@@ -995,8 +1008,8 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
  * @param expectedToBeValidTimestampedLogComment
  * @param expectedUtcDateString
  * /
-const testParseLogComment = (
-  t,
+const testParseLogComment: Macro = (
+  t: ExecutionContext,
   line,
   expectedLinewithoutdate,
   lastKnownTimeZone,
