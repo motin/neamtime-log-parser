@@ -779,6 +779,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
   ];
 };
 
+/*
 /**
  * Note: "lineWithoutDate" here refers to the part without the date-time-stamp, ie the actual log message
  * TODO: Refactor code to reflect this more clearly

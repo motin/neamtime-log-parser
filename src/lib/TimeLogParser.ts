@@ -236,6 +236,7 @@ export class TimeLogParser extends LogParser {
   public set_ts_and_date(dateRaw) {
     this.lastSetTsAndDateErrorMessage = "";
 
+    // Invalidate strings that are clearly too large to be a timestamp
     if (dateRaw.length > 50) {
       this.lastSetTsAndDateErrorMessage =
         "Invalidate strings that are clearly too large to be a timestamp";
@@ -257,16 +258,12 @@ export class TimeLogParser extends LogParser {
 
     const tokens = this.tokens();
     dateRaw = str_replace(tokens.approx, "", dateRaw).trim();
-    const {
-      ts,
-      date,
-      datetime, // Invalidate strings that are clearly too large to be a timestamp // var_dump($dateRaw,$m);
-    } = super.set_ts_and_date(dateRaw);
+    const { date, datetime, ts } = super.set_ts_and_date(dateRaw);
 
     return {
-      ts,
       date,
-      datetime, // Invalidate strings that are clearly too large to be a timestamp // var_dump($dateRaw,$m);
+      datetime,
+      ts,
     };
   }
 
