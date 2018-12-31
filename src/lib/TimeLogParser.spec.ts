@@ -768,7 +768,6 @@ testDetectTimeStampAndSetTsAndDateData().forEach((testData, index) => {
   );
 });
 
-/*
 /**
  * Note: "lineWithoutDate" here refers to the part without the date-time-stamp, ie the actual log message
  * TODO: Refactor code to reflect this more clearly
@@ -779,7 +778,7 @@ testDetectTimeStampAndSetTsAndDateData().forEach((testData, index) => {
  * @param lastKnownDate
  * @param expectedToBeValidTimestampedLogComment
  * @param expectedUtcDateString
- * /
+ */
 const testParseLogComment: Macro = (
   t: ExecutionContext,
   line,
@@ -787,6 +786,7 @@ const testParseLogComment: Macro = (
   lastKnownTimeZone,
   lastKnownDate,
   expectedToBeValidTimestampedLogComment,
+  expectedLastKnownTimeZone,
   expectedUtcDateString, // @var DateTime $datetime
 ) => {
   const timeLogParser = new TimeLogParser();
@@ -796,9 +796,10 @@ const testParseLogComment: Macro = (
     ts,
     date,
     lineWithoutDate,
-    invalid,
+    notTheFirstRowOfALogComment,
     datetime,
   } = timeLogParser.parseLogComment(line);
+  const invalid = notTheFirstRowOfALogComment;
   t.log({ line, ts, date, datetime });
   const valid = !invalid;
   t.is(
@@ -813,9 +814,9 @@ const testParseLogComment: Macro = (
     "TimeLogParser->parseLogComment() detects valid timestamped log content as expected",
   );
   t.is(
-    lastKnownTimeZone,
+    expectedLastKnownTimeZone,
     timeLogParser.lastKnownTimeZone,
-    "TimeLogParser->set_ts_and_date() does not change the last known timezone by parsing a timestamp string",
+    "TimeLogParser->set_ts_and_date() sometimes changes the last known timezone by parsing a timestamp string",
   );
 
   if (expectedToBeValidTimestampedLogComment) {
@@ -838,14 +839,17 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
+    /*
     [
       "14.35, bar",
       " bar",
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
     [
@@ -854,6 +858,7 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
     [
@@ -862,27 +867,70 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
-    ["foo bar", "", "Europe/Stockholm", "2016-05-01", false, false],
+    [
+      "foo bar",
+      "",
+      "Europe/Stockholm",
+      "2016-05-01",
+      false,
+      "Europe/Stockholm",
+      false,
+    ],
     [
       "18:15",
       "",
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 16:15:00",
     ],
-    ["18.15", "", "Europe/Stockholm", "2016-05-01", false, false],
-    ["18,15", "", "Europe/Stockholm", "2016-05-01", false, false],
-    ["foo:bar", "", "Europe/Stockholm", "2016-05-01", false, false],
-    [":zoo", "", "Europe/Stockholm", "2016-05-01", false, false],
+    [
+      "18.15",
+      "",
+      "Europe/Stockholm",
+      "2016-05-01",
+      false,
+      "Europe/Stockholm",
+      false,
+    ],
+    [
+      "18,15",
+      "",
+      "Europe/Stockholm",
+      "2016-05-01",
+      false,
+      "Europe/Stockholm",
+      false,
+    ],
+    [
+      "foo:bar",
+      "",
+      "Europe/Stockholm",
+      "2016-05-01",
+      false,
+      "Europe/Stockholm",
+      false,
+    ],
+    [
+      ":zoo",
+      "",
+      "Europe/Stockholm",
+      "2016-05-01",
+      false,
+      "Europe/Stockholm",
+      false,
+    ],
     [
       "2016-05-01 14:35, bar",
       " bar",
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
     [
@@ -891,6 +939,7 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
     [
@@ -899,6 +948,7 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
     [
@@ -907,6 +957,7 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
     [
@@ -915,6 +966,7 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
     [
@@ -923,6 +975,7 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
     [
@@ -931,6 +984,7 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
     [
@@ -939,6 +993,7 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
     [
@@ -947,6 +1002,7 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
     [
@@ -955,6 +1011,7 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
     [
@@ -963,6 +1020,7 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
     [
@@ -971,10 +1029,41 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
-    ["2016-05-01, bar", "", "Europe/Stockholm", "2016-05-01", false, false],
-    ["2016-05-01, bar", "", "Europe/Stockholm", "2016-05-01", false, false],
+    [
+      "2016-05-01, bar",
+      "",
+      "Europe/Stockholm",
+      "2016-05-01",
+      false,
+      "Europe/Stockholm",
+      false,
+    ],
+    [
+      "2016-05-01, bar",
+      "",
+      "Europe/Stockholm",
+      "2016-05-01",
+      false,
+      "Europe/Stockholm",
+      false,
+    ],
+    */
   ];
 };
-*/
+
+testParseLogCommentData().forEach((testData, index) => {
+  test(
+    "testParseLogComment - " + index,
+    testParseLogComment,
+    testData[0],
+    testData[1],
+    testData[2],
+    testData[3],
+    testData[4],
+    testData[5],
+    testData[6],
+  );
+});

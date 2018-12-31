@@ -3,6 +3,15 @@ import { is_null } from "locutus/php/var";
 import { LogParser, Metadata } from "./LogParser";
 import { DateTime } from "./php-wrappers";
 
+export interface ParsedLogComment {
+  dateRaw: any;
+  ts: any;
+  date: any;
+  lineWithoutDate: any;
+  notTheFirstRowOfALogComment: any;
+  datetime: any;
+}
+
 export class TimeLogParser extends LogParser {
   private collectDebugInfo;
 
@@ -248,8 +257,8 @@ export class TimeLogParser extends LogParser {
       return errorReturn;
     }
 
+    console.debug({ dateRaw });
     if (dateRaw.length < 8) {
-      // console.debug({dateRaw});
       dateRaw = this.lastKnownDate + ` ${dateRaw}`;
     }
 
@@ -264,122 +273,61 @@ export class TimeLogParser extends LogParser {
     };
   }
 
-  /*
-  public parseLogComment(line) {
+  public parseLogComment(line): ParsedLogComment {
+    let parsedLogComment: ParsedLogComment;
+
     // "," is the main separator between date and any written comment...
-    const {
-      dateRaw,
-      ts,
-      date,
-      lineWithoutDate,
-      notTheFirstRowOfALogComment,
-      datetime,
-    } = this.parseLogCommentWithSeparator(
-      ",",
-      line,
-      dateRaw,
-      ts,
-      date,
-      lineWithoutDate,
-      notTheFirstRowOfALogComment,
-      datetime,
-    );
+    parsedLogComment = this.parseLogCommentWithSeparator(",", line);
 
-    if (!notTheFirstRowOfALogComment) {
-      return;
+    if (!parsedLogComment.notTheFirstRowOfALogComment) {
+      return parsedLogComment;
     }
 
-    this.parseLogCommentWithSeparator(
-      " -",
-      line,
-      dateRaw,
-      ts,
-      date,
-      lineWithoutDate,
-      notTheFirstRowOfALogComment,
-      datetime,
-    );
+    parsedLogComment = this.parseLogCommentWithSeparator(" -", line);
 
-    if (!notTheFirstRowOfALogComment) {
-      return;
+    if (!parsedLogComment.notTheFirstRowOfALogComment) {
+      return parsedLogComment;
     }
 
-    this.parseLogCommentWithSeparator(
-      ": ",
-      line,
-      dateRaw,
-      ts,
-      date,
-      lineWithoutDate,
-      notTheFirstRowOfALogComment,
-      datetime,
-    );
+    parsedLogComment = this.parseLogCommentWithSeparator(": ", line);
 
-    if (!notTheFirstRowOfALogComment) {
-      return;
-    }
-
-    return {
-      dateRaw,
-      ts,
-      date,
-      lineWithoutDate,
-      invalid: notTheFirstRowOfALogComment,
-      datetime,
-    };
+    return parsedLogComment;
   }
 
-  public parseLogCommentWithSeparator(
-    separator,
-    line,
-    dateRaw,
-    ts,
-    date,
-    lineWithoutDate,
-    notTheFirstRowOfALogComment,
-    datetime, // Check if we have a valid date already // If not, allow one more separated chunk into the dateRaw and try again // since some timestamp formats may include the seperator (at most once)
-  ) {
+  public parseLogCommentWithSeparator(separator, line): ParsedLogComment {
+    // Check if we have a valid date already
     const parts = line.split(separator);
-    dateRaw = parts.shift();
-    date = undefined;
-    lineWithoutDate = parts.join(separator);
-    datetime = undefined;
-    this.parseLogCommentDateRawCandidate(
+    let dateRaw = parts.shift();
+    let lineWithoutDate = parts.join(separator);
+    let parsedLogComment: ParsedLogComment = this.parseLogCommentDateRawCandidate(
       dateRaw,
-      ts,
-      date,
       lineWithoutDate,
-      notTheFirstRowOfALogComment,
-      datetime,
     );
 
-    if (notTheFirstRowOfALogComment && parts.length > 1) {
+    // If not, allow one more separated chunk into the dateRaw and try again
+    // since some timestamp formats may include the seperator (at most once)
+    if (parsedLogComment.notTheFirstRowOfALogComment && parts.length > 1) {
       dateRaw += separator + parts.shift();
-      date = undefined;
       lineWithoutDate = parts.join(separator);
-      datetime = undefined;
-      this.parseLogCommentDateRawCandidate(
+      parsedLogComment = this.parseLogCommentDateRawCandidate(
         dateRaw,
-        ts,
-        date,
         lineWithoutDate,
-        notTheFirstRowOfALogComment,
-        datetime,
       );
     }
+
+    return parsedLogComment;
   }
 
   public parseLogCommentDateRawCandidate(
     dateRaw,
-    ts,
-    date,
     lineWithoutDate,
-    notTheFirstRowOfALogComment,
-    datetime, // invalidate pure numbers (including those with fractional parts) if there is no comment on the other side - probably not a real log comment // invalidate lines without a valid date
-  ) {
-    preg_match("/[0-9\\.\\,]+/", dateRaw, m);
+  ): ParsedLogComment {
+    let notTheFirstRowOfALogComment;
 
-    if (!!m[0]) {
+    // invalidate pure numbers (including those with fractional parts) if there is no comment on the other side - probably not a real log comment
+    const m = dateRaw.match(/[0-9\.\,]+/);
+
+    if (m[0]) {
       const firstMatch = m[0];
       const trimmedDateRaw = dateRaw.trim();
 
@@ -390,12 +338,28 @@ export class TimeLogParser extends LogParser {
       ) {
         // Due to some odd logic in some other file, we also can't set ts and date for this row
         notTheFirstRowOfALogComment = true;
-        return;
+        return {
+          date: null,
+          dateRaw,
+          datetime: null,
+          lineWithoutDate,
+          notTheFirstRowOfALogComment,
+          ts: 0,
+        };
       }
     }
 
-    this.set_ts_and_date(dateRaw, ts, date, lineWithoutDate, datetime);
+    // invalidate lines without a valid date
+    const { date, datetime, ts } = super.set_ts_and_date(dateRaw);
     notTheFirstRowOfALogComment = !date;
+
+    return {
+      date,
+      dateRaw,
+      datetime,
+      lineWithoutDate,
+      notTheFirstRowOfALogComment,
+      ts,
+    };
   }
-  */
 }
