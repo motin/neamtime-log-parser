@@ -3,108 +3,6 @@ import { array_merge } from "locutus/php/array";
 import { DateTime, DateTimeZone } from "./php-wrappers";
 import { TimeLogParser } from "./TimeLogParser";
 
-const testStartsWithOptionallySuffixedTokenMethod: Macro = (
-  t: ExecutionContext,
-  haystack: string,
-  keyword: string,
-  suffix: string,
-  expectedReturnValue: string,
-) => {
-  const tlp = new TimeLogParser();
-  const result = tlp.startsWithOptionallySuffixedToken(
-    haystack,
-    keyword,
-    suffix,
-  );
-  t.is(
-    result,
-    expectedReturnValue,
-    "TimeLogParser->startsWithOptionallySuffixedToken() behaves as expected",
-  );
-};
-testStartsWithOptionallySuffixedTokenMethod.title = (
-  providedTitle: string,
-  haystack: string,
-  keyword: string,
-  suffix: string,
-  expectedReturnValue: string,
-) =>
-  `: ${providedTitle} ${keyword} with suffix "${suffix}" in "${haystack}" = ${expectedReturnValue}`.trim();
-
-const testStartsWithOptionallySuffixedTokenMethodData = () => {
-  let testDataMatrix = Array();
-  const tlp = new TimeLogParser();
-  const tokens = tlp.tokens();
-  const keyword = "pause";
-
-  for (const token of Object.values(tokens[keyword])) {
-    const tokenSpecific = [
-      [token + "->2010-04-03 7:58", keyword, "->", token],
-      [token + "->2010-04-03 7:58", keyword, undefined, token],
-      [token + " 2016-05-16 09:55->", keyword, "->", false],
-      [token + " 2016-05-16 09:55->", keyword, " ", token],
-      [token + " 2016-05-16 09:55->", keyword, undefined, token],
-      [token + "->|$", keyword, "->|$", token],
-    ];
-    testDataMatrix = array_merge(testDataMatrix, tokenSpecific);
-  }
-
-  return testDataMatrix;
-};
-
-testStartsWithOptionallySuffixedTokenMethodData().forEach((testData, index) => {
-  test(
-    "testStartsWithOptionallySuffixedTokenMethod - " + index,
-    testStartsWithOptionallySuffixedTokenMethod,
-    testData[0],
-    testData[1],
-    testData[2],
-    testData[3],
-  );
-});
-
-const testAddZeroFilledDates: Macro = (
-  t: ExecutionContext,
-  times,
-  expectedReturnValue,
-) => {
-  const tlp = new TimeLogParser();
-  const result = tlp.addZeroFilledDates(times);
-  t.deepEqual(
-    expectedReturnValue,
-    result,
-    "TimeLogParser->addZeroFilledDates() behaves as expected",
-  );
-};
-
-const testAddZeroFilledDatesData = () => {
-  return [
-    [
-      {
-        "2013-03-28": "foo",
-        "2013-04-02": "foo",
-      },
-      {
-        "2013-03-28": "foo",
-        "2013-03-29": 0,
-        "2013-03-30": 0,
-        "2013-03-31": 0,
-        "2013-04-01": 0,
-        "2013-04-02": "foo",
-      },
-    ],
-  ];
-};
-
-testAddZeroFilledDatesData().forEach((testData, index) => {
-  test(
-    "testAddZeroFilledDates - " + index,
-    testAddZeroFilledDates,
-    testData[0],
-    testData[1],
-  );
-});
-
 const testDurationFromLast: Macro = (
   t: ExecutionContext,
   ts,
@@ -112,8 +10,8 @@ const testDurationFromLast: Macro = (
   rowsWithTimemarkers,
   expectedDurationFromLast,
 ) => {
-  const tlp = new TimeLogParser();
-  const result = tlp.durationFromLast(
+  const timeLogParser = new TimeLogParser();
+  const result = timeLogParser.durationFromLast(
     ts,
     rowsWithTimemarkersHandled,
     rowsWithTimemarkers,
@@ -206,34 +104,67 @@ testDurationFromLastData().forEach((testData, index) => {
   );
 });
 
-/*
-// TODO: Test detection of start/stop-lines
-// TODO: Do not treat "stop paying the bills" as a stop-line...
-const testDetectStartStopLinesCorrectlyData = () => {
-  return [
-    [
-      "stop paying the bills",
-      false,
-      false,
-      false,
-      "Europe/Stockholm",
-      "2016-05-01",
-      false,
-      false,
-    ],
-    [
-      "start going through the items",
-      false,
-      false,
-      false,
-      "Europe/Stockholm",
-      "2016-05-01",
-      false,
-      false,
-    ],
-  ];
+const testStartsWithOptionallySuffixedTokenMethod: Macro = (
+  t: ExecutionContext,
+  haystack: string,
+  keyword: string,
+  suffix: string,
+  expectedReturnValue: string,
+) => {
+  const timeLogParser = new TimeLogParser();
+  const result = timeLogParser.startsWithOptionallySuffixedToken(
+    haystack,
+    keyword,
+    suffix,
+  );
+  t.is(
+    result,
+    expectedReturnValue,
+    "TimeLogParser->startsWithOptionallySuffixedToken() behaves as expected",
+  );
 };
-*/
+testStartsWithOptionallySuffixedTokenMethod.title = (
+  providedTitle: string,
+  haystack: string,
+  keyword: string,
+  suffix: string,
+  expectedReturnValue: string,
+) =>
+  `: ${providedTitle} ${keyword} with suffix "${suffix}" in "${haystack}" = ${expectedReturnValue}`.trim();
+
+const testStartsWithOptionallySuffixedTokenMethodData = () => {
+  let testDataMatrix = Array();
+  const timeLogParser = new TimeLogParser();
+  const tokens = timeLogParser.tokens();
+  const keyword = "pause";
+
+  for (const token of Object.values(tokens[keyword])) {
+    const tokenSpecific = [
+      [token + "->2010-04-03 7:58", keyword, "->", token],
+      [token + "->2010-04-03 7:58", keyword, undefined, token],
+      [token + " 2016-05-16 09:55->", keyword, "->", false],
+      [token + " 2016-05-16 09:55->", keyword, " ", token],
+      [token + " 2016-05-16 09:55->", keyword, undefined, token],
+      [token + "->|$", keyword, "->|$", token],
+    ];
+    testDataMatrix = array_merge(testDataMatrix, tokenSpecific);
+  }
+
+  return testDataMatrix;
+};
+
+testStartsWithOptionallySuffixedTokenMethodData().forEach((testData, index) => {
+  test(
+    "testStartsWithOptionallySuffixedTokenMethod - " + index,
+    testStartsWithOptionallySuffixedTokenMethod,
+    testData[0],
+    testData[1],
+    testData[2],
+    testData[3],
+  );
+});
+
+// TODO: testRemoveSuffixedToken
 
 const testDetectTimeStampAndSetTsAndDate: Macro = (
   t: ExecutionContext,
@@ -247,10 +178,10 @@ const testDetectTimeStampAndSetTsAndDate: Macro = (
   expectedLastKnownTimeZone,
   expectedUtcDateString,
 ) => {
-  const tlp = new TimeLogParser();
-  tlp.lastKnownDate = lastKnownDate;
-  tlp.lastKnownTimeZone = lastKnownTimeZone;
-  const { metadata } = tlp.detectTimeStamp(lineForDateCheck);
+  const timeLogParser = new TimeLogParser();
+  timeLogParser.lastKnownDate = lastKnownDate;
+  timeLogParser.lastKnownTimeZone = lastKnownTimeZone;
+  const { metadata } = timeLogParser.detectTimeStamp(lineForDateCheck);
   t.log({ lineForDateCheck, metadata });
   t.is(
     expectedMetadataDateRaw,
@@ -267,8 +198,10 @@ const testDetectTimeStampAndSetTsAndDate: Macro = (
     metadata.dateRawFormat,
     "TimeLogParser->detectTimeStamp() detects the datetime with the expected format",
   );
-  const { ts, date, datetime } = tlp.set_ts_and_date(metadata.dateRaw);
-  const setTsAndDateError = tlp.lastSetTsAndDateErrorMessage;
+  const { ts, date, datetime } = timeLogParser.set_ts_and_date(
+    metadata.dateRaw,
+  );
+  const setTsAndDateError = timeLogParser.lastSetTsAndDateErrorMessage;
   t.log({ ts, date, datetime, setTsAndDateError });
   const valid = !!date;
   t.is(
@@ -278,7 +211,7 @@ const testDetectTimeStampAndSetTsAndDate: Macro = (
   );
   t.is(
     expectedLastKnownTimeZone,
-    tlp.lastKnownTimeZone,
+    timeLogParser.lastKnownTimeZone,
     "TimeLogParser->set_ts_and_date() sometimes changes the last known timezone by parsing a timestamp string",
   );
 
@@ -856,12 +789,16 @@ const testParseLogComment: Macro = (
   expectedToBeValidTimestampedLogComment,
   expectedUtcDateString, // @var DateTime $datetime
 ) => {
-  const tlp = new TimeLogParser();
-  tlp.lastKnownDate = lastKnownDate;
-  tlp.lastKnownTimeZone = lastKnownTimeZone;
-  const { ts, date, lineWithoutDate, invalid, datetime } = tlp.parseLogComment(
-    line,
-  );
+  const timeLogParser = new TimeLogParser();
+  timeLogParser.lastKnownDate = lastKnownDate;
+  timeLogParser.lastKnownTimeZone = lastKnownTimeZone;
+  const {
+    ts,
+    date,
+    lineWithoutDate,
+    invalid,
+    datetime,
+  } = timeLogParser.parseLogComment(line);
   t.log({ line, ts, date, datetime });
   const valid = !invalid;
   t.is(
@@ -877,12 +814,14 @@ const testParseLogComment: Macro = (
   );
   t.is(
     lastKnownTimeZone,
-    tlp.lastKnownTimeZone,
+    timeLogParser.lastKnownTimeZone,
     "TimeLogParser->set_ts_and_date() does not change the last known timezone by parsing a timestamp string",
   );
 
   if (expectedToBeValidTimestampedLogComment) {
-    const utcDatetime = datetime.cloneWithAnotherTimezone(new DateTimeZone("UTC"));
+    const utcDatetime = datetime.cloneWithAnotherTimezone(
+      new DateTimeZone("UTC"),
+    );
     t.is(
       expectedUtcDateString,
       utcDatetime.format("Y-m-d H:i:s"),

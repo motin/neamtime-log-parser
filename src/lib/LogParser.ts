@@ -87,28 +87,17 @@ export class LogParser {
   }
   */
 
-  // Main contents holders
-  public contents;
-  // Metadata arrays
-  public notParsedAddTimeMarkers;
   // Helper variables
   public lastKnownDate;
   public lastKnownTimeZone;
   public lastUsedTimeZone;
   public lastSetTsAndDateErrorMessage;
-  public tzFirst;
-  public debugAddTimeMarkers;
-  public collectDebugInfo;
 
   constructor() {
-    this.contents = "";
-    this.notParsedAddTimeMarkers = Array();
     this.lastKnownDate = "";
     this.lastKnownTimeZone = "";
     this.lastUsedTimeZone = "";
     this.lastSetTsAndDateErrorMessage = "";
-    this.tzFirst = undefined;
-    this.debugAddTimeMarkers = Array();
   }
 
   public supportedTimestampFormats() // the minute-part may be omitted and instead an approx token will be found, which will be replaced before reaching createFromFormat
