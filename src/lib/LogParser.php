@@ -389,9 +389,9 @@ class LogParser
         $date_raw = trim(str_replace(array("maj", "okt"), array("may", "oct"), $date_raw));
 
         try {
-            $timeZone = $this->interpretLastKnownTimeZone();
-            $ts = $this->parseGmtTimestampFromDateSpecifiedInSpecificTimezone($date_raw, $timeZone, $datetime);
-            $this->lastUsedTimeZone = $timeZone;
+            $timezone = $this->interpretLastKnownTimeZone();
+            $ts = $this->parseGmtTimestampFromDateSpecifiedInSpecificTimezone($date_raw, $timezone, $datetime);
+            $this->lastUsedTimeZone = $timezone;
         } catch (InvalidDateTimeZoneException $e) {
             // If invalid timezone is encountered, use UTC and at least detect the timestamp correctly, but make a note about that the wrong timezone was used
             $ts = $this->parseGmtTimestampFromDateSpecifiedInSpecificTimezone($date_raw, "UTC", $datetime);

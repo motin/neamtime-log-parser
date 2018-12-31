@@ -3,7 +3,8 @@ import { getUnixTime, getZonedTime } from "timezone-support";
 import { DateTimeZone } from "./DateTimeZone";
 
 export class DateTime {
-  public static ISO8601 = "Y-m-d\\TH:i:s\\Z"; // Literal "Z" to strictly only accept 0000-00-00T00:00:00Z
+  public static ISO8601 = "Y-m-d\\TH:i:sP"; // 0000-00-00T00:00:00+00:00
+  public static ISO8601Z = "Y-m-d\\TH:i:s\\Z"; // Literal "Z" to strictly only accept 0000-00-00T00:00:00Z
   public static YMDHI = "Y-m-d H:i";
   public static TTBWSD = "Y-m-d \\(O\\) H:i:s";
 
@@ -21,18 +22,19 @@ export class DateTime {
    *
    * @param phpFormatString
    * @param dateString
-   * @param timeZoneToUseInCaseDateStringHasNoTimezoneInfo
+   * @param timezoneToUseInCaseDateStringHasNoTimezoneInfo
    */
   public static createFromFormat(
     phpFormatString: string,
     dateString: string = null,
-    timeZoneToUseInCaseDateStringHasNoTimezoneInfo: DateTimeZone = null,
+    timezoneToUseInCaseDateStringHasNoTimezoneInfo: DateTimeZone = null,
   ): DateTime {
     let parsedDate;
-    let timeZone;
+    let timezone;
 
     const {
       formatString,
+      formatStringIncludesLiteralZAsTimezone,
       formatStringIncludesTimezone,
     } = phpToDateFnsFormatString(phpFormatString);
 
@@ -42,7 +44,7 @@ export class DateTime {
         dateString,
       );
       parsedDate = parsedZonedDate.getDate();
-      timeZone = parsedZonedDate.getTimezone();
+      timezone = parsedZonedDate.getTimezone();
       // TODO: Emit warning/notice if the zoned timezone differs from the supplied timezone argument??
 
       if (!DateTime.isValidDate(parsedDate)) {
@@ -50,20 +52,20 @@ export class DateTime {
           "DateTime parse error (toZonedDate, required to detect the timezone, failed)",
         );
       }
-      console.debug("parsedDate", parsedDate);
+      // console.debug("parsedDate", parsedDate);
 
-      return new DateTime(parsedDate, timeZone);
+      return new DateTime(parsedDate, timezone);
     } else {
-      timeZone = timeZoneToUseInCaseDateStringHasNoTimezoneInfo;
+      timezone = timezoneToUseInCaseDateStringHasNoTimezoneInfo;
     }
 
-    if (!timeZone) {
-      timeZone = new DateTimeZone("UTC");
+    if (!timezone || formatStringIncludesLiteralZAsTimezone) {
+      timezone = new DateTimeZone("UTC");
     }
 
     // When we parse a date without timezone information using date-fns, it will
     // be assumed that we are parsing in the local timezone, which means that we need to
-    // adjust the parsed time here to match our timeZone parameter
+    // adjust the parsed time here to match our timezone parameter
 
     const initiallyParsedDate = parse(dateString, formatString, new Date(), {
       awareOfUnicodeTokens: false,
@@ -76,7 +78,7 @@ export class DateTime {
 
     const zonedParsedDate = getZonedTime(
       initiallyParsedDate,
-      timeZone.getTimeZoneInfo(),
+      timezone.getTimeZoneInfo(),
     );
 
     // Adjust the incorrectly parsed local time
@@ -89,7 +91,7 @@ export class DateTime {
 
     // console.debug("{timezoneOffset, zonedParsedDate, parsedDate}", {timezoneOffset, zonedParsedDate, parsedDate});
 
-    return new DateTime(parsedDate, timeZone);
+    return new DateTime(parsedDate, timezone);
   }
 
   public static createFromUnixTimestamp(unixTimestamp: number): DateTime {
@@ -98,19 +100,19 @@ export class DateTime {
   }
 
   private readonly date: Date;
-  private readonly timeZone;
+  private readonly timezone;
 
-  constructor(date: Date, timeZone = null) {
+  constructor(date: Date, timezone = null) {
     this.date = date;
-    this.timeZone = timeZone;
+    this.timezone = timezone;
   }
 
   public isValid() {
     return DateTime.isValidDate(this.date);
   }
 
-  public setTimestamp(unixTimestamp): DateTime {
-    return new DateTime(new Date(unixTimestamp * 1000));
+  public cloneWithAnotherTimestamp(unixTimestamp): DateTime {
+    return new DateTime(new Date(unixTimestamp * 1000), this.timezone);
   }
 
   public getTimestamp() {
@@ -121,15 +123,15 @@ export class DateTime {
     return this.date;
   }
 
-  public setTimezone(timeZone): DateTime {
-    return new DateTime(this.date, timeZone);
+  public cloneWithAnotherTimezone(timezone: DateTimeZone): DateTime {
+    return new DateTime(this.date, timezone);
   }
 
   public getTimezone() {
-    if (!this.timeZone) {
+    if (!this.timezone) {
       return new DateTimeZone("UTC");
     }
-    return this.timeZone;
+    return this.timezone;
   }
 
   public format(phpFormatString) {
@@ -144,6 +146,7 @@ export class DateTime {
         zonedParsedDate.zone.offset * 1000 * 60,
     );
     const formatted = format(dateForFormatting, formatString);
+    // console.debug("DateTime.format - {formatString, zonedParsedDate, dateForFormatting, formatted}, this.getDate(), this.getTimezone().getName()",{formatString, zonedParsedDate, dateForFormatting, formatted}, this.getDate(), this.getTimezone().getName());
     return formatted;
   }
 }
@@ -171,10 +174,15 @@ const phpToDateFnsFormatStringConversions = {
 
 const phpToDateFnsFormatString = (
   phpFormat,
-): { formatString: string; formatStringIncludesTimezone: boolean } => {
+): {
+  formatString: string;
+  formatStringIncludesLiteralZAsTimezone: boolean;
+  formatStringIncludesTimezone: boolean;
+} => {
   const items = phpFormat.split("");
   let formatString = "";
   let formatStringIncludesTimezone = false;
+  let formatStringIncludesLiteralZAsTimezone = false;
 
   const timezoneTokens = ["e", "O", "P", "T"];
 
@@ -182,6 +190,9 @@ const phpToDateFnsFormatString = (
   for (const item of items) {
     if (literalNext) {
       formatString += "'" + item + "'";
+      if (item === "Z") {
+        formatStringIncludesLiteralZAsTimezone = true;
+      }
       literalNext = false;
     } else {
       if (phpToDateFnsFormatStringConversions[item] !== undefined) {
@@ -198,5 +209,9 @@ const phpToDateFnsFormatString = (
       }
     }
   }
-  return { formatString, formatStringIncludesTimezone };
+  return {
+    formatString,
+    formatStringIncludesLiteralZAsTimezone,
+    formatStringIncludesTimezone,
+  };
 };

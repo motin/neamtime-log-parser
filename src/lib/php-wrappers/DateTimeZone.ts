@@ -1,5 +1,6 @@
 import { convertTimeToDate, findTimeZone } from "timezone-support";
 import { parseZonedTime } from "timezone-support/dist/parse-format";
+import { InvalidDateTimeZoneException } from "../exceptions/InvalidDateTimeZoneException";
 import { DateTime } from "./DateTime";
 
 export class DateTimeZone {
@@ -26,9 +27,9 @@ export class DateTimeZone {
    * Necessary in order to not only parse a zoned date string but also detect the original time zone
    * Supports the following timezone definitions:
    *
-   * Timezone abbreviation	z	CET, CEST, EST, EDT, ...
-   * Timezone offset to UTC	Z	-01:00, +00:00, ... +12:00
-   *                        ZZ	-0100, +0000, ..., +1200
+   * Timezone abbreviation  z  CET, CEST, EST, EDT, ...
+   * Timezone offset to UTC  Z  -01:00, +00:00, ... +12:00
+   *                        ZZ  -0100, +0000, ..., +1200
    *
    * @param phpFormatString
    * @param dateString
@@ -63,31 +64,40 @@ export class DateTimeZone {
     return new DateTime(parsedZonedDate, detectedTimeZone);
   }
 
-  private readonly timeZone: string;
-  private readonly timeZoneInfo: any;
+  private readonly timezone: string;
+  private timezoneInfo: any;
 
   constructor(timezoneString) {
-    this.timeZone = DateTimeZone.interpretTimezoneString(timezoneString);
+    this.timezone = DateTimeZone.interpretTimezoneString(timezoneString);
     // This is weird - can't use offsets directly, instead must translate
     // Even weirder is that GMT timezones count backwards
-    switch (this.timeZone) {
+    switch (this.timezone) {
       case "-06:00":
-        this.timeZone = "Etc/GMT+6";
+        this.timezone = "Etc/GMT+6";
         break;
     }
-    this.timeZoneInfo = findTimeZone(this.timeZone);
   }
 
   public toString() {
-    return this.timeZone;
+    return this.timezone;
   }
 
   public getName() {
-    return this.timeZone;
+    return this.timezone;
   }
 
   public getTimeZoneInfo() {
-    return this.timeZoneInfo;
+    if (!this.timezoneInfo) {
+      try {
+        this.timezoneInfo = findTimeZone(this.timezone);
+      } catch (e) {
+        if (e.message.indexOf("Unknown time zone") > -1) {
+          throw new InvalidDateTimeZoneException(e.message, undefined, e);
+        }
+        throw e;
+      }
+    }
+    return this.timezoneInfo;
   }
 }
 

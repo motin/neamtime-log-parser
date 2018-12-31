@@ -244,13 +244,14 @@ const testDetectTimeStampAndSetTsAndDate: Macro = (
   lastKnownTimeZone,
   lastKnownDate,
   expectedToBeValid,
+  expectedLastKnownTimeZone,
   expectedUtcDateString,
 ) => {
   const tlp = new TimeLogParser();
   tlp.lastKnownDate = lastKnownDate;
   tlp.lastKnownTimeZone = lastKnownTimeZone;
   const { metadata } = tlp.detectTimeStamp(lineForDateCheck);
-  t.log({ metadata });
+  t.log({ lineForDateCheck, metadata });
   t.is(
     expectedMetadataDateRaw,
     metadata.dateRaw,
@@ -276,9 +277,9 @@ const testDetectTimeStampAndSetTsAndDate: Macro = (
     "TimeLogParser->set_ts_and_date() detects valid datetimes as expected",
   );
   t.is(
-    lastKnownTimeZone,
+    expectedLastKnownTimeZone,
     tlp.lastKnownTimeZone,
-    "TimeLogParser->set_ts_and_date() does not change the last known timezone by parsing a timestamp string",
+    "TimeLogParser->set_ts_and_date() sometimes changes the last known timezone by parsing a timestamp string",
   );
 
   if (expectedToBeValid) {
@@ -296,10 +297,12 @@ const testDetectTimeStampAndSetTsAndDate: Macro = (
   }
 
   if (expectedToBeValid) {
-    datetime.setTimezone(new DateTimeZone("UTC"));
+    const utcDatetime = datetime.cloneWithAnotherTimezone(
+      new DateTimeZone("UTC"),
+    );
     t.is(
+      utcDatetime.format("Y-m-d H:i:s"),
       expectedUtcDateString,
-      datetime.format("Y-m-d H:i:s"),
       "TimeLogParser->set_ts_and_date() behaves as expected",
     );
   }
@@ -311,13 +314,13 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "foo 2016-05-25T14:50:00Z bar",
       "2016-05-25T14:50:00Z",
       "14:50:00",
-      DateTime.ISO8601,
-      "Europe/Stockholm",
+      DateTime.ISO8601Z,
+      "Europe/Stockholm", // TODO: This should be able to be undefined or anything since we have time zone info
       "2016-05-01",
       true,
+      "UTC",
       "2016-05-25 14:50:00",
     ],
-    /*
     [
       "foo 2016-05-25T14:50:00+03:00 bar",
       "2016-05-25T14:50:00+03:00",
@@ -326,16 +329,18 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "UTC", // TODO: Revisit this - this should be +03:00 instead of UTC
       "2016-05-25 11:50:00",
     ],
     [
       "foo 2016-05-25T14:50:00+UTC bar",
       "2016-05-25T14:50:00+UTC",
       "14:50:00",
-      DateTime.ISO8601,
+      DateTime.ISO8601Z,
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "UTC",
       "2016-05-25 14:50:00",
     ],
     [
@@ -346,6 +351,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "UTC",
       "2016-05-01",
       true,
+      "UTC",
       "2016-05-25 14:50:00",
     ],
     [
@@ -356,7 +362,8 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
-      "2016-05-25 12:50:00",
+      "Europe/Stockholm",
+      "2016-05-25 12:50:00", // verified via https://www.timeanddate.com/worldclock/converter.html?iso=20160625T125000&p1=1440&p2=37&p3=239
     ],
     [
       "foo 2016-05-25 14:50 bar",
@@ -366,6 +373,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Helsinki",
       "2016-05-01",
       true,
+      "Europe/Helsinki",
       "2016-05-25 11:50:00",
     ],
     [
@@ -376,6 +384,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "UTC",
       "2016-05-01",
       true,
+      "UTC",
       "2014-09-01 14:50:00",
     ],
     [
@@ -386,6 +395,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2014-09-01 12:50:00",
     ],
     [
@@ -396,6 +406,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Helsinki",
       "2016-05-01",
       true,
+      "Europe/Helsinki",
       "2014-09-01 11:50:00",
     ],
     [
@@ -406,6 +417,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "UTC",
       "2016-05-01",
       true,
+      "UTC",
       "2014-11-21 14:50:00",
     ],
     [
@@ -416,6 +428,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2014-11-21 13:50:00",
     ],
     [
@@ -426,6 +439,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Helsinki",
       "2016-05-01",
       true,
+      "Europe/Helsinki",
       "2014-11-21 12:50:00",
     ],
     [
@@ -436,6 +450,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "UTC",
       "2016-05-01",
       true,
+      "UTC",
       "2016-05-25 14:50:00",
     ],
     [
@@ -446,6 +461,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-25 12:50:00",
     ],
     [
@@ -456,6 +472,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Helsinki",
       "2016-05-01",
       true,
+      "Europe/Helsinki",
       "2016-05-25 11:50:00",
     ],
     [
@@ -466,6 +483,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "UTC",
       "2016-05-01",
       true,
+      "UTC",
       "2014-09-01 14:50:00",
     ],
     [
@@ -476,6 +494,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2014-09-01 12:50:00",
     ],
     [
@@ -486,6 +505,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Helsinki",
       "2016-05-01",
       true,
+      "Europe/Helsinki",
       "2014-09-01 11:50:00",
     ],
     [
@@ -496,6 +516,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "UTC",
       "2016-05-01",
       true,
+      "UTC",
       "2014-11-21 14:50:00",
     ],
     [
@@ -506,6 +527,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2014-11-21 13:50:00",
     ],
     [
@@ -516,6 +538,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Helsinki",
       "2016-05-01",
       true,
+      "Europe/Helsinki",
       "2014-11-21 12:50:00",
     ],
     [
@@ -526,6 +549,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "UTC",
       "2016-05-01",
       true,
+      "UTC",
       "2016-05-25 14:50:00",
     ],
     [
@@ -536,6 +560,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-25 12:50:00",
     ],
     [
@@ -546,6 +571,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Helsinki",
       "2016-05-01",
       true,
+      "Europe/Helsinki",
       "2016-05-25 11:50:00",
     ],
     [
@@ -556,6 +582,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "UTC",
       "2016-05-01",
       true,
+      "UTC",
       "2014-09-01 14:50:00",
     ],
     [
@@ -566,6 +593,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2014-09-01 12:50:00",
     ],
     [
@@ -576,6 +604,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Helsinki",
       "2016-05-01",
       true,
+      "Europe/Helsinki",
       "2014-09-01 11:50:00",
     ],
     [
@@ -586,6 +615,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "UTC",
       "2016-05-01",
       true,
+      "UTC",
       "2014-11-21 14:50:00",
     ],
     [
@@ -596,6 +626,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2014-11-21 13:50:00",
     ],
     [
@@ -606,6 +637,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Helsinki",
       "2016-05-01",
       true,
+      "Europe/Helsinki",
       "2014-11-21 12:50:00",
     ],
     [
@@ -616,6 +648,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "UTC", // TODO: Revisit this - this should be +02:00 instead of UTC
       "2014-09-01 10:42:21",
     ],
     [
@@ -626,6 +659,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2014-09-01 10:42:00",
     ],
     [
@@ -636,6 +670,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2014-09-01 10:42:00",
     ],
     [
@@ -646,6 +681,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
     [
@@ -656,6 +692,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
     [
@@ -666,6 +703,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       false,
+      "Europe/Stockholm",
       false,
     ],
     [
@@ -676,6 +714,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-01 16:45:00",
     ],
     [
@@ -686,6 +725,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-25 16:45:00",
     ],
     [
@@ -696,6 +736,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       true,
+      "Europe/Stockholm",
       "2016-05-25 16:45:00",
     ],
     [
@@ -706,6 +747,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       false,
+      "Europe/Stockholm",
       false,
     ],
     [
@@ -716,6 +758,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2016-05-01",
       false,
+      "Europe/Stockholm",
       false,
     ],
     [
@@ -726,6 +769,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2014-11-21",
       true,
+      "Europe/Stockholm",
       "2014-11-21 16:49:00",
     ],
     [
@@ -736,16 +780,18 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Stockholm",
       "2014-11-21",
       true,
+      "Europe/Stockholm",
       "2014-11-21 16:49:00",
     ],
     [
       " 2014-11-21T15:51:00+UTC, <just before paus>",
       "2014-11-21T15:51:00+UTC",
       "15:51:00",
-      DateTime.ISO8601,
+      DateTime.ISO8601Z,
       "Europe/Stockholm",
       "2014-11-21",
       true,
+      "UTC",
       "2014-11-21 15:51:00",
     ],
     [
@@ -756,6 +802,7 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Helsinki",
       "2017-01-26",
       true,
+      "Europe/Helsinki",
       "2017-01-26 15:26:00",
     ],
     [
@@ -766,9 +813,9 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
       "Europe/Helsinki",
       "2017-03-01",
       true,
+      "Europe/Helsinki",
       "2017-03-01 07:15:00",
     ],
-    */
   ];
 };
 
@@ -784,6 +831,7 @@ testDetectTimeStampAndSetTsAndDateData().forEach((testData, index) => {
     testData[5],
     testData[6],
     testData[7],
+    testData[8],
   );
 });
 
@@ -834,10 +882,10 @@ const testParseLogComment: Macro = (
   );
 
   if (expectedToBeValidTimestampedLogComment) {
-    datetime.setTimezone(new DateTimeZone("UTC"));
+    const utcDatetime = datetime.cloneWithAnotherTimezone(new DateTimeZone("UTC"));
     t.is(
       expectedUtcDateString,
-      datetime.format("Y-m-d H:i:s"),
+      utcDatetime.format("Y-m-d H:i:s"),
       "TimeLogParser->parseLogComment() behaves as expected",
     );
   }

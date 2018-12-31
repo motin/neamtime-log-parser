@@ -165,18 +165,10 @@ export class TimeLogParser extends LogParser {
       }
       */
 
-      console.debug("{detectRegex, lineForDateCheck, m, regexp}", {
-        detectRegex,
-        lineForDateCheck,
-        m,
-        regexp,
-      });
+      // console.debug("{detectRegex, lineForDateCheck, m, regexp}", {detectRegex, lineForDateCheck, m, regexp});
 
       if (m) {
-        console.debug("MATCHED: {lineForDateCheck, m}", {
-          lineForDateCheck,
-          m,
-        });
+        // console.debug("MATCHED: {lineForDateCheck, m}", {lineForDateCheck, m});
         if (this.collectDebugInfo) {
           metadata["date_search_preg_debug:" + format] = {
             lineForDateCheck,
@@ -256,14 +248,25 @@ export class TimeLogParser extends LogParser {
     return durationSinceLast;
   }
 
-  public set_ts_and_date(dateRaw) {
+  public set_ts_and_date(
+    dateRaw,
+  ): { ts: number; date?: string; datetime?: DateTime } {
     this.lastSetTsAndDateErrorMessage = "";
+
+    const errorReturn = {
+      ts: 0,
+    };
+
+    if (dateRaw === false) {
+      this.lastSetTsAndDateErrorMessage = "Found no timestamp to parse";
+      return errorReturn;
+    }
 
     // Invalidate strings that are clearly too large to be a timestamp
     if (dateRaw.length > 50) {
       this.lastSetTsAndDateErrorMessage =
         "Invalidate strings that are clearly too large to be a timestamp";
-      return null;
+      return errorReturn;
     }
 
     const m = dateRaw.match(/[0-9]+/g);
@@ -271,7 +274,7 @@ export class TimeLogParser extends LogParser {
     if (!m) {
       this.lastSetTsAndDateErrorMessage =
         "Invalidate strings that do not contain numbers, since they can not be a timestamp";
-      return null;
+      return errorReturn;
     }
 
     if (dateRaw.length < 8) {

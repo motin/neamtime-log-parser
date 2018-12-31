@@ -93,20 +93,24 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone: Macro = (
     datetime,
   } = tlp.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(str, timezone);
   t.true(typeof datetime !== "undefined");
-  t.is(expectedGmtTimestamp, gmtTimestamp);
+  t.is(gmtTimestamp, expectedGmtTimestamp);
   const gmtTimestampFormattedAsNewDefaultDatetime = DateTime.createFromUnixTimestamp(
     gmtTimestamp,
   );
   t.is(
-    expectedGmtTimestampFormattedAsNewDefaultDatetime,
     gmtTimestampFormattedAsNewDefaultDatetime.format("Y-m-d H:i"),
+    expectedGmtTimestampFormattedAsNewDefaultDatetime,
   );
-  t.is(expectedDateTimeTimeZone, datetime.getTimezone().getName());
-  t.is(expectedGmtTimestamp, datetime.getTimestamp());
-  const timezoneDatetime = datetime.setTimezone(new DateTimeZone(timezone));
-  t.is(expectedTimestampInTimeZone, timezoneDatetime.getTimestamp());
-  const transposed = datetime.setTimezone(new DateTimeZone(transposeTimeZone));
-  t.is(expectedTransposedFormatted, transposed.format("Y-m-d H:i"));
+  t.is(datetime.getTimezone().getName(), expectedDateTimeTimeZone);
+  t.is(datetime.getTimestamp(), expectedGmtTimestamp);
+  const timezoneDatetime = datetime.cloneWithAnotherTimezone(
+    new DateTimeZone(timezone),
+  );
+  t.is(timezoneDatetime.getTimestamp(), expectedTimestampInTimeZone);
+  const transposed = datetime.cloneWithAnotherTimezone(
+    new DateTimeZone(transposeTimeZone),
+  );
+  t.is(transposed.format("Y-m-d H:i"), expectedTransposedFormatted);
 };
 
 const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
@@ -218,8 +222,28 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
       "2016-05-25 14:50",
       "UTC",
       1464187800,
+      "UTC",
+      "2016-05-25 14:50",
+    ],
+    [
+      "2016-05-25T14:50:00Z",
+      "UTC",
+      1464187800,
+      "2016-05-25 14:50",
+      "UTC",
+      1464187800,
       "Europe/Berlin",
       "2016-05-25 16:50", // verified using https://www.timeanddate.com/worldclock/converter.html?iso=20160625T145000&p1=1440&p2=37
+    ],
+    [
+      "2016-05-25 14:50",
+      "Europe/Stockholm",
+      1464180600,
+      "2016-05-25 12:50",
+      "Europe/Stockholm",
+      1464180600,
+      "UTC",
+      "2016-05-25 12:50", // verified using https://www.timeanddate.com/worldclock/converter.html?iso=20160625T145000&p1=1440&p2=37
     ],
   ];
 };

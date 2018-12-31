@@ -125,9 +125,18 @@ export class LogParser {
       "(\\d+\\.([^\\s\\-,:]*|ca|appr))";
     const regexDetectHcoloni = "(\\d+:[^\\s\\-,:]+)";
     const regexDetectHdoti = "(\\d+\\.[^\\s\\-,:]+)";
-    const regexDetectIsoTimezone = "(Z|\\+\\d\\d:\\d\\d)";
+    const regexDetectLiteralZAsTimezone = "(Z)";
+    const regexDetectIsoTimezone = "(\\+\\d\\d:\\d\\d)";
     const regexDetectUtcTimezone = "(\\+UTC)";
     return [
+      {
+        acceptApproxTokenInsteadOfMinutes: false,
+        detectRegex:
+          regexDetectYmd + "T" + regexDetectHis + regexDetectLiteralZAsTimezone,
+        detectRegexDateRawMatchIndex: 0,
+        detectRegexTimeRawMatchIndex: 2,
+        format: DateTime.ISO8601Z,
+      },
       {
         acceptApproxTokenInsteadOfMinutes: false,
         detectRegex:
@@ -142,8 +151,9 @@ export class LogParser {
           regexDetectYmd + "T" + regexDetectHis + regexDetectUtcTimezone,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
-        format: DateTime.ISO8601,
+        format: DateTime.ISO8601Z,
         pre_datetime_parsing_callback: str => {
+          // Convert to ISO8601Z
           return str_replace("+UTC", "Z", str);
         },
       },
@@ -282,28 +292,28 @@ export class LogParser {
 
   public set_ts_and_date(
     dateRaw: string,
-  ): { ts: number; date: string | false; datetime: DateTime } {
+  ): { ts: number; date?: string; datetime?: DateTime } {
     this.lastSetTsAndDateErrorMessage = "";
     dateRaw = str_replace(["maj", "okt"], ["may", "oct"], dateRaw).trim();
 
     let ts: number;
     let datetime: DateTime;
     let datetimeParseResult: DateTime | false;
-    let date: string | false;
+    let date: string;
+
+    const timezoneStringToUseInCaseDateStringHasNoTimezoneInfo = this.interpretLastKnownTimeZone();
 
     try {
-      const timeZone = this.interpretLastKnownTimeZone();
-
       const {
         gmtTimestamp,
         datetime: datetimeReturned,
       } = this.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
         dateRaw,
-        timeZone,
+        timezoneStringToUseInCaseDateStringHasNoTimezoneInfo,
       );
       ts = gmtTimestamp;
       datetimeParseResult = datetimeReturned;
-      this.lastUsedTimeZone = timeZone;
+      this.lastUsedTimeZone = datetimeParseResult.getTimezone().getName();
     } catch (e) {
       if (e instanceof InvalidDateTimeZoneException) {
         // If invalid timezone is encountered, use UTC and at least detect the timestamp correctly, but make a note about that the wrong timezone was used
@@ -321,22 +331,25 @@ export class LogParser {
       }
     }
 
+    // console.debug("set_ts_and_date - midway - {datetimeParseResult, timezoneStringToUseInCaseDateStringHasNoTimezoneInfo, ts}, this.lastKnownDate, this.lastKnownTimeZone, this.lastSetTsAndDateErrorMessage, this.lastUsedTimeZone",{datetimeParseResult, timezoneStringToUseInCaseDateStringHasNoTimezoneInfo, ts}, this.lastKnownDate, this.lastKnownTimeZone, this.lastSetTsAndDateErrorMessage, this.lastUsedTimeZone);
+
     if (!ts) {
       ts = 0;
-      date = false;
       this.lastSetTsAndDateErrorMessage = "Timestamp not found";
     } else if (
       ts > 0 &&
       ts < new Date().getTime() / 1000 - 24 * 3600 * 365 * 10
     ) {
       ts = 0;
-      date = false;
       this.lastSetTsAndDateErrorMessage =
         "Timestamp found was more than 10 years old, not reasonably correct";
     } else {
       if (datetimeParseResult instanceof DateTime) {
         datetime = datetimeParseResult;
         this.lastKnownDate = datetime.format("Y-m-d");
+        // trust that the last used time zone is the one that should be used for upcoming unzoned timestamps (allows for a zoned timestamp to function as a |tz: marker)
+        // TODO: This should only be set if the last used timezone was set from a zoned timestamp
+        this.lastKnownTimeZone = datetime.getTimezone().getName();
         // new day starts at 06.00 in the morning - arbitrarily decided as such TODO: Make configurable
         const midnightOffset = 6 * 60;
         // TODO: Possibly restore this, but then based on dateRaw lacking time-information instead of the parsed date object having time at midnight
@@ -354,24 +367,21 @@ export class LogParser {
     return DateTimeZone.interpretTimezoneString(this.lastKnownTimeZone);
   }
 
+  /**
+   *
+   * @param str
+   * @param timezoneStringToUseInCaseDateStringHasNoTimezoneInfo
+   */
   public parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
     str: string,
-    timezoneString: string,
+    timezoneStringToUseInCaseDateStringHasNoTimezoneInfo: string,
   ): { gmtTimestamp: number; datetime: DateTime } {
     let gmtTimestamp: number;
     let datetimeParseResult: DateTime | false;
     let datetime: DateTime;
-    let timezone;
-
-    try {
-      timezone = new DateTimeZone(timezoneString);
-    } catch (e) {
-      if (strpos(e.message, "Unknown time zone") !== false) {
-        throw new InvalidDateTimeZoneException(e.message, undefined, e);
-      }
-
-      throw e;
-    }
+    const timezoneToUseInCaseDateStringHasNoTimezoneInfo: DateTimeZone = new DateTimeZone(
+      timezoneStringToUseInCaseDateStringHasNoTimezoneInfo,
+    );
 
     for (const supportedTimestampFormat of Object.values(
       this.supportedTimestampFormats(),
@@ -383,7 +393,11 @@ export class LogParser {
       }
 
       try {
-        datetimeParseResult = DateTime.createFromFormat(format, str, timezone);
+        datetimeParseResult = DateTime.createFromFormat(
+          format,
+          str,
+          timezoneToUseInCaseDateStringHasNoTimezoneInfo,
+        );
         if (datetimeParseResult.isValid()) {
           if (datetimeParseResult instanceof DateTime) {
             datetime = datetimeParseResult;
@@ -391,21 +405,16 @@ export class LogParser {
           break;
         }
       } catch (e) {
-        if (e.message === "DateTime parse error") {
-          // ignore
+        if (e.message.indexOf("DateTime parse error") > -1) {
+          // ignore, since we will try another supported format until something works
         } else {
           throw e;
         }
       }
     }
 
-    if (!datetime) {
-      // TODO: Remove expectation of number and this setting of 0 on error
-      gmtTimestamp = 0;
-    } else {
-      const gmtDatetime = datetime.setTimezone(new DateTimeZone("UTC"));
-      gmtTimestamp = gmtDatetime.getTimestamp();
-    }
+    // TODO: Remove expectation of number and this setting of 0 on error
+    gmtTimestamp = !datetime ? 0 : datetime.getTimestamp();
 
     return { gmtTimestamp, datetime };
   }
