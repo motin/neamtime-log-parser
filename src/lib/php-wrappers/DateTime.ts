@@ -3,45 +3,68 @@ import { getUnixTime, getZonedTime } from "timezone-support";
 import { DateTimeZone } from "./DateTimeZone";
 
 export class DateTime {
-  public static ISO8601 = "Y-m-d\\TH:i:sO";
+  public static ISO8601 = "Y-m-d\\TH:i:s\\Z"; // Literal "Z" to strictly only accept 0000-00-00T00:00:00Z
   public static YMDHI = "Y-m-d H:i";
+  public static TTBWSD = "Y-m-d \\(O\\) H:i:s";
 
   public static isValidDate(d) {
     return d instanceof Date && !isNaN(Number(d));
   }
 
+  /**
+   * Timezone handling in javascript is silly. PHP's DateTime::createFromFormat is more deterministic
+   * so we model its interface and implementation here.
+   *
+   * Note: Differs from PHP's DateTime::createFromFormat in the following aspect:
+   *  - If timezone is omitted and time contains no timezone, the UTC timezone will be used instead of the current timezone.
+   * This reflects how servers are usually configured in UTC timezone and not in the client's timezone.
+   *
+   * @param phpFormatString
+   * @param dateString
+   * @param timeZoneToUseInCaseDateStringHasNoTimezoneInfo
+   */
   public static createFromFormat(
     phpFormatString: string,
     dateString: string = null,
-    timeZone: DateTimeZone = null,
+    timeZoneToUseInCaseDateStringHasNoTimezoneInfo: DateTimeZone = null,
   ): DateTime {
-    if (!timeZone) {
-      timeZone = new DateTimeZone("UTC");
-    }
-
     let parsedDate;
-    // TODO: Either fully support IANA timezones or strip the corresponding wip code away
-    /*
-    const formatContainsIanaTimezone = false;
-    if (formatContainsIanaTimezone) {
-      const formatString = phpToTimeZoneSupportFormatString(phpFormatString);
-      console.log("formatString", formatString);
-      try {
-        parsedDate = DateTimeZone.parseZonedString(dateString, formatString);
-        // TODO: Throw exception if the zoned timezone differs from the supplied timezone argument??
-      } catch (e) {
-        // console.error("Zoned time parse error: ", e);
-        parsedDate = false;
-      }
-    } else { ... }
-    */
-
-    // Timezone handling in javascript is silly requiring this dance
+    let timeZone;
 
     const {
       formatString,
       formatStringIncludesTimezone,
     } = phpToDateFnsFormatString(phpFormatString);
+
+    if (formatStringIncludesTimezone) {
+      const parsedZonedDate = DateTimeZone.createFromZonedFormat(
+        phpFormatString,
+        dateString,
+      );
+      parsedDate = parsedZonedDate.getDate();
+      timeZone = parsedZonedDate.getTimezone();
+      // TODO: Emit warning/notice if the zoned timezone differs from the supplied timezone argument??
+
+      if (!DateTime.isValidDate(parsedDate)) {
+        throw new Error(
+          "DateTime parse error (toZonedDate, required to detect the timezone, failed)",
+        );
+      }
+      console.debug("parsedDate", parsedDate);
+
+      return new DateTime(parsedDate, timeZone);
+    } else {
+      timeZone = timeZoneToUseInCaseDateStringHasNoTimezoneInfo;
+    }
+
+    if (!timeZone) {
+      timeZone = new DateTimeZone("UTC");
+    }
+
+    // When we parse a date without timezone information using date-fns, it will
+    // be assumed that we are parsing in the local timezone, which means that we need to
+    // adjust the parsed time here to match our timeZone parameter
+
     const initiallyParsedDate = parse(dateString, formatString, new Date(), {
       awareOfUnicodeTokens: false,
     });
@@ -50,14 +73,6 @@ export class DateTime {
     if (!DateTime.isValidDate(initiallyParsedDate)) {
       throw new Error("DateTime parse error");
     }
-
-    if (formatStringIncludesTimezone) {
-      return new DateTime(initiallyParsedDate, timeZone);
-    }
-
-    // When we parse a date without timezone information using date-fns, it will
-    // be assumed that we are parsing in the local timezone, which means that we need to
-    // adjust the parsed time here
 
     const zonedParsedDate = getZonedTime(
       initiallyParsedDate,
@@ -133,74 +148,10 @@ export class DateTime {
   }
 }
 
-/*
-const phpToTimezoneSupportFormatStringConversions = {
-  /* tslint:disable:object-literal-sort-keys * /
-  d: "DD",
-  D: "ddd",
-  j: "D",
-  l: "dddd",
-  N: "E",
-  S: "o",
-  w: "e",
-  z: "DDD",
-  W: "W",
-  F: "MMMM",
-  m: "MM",
-  M: "MMM",
-  n: "M",
-  t: "",
-  L: "",
-  o: "YYYY",
-  Y: "YYYY",
-  y: "YY",
-  a: "a",
-  A: "A",
-  B: "",
-  g: "h",
-  G: "H",
-  h: "hh",
-  H: "HH",
-  i: "mm",
-  s: "ss",
-  u: "SSS",
-  e: "zz",
-  I: "",
-  O: "zz",
-  P: "zz",
-  T: "zz",
-  Z: "",
-  c: "",
-  r: "",
-  U: "X",
-  /* tslint:enable:object-literal-sort-keys * /
-};
-
-const phpToTimeZoneSupportFormatString = phpFormat => {
-  const items = phpFormat.split("");
-  let returnItem = "";
-
-  let ignoreNext;
-  for (const item of items) {
-    if (
-      !ignoreNext &&
-      phpToTimezoneSupportFormatStringConversions[item] !== undefined
-    ) {
-      returnItem += phpToTimezoneSupportFormatStringConversions[item];
-    } else {
-      returnItem += item;
-    }
-    if (ignoreNext) {
-      ignoreNext = false;
-    }
-    if (item === "\\") {
-      ignoreNext = true;
-    }
-  }
-  return returnItem;
-};
-*/
-
+/**
+ * From: http://php.net/manual/en/datetime.createfromformat.php
+ * To: https://date-fns.org/v2.0.0-alpha.26/docs/parse
+ */
 const phpToDateFnsFormatStringConversions = {
   /* tslint:disable:object-literal-sort-keys */
   d: "dd",
@@ -211,10 +162,10 @@ const phpToDateFnsFormatStringConversions = {
   i: "mm",
   s: "ss",
   u: "SSS",
-  e: "xxx",
-  O: "X",
-  P: "xxx",
-  T: "xxx",
+  e: "XXX", // Timezone identifier (UTC, GMT, Atlantic/Azores) Note: Not supported by date-fns, but using XXX in order to catch the supported special case "Z"
+  O: "XX", // Difference to UTC in hours (+0200)
+  P: "XXX", // Difference to UTC with colon between hours and minutes (+02:00)
+  T: "XXX", // Timezone abbreviation (EST, MDT) Note: Not supported by date-fns, but using XXX in order to catch the supported special case "Z"
   /* tslint:enable:object-literal-sort-keys */
 };
 

@@ -1,5 +1,6 @@
-import { findTimeZone } from "timezone-support";
-// import { parseZonedTime } from "timezone-support/dist/parse-format";
+import { convertTimeToDate, findTimeZone } from "timezone-support";
+import { parseZonedTime } from "timezone-support/dist/parse-format";
+import { DateTime } from "./DateTime";
 
 export class DateTimeZone {
   // https://github.com/prantlf/date-fns-timezone/blob/master/src/parseFromString.js
@@ -21,14 +22,50 @@ export class DateTimeZone {
     return timezoneString;
   }
 
-  /*
-  public static parseZonedString(dateString, formatString) {
-    const time = parseZonedTime(dateString, formatString);
-    return convertTimeToDate(time);
+  /**
+   * Necessary in order to not only parse a zoned date string but also detect the original time zone
+   * Supports the following timezone definitions:
+   *
+   * Timezone abbreviation	z	CET, CEST, EST, EDT, ...
+   * Timezone offset to UTC	Z	-01:00, +00:00, ... +12:00
+   *                        ZZ	-0100, +0000, ..., +1200
+   *
+   * @param phpFormatString
+   * @param dateString
+   */
+  public static createFromZonedFormat(phpFormatString, dateString): DateTime {
+    let parsedZonedDate;
+    let detectedTimeZone;
+
+    const {
+      formatString,
+      formatStringIncludesTimezone,
+    } = phpToTimeZoneSupportFormatString(phpFormatString);
+
+    if (!formatStringIncludesTimezone) {
+      throw new Error(
+        "Only zoned format strings should be attempted to be parsed by this function",
+      );
+    }
+
+    // console.debug("createFromZonedFormat - {dateString, formatString, phpFormatString}", { dateString, formatString, phpFormatString },);
+
+    try {
+      const time = parseZonedTime(dateString, formatString);
+      // console.debug("{time}", { time });
+      parsedZonedDate = convertTimeToDate(time);
+      detectedTimeZone = null;
+    } catch (e) {
+      // console.error("Zoned time parse error: ", e);
+      parsedZonedDate = false;
+    }
+
+    return new DateTime(parsedZonedDate, detectedTimeZone);
   }
-  */
+
   private readonly timeZone: string;
   private readonly timeZoneInfo: any;
+
   constructor(timezoneString) {
     this.timeZone = DateTimeZone.interpretTimezoneString(timezoneString);
     // This is weird - can't use offsets directly, instead must translate
@@ -40,13 +77,92 @@ export class DateTimeZone {
     }
     this.timeZoneInfo = findTimeZone(this.timeZone);
   }
+
   public toString() {
     return this.timeZone;
   }
+
   public getName() {
     return this.timeZone;
   }
+
   public getTimeZoneInfo() {
     return this.timeZoneInfo;
   }
 }
+
+/**
+ * From: http://php.net/manual/en/datetime.createfromformat.php
+ * To: https://github.com/prantlf/timezone-support/blob/master/docs/API.md#parsezonedtime
+ */
+const phpToTimezoneSupportFormatStringConversions = {
+  /* tslint:disable:object-literal-sort-keys */
+  d: "DD",
+  D: "",
+  j: "D",
+  l: "",
+  N: "",
+  S: "",
+  w: "",
+  z: "",
+  W: "",
+  F: "",
+  m: "MM",
+  M: "",
+  n: "M",
+  t: "",
+  L: "",
+  o: "YYYY",
+  Y: "YYYY",
+  y: "YY",
+  a: "a",
+  A: "A",
+  B: "",
+  g: "h",
+  G: "H",
+  h: "hh",
+  H: "HH",
+  i: "mm",
+  s: "ss",
+  u: "SSS",
+  I: "",
+  e: "z", // Timezone identifier (UTC, GMT, Atlantic/Azores) Note: Only 3-4 character abbreviations are supported by timezone-support
+  O: "ZZ", // Difference to UTC in hours (+0200)
+  P: "Z", // Difference to UTC with colon between hours and minutes (+02:00)
+  T: "z", // Timezone abbreviation (EST, MDT)
+  Z: "",
+  c: "",
+  r: "",
+  U: "",
+  /* tslint:enable:object-literal-sort-keys */
+};
+
+const phpToTimeZoneSupportFormatString = phpFormat => {
+  const items = phpFormat.split("");
+  let formatString = "";
+  let formatStringIncludesTimezone = false;
+
+  const timezoneTokens = ["e", "O", "P", "T"];
+
+  let literalNext;
+  for (const item of items) {
+    if (literalNext) {
+      formatString += "[" + item + "]";
+      literalNext = false;
+    } else {
+      if (phpToTimezoneSupportFormatStringConversions[item] !== undefined) {
+        formatString += phpToTimezoneSupportFormatStringConversions[item];
+        if (timezoneTokens.indexOf(item) > -1) {
+          formatStringIncludesTimezone = true;
+        }
+      } else {
+        if (item === "\\") {
+          literalNext = true;
+        } else {
+          formatString += item;
+        }
+      }
+    }
+  }
+  return { formatString, formatStringIncludesTimezone };
+};
