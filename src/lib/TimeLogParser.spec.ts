@@ -48,6 +48,7 @@ const testDurationFromLastData = () => {
           lastUsedTimeZone: "Europe/Helsinki",
           lastSetTsAndDateErrorMessage: "Timestamp not found",
           lastKnownDate: "2017-12-12",
+          lastInterpretTsAndDateErrorMessage: "",
           dateRawWasNonemptyBeforeDetectTimestamp: "start 2017-12-12, 18:24ca",
           dateRawFormat: "Y-m-d, H:i",
           timeRaw: "18:24ca",
@@ -68,6 +69,7 @@ const testDurationFromLastData = () => {
           lastKnownTimeZone: "Europe/Helsinki",
           lastUsedTimeZone: "Europe/Helsinki",
           lastSetTsAndDateErrorMessage: "",
+          lastInterpretTsAndDateErrorMessage: "",
           durationSinceLast: 240,
         },
         2: {
@@ -84,6 +86,7 @@ const testDurationFromLastData = () => {
           lastKnownTimeZone: "Europe/Helsinki",
           lastUsedTimeZone: "Europe/Helsinki",
           lastSetTsAndDateErrorMessage: "",
+          lastInterpretTsAndDateErrorMessage: "",
           durationSinceLast: 240,
         },
       },
@@ -166,7 +169,7 @@ testStartsWithOptionallySuffixedTokenMethodData().forEach((testData, index) => {
 
 // TODO: testRemoveSuffixedToken
 
-const testDetectTimeStampAndSetTsAndDate: Macro = (
+const testDetectTimeStampAndInterpretTsAndDate: Macro = (
   t: ExecutionContext,
   lineForDateCheck,
   expectedMetadataDateRaw,
@@ -198,34 +201,42 @@ const testDetectTimeStampAndSetTsAndDate: Macro = (
     metadata.dateRawFormat,
     "TimeLogParser->detectTimeStamp() detects the datetime with the expected format",
   );
-  const { ts, date, datetime } = timeLogParser.set_ts_and_date(
+  const { ts, date, datetime } = timeLogParser.interpretTsAndDate(
     metadata.dateRaw,
   );
   const setTsAndDateError = timeLogParser.lastSetTsAndDateErrorMessage;
-  t.log({ ts, date, datetime, setTsAndDateError });
+  const interpretTsAndDateError =
+    timeLogParser.lastInterpretTsAndDateErrorMessage;
+  t.log({ ts, date, datetime, setTsAndDateError, interpretTsAndDateError });
   const valid = !!date;
   t.is(
     expectedToBeValid,
     valid,
-    "TimeLogParser->set_ts_and_date() detects valid datetimes as expected",
+    "TimeLogParser->interpretTsAndDate() detects valid datetimes as expected",
   );
   t.is(
     expectedLastKnownTimeZone,
     timeLogParser.lastKnownTimeZone,
-    "TimeLogParser->set_ts_and_date() sometimes changes the last known timezone by parsing a timestamp string",
+    "TimeLogParser->interpretTsAndDate() sometimes changes the last known timezone by parsing a timestamp string",
   );
 
   if (expectedToBeValid) {
     t.true(
-      setTsAndDateError === "",
-      "TimeLogParser->set_ts_and_date() does not set an error message where valid datetimes are expected",
+      interpretTsAndDateError === "" && setTsAndDateError === "",
+      "TimeLogParser->interpretTsAndDate() does not set an error message where valid datetimes are expected",
     );
   } else {
-    t.true(
+    const interpretError =
+      typeof interpretTsAndDateError !== "undefined" &&
+      interpretTsAndDateError !== null &&
+      interpretTsAndDateError !== "";
+    const setError =
       typeof setTsAndDateError !== "undefined" &&
-        setTsAndDateError !== null &&
-        setTsAndDateError !== "",
-      "TimeLogParser->set_ts_and_date() sets an error message where invalid datetimes are expected",
+      setTsAndDateError !== null &&
+      setTsAndDateError !== "";
+    t.true(
+      interpretError || setError,
+      "TimeLogParser->interpretTsAndDate() sets an error message where invalid datetimes are expected",
     );
   }
 
@@ -236,12 +247,12 @@ const testDetectTimeStampAndSetTsAndDate: Macro = (
     t.is(
       utcDatetime.format("Y-m-d H:i:s"),
       expectedUtcDateString,
-      "TimeLogParser->set_ts_and_date() behaves as expected",
+      "TimeLogParser->interpretTsAndDate() behaves as expected",
     );
   }
 };
 
-const testDetectTimeStampAndSetTsAndDateData = () => {
+const testDetectTimeStampAndInterpretTsAndDateData = () => {
   return [
     [
       "foo 2016-05-25T14:50:00Z bar",
@@ -752,10 +763,10 @@ const testDetectTimeStampAndSetTsAndDateData = () => {
   ];
 };
 
-testDetectTimeStampAndSetTsAndDateData().forEach((testData, index) => {
+testDetectTimeStampAndInterpretTsAndDateData().forEach((testData, index) => {
   test(
-    "testDetectTimeStampAndSetTsAndDate - " + index,
-    testDetectTimeStampAndSetTsAndDate,
+    "testDetectTimeStampAndInterpretTsAndDate - " + index,
+    testDetectTimeStampAndInterpretTsAndDate,
     testData[0],
     testData[1],
     testData[2],
@@ -772,11 +783,13 @@ testDetectTimeStampAndSetTsAndDateData().forEach((testData, index) => {
  * Note: "lineWithoutDate" here refers to the part without the date-time-stamp, ie the actual log message
  * TODO: Refactor code to reflect this more clearly
  *
+ * @param t
  * @param line
  * @param expectedLinewithoutdate
  * @param lastKnownTimeZone
  * @param lastKnownDate
  * @param expectedToBeValidTimestampedLogComment
+ * @param expectedLastKnownTimeZone
  * @param expectedUtcDateString
  */
 const testParseLogComment: Macro = (
@@ -816,7 +829,7 @@ const testParseLogComment: Macro = (
   t.is(
     expectedLastKnownTimeZone,
     timeLogParser.lastKnownTimeZone,
-    "TimeLogParser->set_ts_and_date() sometimes changes the last known timezone by parsing a timestamp string",
+    "TimeLogParser->parseLogComment() sometimes changes the last known timezone by parsing a timestamp string",
   );
 
   if (expectedToBeValidTimestampedLogComment) {
@@ -842,7 +855,6 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       "2016-05-01 12:35:00",
     ],
-    /*
     [
       "14.35, bar",
       " bar",
@@ -1050,13 +1062,12 @@ const testParseLogCommentData = () => {
       "Europe/Stockholm",
       false,
     ],
-    */
   ];
 };
 
 testParseLogCommentData().forEach((testData, index) => {
   test(
-    "testParseLogComment - " + index,
+    `testParseLogComment - ${index} ("${testData[0]}")`,
     testParseLogComment,
     testData[0],
     testData[1],

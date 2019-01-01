@@ -13,10 +13,12 @@ export interface ParsedLogComment {
 }
 
 export class TimeLogParser extends LogParser {
+  public lastInterpretTsAndDateErrorMessage;
   private collectDebugInfo;
 
   constructor() {
     super();
+    this.lastInterpretTsAndDateErrorMessage = "";
   }
 
   public tokens() {
@@ -228,23 +230,26 @@ export class TimeLogParser extends LogParser {
     return durationSinceLast;
   }
 
-  public set_ts_and_date(
+  public interpretTsAndDate(
     dateRaw,
   ): { ts: number; date?: string; datetime?: DateTime } {
-    this.lastSetTsAndDateErrorMessage = "";
+    console.debug("TimeLogParser.interpretTsAndDate - { dateRaw }", {
+      dateRaw,
+    });
+    this.lastInterpretTsAndDateErrorMessage = "";
 
     const errorReturn = {
       ts: 0,
     };
 
     if (dateRaw === false) {
-      this.lastSetTsAndDateErrorMessage = "Found no timestamp to parse";
+      this.lastInterpretTsAndDateErrorMessage = "Found no timestamp to parse";
       return errorReturn;
     }
 
     // Invalidate strings that are clearly too large to be a timestamp
     if (dateRaw.length > 50) {
-      this.lastSetTsAndDateErrorMessage =
+      this.lastInterpretTsAndDateErrorMessage =
         "Invalidate strings that are clearly too large to be a timestamp";
       return errorReturn;
     }
@@ -252,19 +257,18 @@ export class TimeLogParser extends LogParser {
     const m = dateRaw.match(/[0-9]+/g);
 
     if (!m) {
-      this.lastSetTsAndDateErrorMessage =
+      this.lastInterpretTsAndDateErrorMessage =
         "Invalidate strings that do not contain numbers, since they can not be a timestamp";
       return errorReturn;
     }
 
-    console.debug({ dateRaw });
     if (dateRaw.length < 8) {
       dateRaw = this.lastKnownDate + ` ${dateRaw}`;
     }
 
     const tokens = this.tokens();
     dateRaw = str_replace(tokens.approx, "", dateRaw).trim();
-    const { date, datetime, ts } = super.set_ts_and_date(dateRaw);
+    const { date, datetime, ts } = this.setTsAndDate(dateRaw);
 
     return {
       date,
@@ -324,9 +328,22 @@ export class TimeLogParser extends LogParser {
   ): ParsedLogComment {
     let notTheFirstRowOfALogComment;
 
-    // invalidate pure numbers (including those with fractional parts) if there is no comment on the other side - probably not a real log comment
     const m = dateRaw.match(/[0-9\.\,]+/);
 
+    // invalidate lines without any number or comma or period at all
+    if (!m) {
+      notTheFirstRowOfALogComment = true;
+      return {
+        date: null,
+        dateRaw,
+        datetime: null,
+        lineWithoutDate,
+        notTheFirstRowOfALogComment,
+        ts: 0,
+      };
+    }
+
+    // invalidate pure numbers (including those with fractional parts) if there is no comment on the other side - probably not a real log comment
     if (m[0]) {
       const firstMatch = m[0];
       const trimmedDateRaw = dateRaw.trim();
@@ -350,7 +367,7 @@ export class TimeLogParser extends LogParser {
     }
 
     // invalidate lines without a valid date
-    const { date, datetime, ts } = super.set_ts_and_date(dateRaw);
+    const { date, datetime, ts } = this.interpretTsAndDate(dateRaw);
     notTheFirstRowOfALogComment = !date;
 
     return {

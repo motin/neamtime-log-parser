@@ -279,9 +279,10 @@ export class LogParser {
     return seconds / 60;
   }
 
-  public set_ts_and_date(
+  public setTsAndDate(
     dateRaw: string,
   ): { ts: number; date?: string; datetime?: DateTime } {
+    console.debug("LogParser.setTsAndDate - { dateRaw }", { dateRaw });
     this.lastSetTsAndDateErrorMessage = "";
     dateRaw = str_replace(["maj", "okt"], ["may", "oct"], dateRaw).trim();
 
@@ -320,7 +321,7 @@ export class LogParser {
       }
     }
 
-    // console.debug("set_ts_and_date - midway - {datetimeParseResult, timezoneStringToUseInCaseDateStringHasNoTimezoneInfo, ts}, this.lastKnownDate, this.lastKnownTimeZone, this.lastSetTsAndDateErrorMessage, this.lastUsedTimeZone",{datetimeParseResult, timezoneStringToUseInCaseDateStringHasNoTimezoneInfo, ts}, this.lastKnownDate, this.lastKnownTimeZone, this.lastSetTsAndDateErrorMessage, this.lastUsedTimeZone);
+    // console.debug("setTsAndDate - midway - {datetimeParseResult, timezoneStringToUseInCaseDateStringHasNoTimezoneInfo, ts}, this.lastKnownDate, this.lastKnownTimeZone, this.lastSetTsAndDateErrorMessage, this.lastUsedTimeZone",{datetimeParseResult, timezoneStringToUseInCaseDateStringHasNoTimezoneInfo, ts}, this.lastKnownDate, this.lastKnownTimeZone, this.lastSetTsAndDateErrorMessage, this.lastUsedTimeZone);
 
     if (!ts) {
       ts = 0;
