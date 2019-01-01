@@ -42,9 +42,8 @@ export class TimeLogParser extends LogParser {
     return false;
   }
 
-  /*
-  public removeSuffixedToken(string, keyword, suffix) {
-    let forReturn = string;
+  public removeSuffixedToken(str, keyword, suffix) {
+    let forReturn = str;
     const tokens = this.tokens();
 
     for (const token of Object.values(tokens[keyword])) {
@@ -53,9 +52,7 @@ export class TimeLogParser extends LogParser {
 
     return forReturn;
   }
-  */
 
-  /*
   public isProbableStartStopLine(line, dump = false) {
     const trimmedLine = line.trim();
     const startsWithPauseTokenFollowedByASpace = this.startsWithOptionallySuffixedToken(
@@ -93,7 +90,11 @@ export class TimeLogParser extends LogParser {
       true;
 
     if (dump) {
-      console.log(trimmedLine, trimmedLine, str_hex(trimmedLine), forReturn);
+      console.log(
+        trimmedLine,
+        trimmedLine,
+        /*str_hex(trimmedLine),*/ forReturn,
+      );
     }
 
     return forReturn;
@@ -108,7 +109,6 @@ export class TimeLogParser extends LogParser {
       strpos(trimmedLine, "! ") === 0
     );
   }
-  */
 
   public detectTimeStamp(lineForDateCheck) {
     const metadata: Metadata = {

@@ -38,3 +38,9 @@ export function str_word_count_utf8(str, format = 0) {
   return preg_match_all(WORD_COUNT_MASK, str, matches);
   */
 }
+
+/*
+function utf8_decode(description: string): string {
+  return description;
+}
+*/

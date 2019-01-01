@@ -26,7 +26,7 @@ export function newlineConvert(str, newline) {
 
 export function textIntoLinesArray(
   text, // Remove weird skype-produced spaces (hex c2a0 as opposed to hex 20 for ordinary spaces) // Normalize line-endings
-) {
+): string[] {
   text = str_replace("\xA0", " ", text);
   text = this.newlineConvert(text, this.NL_NIX);
   const lines = text.split(this.NL_NIX);
@@ -282,7 +282,7 @@ export class LogParser {
   public setTsAndDate(
     dateRaw: string,
   ): { ts: number; date?: string; datetime?: DateTime } {
-    console.debug("LogParser.setTsAndDate - { dateRaw }", { dateRaw });
+    // console.debug("LogParser.setTsAndDate - { dateRaw }", { dateRaw });
     this.lastSetTsAndDateErrorMessage = "";
     dateRaw = str_replace(["maj", "okt"], ["may", "oct"], dateRaw).trim();
 

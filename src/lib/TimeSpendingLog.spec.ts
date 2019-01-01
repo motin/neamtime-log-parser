@@ -277,12 +277,9 @@ const getProcessedTimeSpendingLog = (
 ): ProcessedTimeSpendingLog => {
   const timeSpendingLogContents = file_get_contents(timeSpendingLogPath);
 
-  let tzFirst;
-  if (is_file(timeSpendingLogPath + ".tzFirst")) {
-    tzFirst = file_get_contents(timeSpendingLogPath + ".tzFirst").trim();
-  } else {
-    tzFirst = "UTC";
-  }
+  const tzFirst = is_file(timeSpendingLogPath + ".tzFirst")
+    ? file_get_contents(timeSpendingLogPath + ".tzFirst").trim()
+    : "UTC";
 
   const timeSpendingLog = new TimeSpendingLog();
   timeSpendingLog.rawLogContents = timeSpendingLogContents;

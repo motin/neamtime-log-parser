@@ -1,10 +1,8 @@
-// class TimeSpendingLogSessionSpecificProcessingException extends Exception
-// {
-//    public $processedTimeSpendingLog;
-//    public $sessionMetadata;
-// }
-
-import { TimeLogParser } from "./TimeLogParser";
+import { array_slice } from "locutus/php/array";
+import { strpos } from "locutus/php/strings";
+import { TimeLogParsingException } from "./exceptions/TimeLogParsingException";
+import { TimeSpendingLogProcessingErrorsEncounteredException } from "./exceptions/TimeSpendingLogProcessingErrorsEncounteredException";
+import { TimeLogProcessor, TimeLogSession } from "./TimeLogProcessor";
 import { TimeSpendingLog } from "./TimeSpendingLog";
 
 export class ProcessedTimeSpendingLog {
@@ -13,7 +11,7 @@ export class ProcessedTimeSpendingLog {
   public unprocessedTimeSpendingLog: TimeSpendingLog;
   public timeReportCsv;
 
-  private TimeLogParser: TimeLogParser;
+  private timeLogProcessor: TimeLogProcessor;
 
   constructor(unprocessedTimeSpendingLog: TimeSpendingLog) {
     this.timeReportData = [];
@@ -26,35 +24,31 @@ export class ProcessedTimeSpendingLog {
     return this.processingErrors;
   }
 
-  public getTimeLogParser() {
-    if (!this.TimeLogParser) {
-      this.TimeLogParser = new TimeLogParser();
+  public getTimeLogProcessor() {
+    if (!this.timeLogProcessor) {
+      this.timeLogProcessor = new TimeLogProcessor();
     }
 
-    return this.TimeLogParser;
-  }
-
-  public rules() {
-    return [["rawLogContents", "required"]];
+    return this.timeLogProcessor;
   }
 
   public attributeLabels() {
     return {
-      rawLogContents: "Log contents",
+      preProcessedContents: "Pre-processed log contents",
       processedLogContentsWithTimeMarkers:
         "Log contents with time markers (for sorting) - When finished sorting/categorizing, paste into here once again",
+      processedLogContentsWithTimeMarkersDebug: "Time markers parse metadata",
+      rawLogContents: "Log contents",
       timeReportCsv:
         "Time report CSV (Date, Hours in each category, Log messages)",
+      timeReportCsvDebug: "Time report parse/generate metadata",
       timeReportICal: "Time report iCal",
-      preProcessedContents: "Pre-processed log contents",
-      processedLogContentsWithTimeMarkers_debug: "Time markers parse metadata",
-      timeReportCsv_debug: "Time report parse/generate metadata",
     };
   }
 
   public ensureParsedRawLogContents() {
     this.parseRawLogContents();
-    const tlp = this.getTimeLogParser();
+    const tlp = this.getTimeLogProcessor();
     this.parseDetectSessionsOneByOne(tlp);
 
     if (!!this.processingErrors) {
@@ -81,30 +75,33 @@ export class ProcessedTimeSpendingLog {
       );
     }
 
-    const tlp = this.getTimeLogParser();
-    tlp.tzFirst = this.unprocessedTimeSpendingLog.tzFirst;
-    tlp.contents = this.unprocessedTimeSpendingLog.rawLogContents;
+    const timeLogProcessor = this.getTimeLogProcessor();
+    timeLogProcessor.tzFirst = this.unprocessedTimeSpendingLog.tzFirst;
+    timeLogProcessor.contents = this.unprocessedTimeSpendingLog.rawLogContents;
 
     try {
-      tlp.addTimeMarkers();
+      timeLogProcessor.addTimeMarkers();
     } catch (e) {
       if (e instanceof TimeLogParsingException) {
-        this.addError("addTimeMarkers TimeLogParsingException", e.getMessage());
+        this.addError("addTimeMarkers TimeLogParsingException", e.message);
         return;
       }
     }
 
-    if (!!tlp.notParsedAddTimeMarkers) {
+    if (!!timeLogProcessor.notParsedAddTimeMarkers) {
       this.addError(
         "issues-during-initial-parsing",
         "The following content was not understood by the parser",
-        tlp.notParsedAddTimeMarkersErrorSummary(tlp.notParsedAddTimeMarkers),
+        timeLogProcessor.notParsedAddTimeMarkersErrorSummary(
+          timeLogProcessor.notParsedAddTimeMarkers,
+        ),
       );
     }
 
-    this.processedLogContentsWithTimeMarkers = tlp.contentsWithTimeMarkers;
+    this.processedLogContentsWithTimeMarkers =
+      timeLogProcessor.contentsWithTimeMarkers;
     this.parseProcessedLogContentsWithTimeMarkers();
-    this.timeReportICal = tlp.generateIcal();
+    this.timeReportICal = timeLogProcessor.generateIcal();
   }
 
   public parseProcessedLogContentsWithTimeMarkers() {
@@ -112,73 +109,80 @@ export class ProcessedTimeSpendingLog {
       throw new Error("No valid processedLogContentsWithTimeMarkers");
     }
 
-    const tlp = this.getTimeLogParser();
-    tlp.generateTimeReport();
+    const timeLogProcessor = this.getTimeLogProcessor();
+    timeLogProcessor.generateTimeReport();
 
-    if (!!tlp.notParsedAddTimeMarkers) {
+    if (!!timeLogProcessor.notParsedAddTimeMarkers) {
       this.addError(
         "timeReportCsv-notParsedAddTimeMarkers",
         "Time Report was generated upon log contents which had non-understood parts",
       );
     }
 
-    if (!!tlp.notParsedTimeReport) {
+    if (!!timeLogProcessor.notParsedTimeReport) {
       this.addError(
         "timeReportCsv-notParsedTimeReport",
         "The following content was not understood by the parser and was thus not regarded while generating the report above",
-        tlp.notParsedTimeReportErrorSummary(tlp.notParsedTimeReport),
+        timeLogProcessor.notParsedTimeReportErrorSummary(
+          timeLogProcessor.notParsedTimeReport,
+        ),
       );
     }
 
-    this.timeReportCsv = tlp.contentsOfTimeReport;
-    this.timeReportData = tlp.timeReportData;
-    this.preProcessedContents = tlp.preProcessedContents;
+    this.timeReportCsv = timeLogProcessor.contentsOfTimeReport;
+    this.timeReportData = timeLogProcessor.timeReportData;
+    this.preProcessedContents = timeLogProcessor.preProcessedContents;
     this.processedLogContentsWithTimeMarkers_debug = JSON.stringify(
-      tlp.debugAddTimeMarkers,
+      timeLogProcessor.debugAddTimeMarkers,
     );
-    this.timeReportCsv_debug = JSON.stringify(tlp.debugGenerateTimeReport);
+    this.timeReportCsv_debug = JSON.stringify(
+      timeLogProcessor.debugGenerateTimeReport,
+    );
     this.time_report_source_comments = JSON.stringify(
-      tlp.timeReportSourceComments,
+      timeLogProcessor.timeReportSourceComments,
     );
 
-    if (strpos(tlp.contentsWithTimeMarkers, "{!}") !== false) {
+    if (strpos(timeLogProcessor.contentsWithTimeMarkers, "{!}") !== false) {
       this.addError(
         "timeReportCsv-contentsWithTimeMarkers",
         '{!} was found somewhere in the log file. Note: Estimated (marked with {!}) and needs to be manually adjusted before time report gives an accurate summary. If you already adjusted the durations, don\'t forget to also remove the "{!}"',
       );
     }
 
-    const tlp_dummy = new TimeLogParser();
-    tlp_dummy.tzFirst = this.unprocessedTimeSpendingLog.tzFirst;
-    tlp_dummy.contents = tlp.preProcessedContents;
-    tlp_dummy.preProcessContents();
+    const timeLogProcessorDummy = new TimeLogProcessor();
+    timeLogProcessorDummy.tzFirst = this.unprocessedTimeSpendingLog.tzFirst;
+    timeLogProcessorDummy.contents = timeLogProcessor.preProcessedContents;
+    timeLogProcessorDummy.preProcessContents();
 
-    if (tlp_dummy.preProcessedContents !== tlp.preProcessedContents) {
+    if (
+      timeLogProcessorDummy.preProcessedContents !==
+      timeLogProcessor.preProcessedContents
+    ) {
       this.addError("preProcessedContents", "Pre-processing is looping");
     }
 
-    if (!tlp.timeReportData) {
+    if (!timeLogProcessor.timeReportData) {
       this.addError("timeReportCsv", "No time to report found");
     }
   }
 
-  public addError(ref, message, data = undefined) {
+  public addError(ref, message, data = null) {
     this.processingErrors.push({ ref, message, data });
   }
 
   public getTroubleshootingInfo() {
-    const tlp = this.getTimeLogParser();
+    const timeLogProcessor = this.getTimeLogProcessor();
     return {
-      logMetadata: tlp.getTimeLogMetadata(),
+      logMetadata: timeLogProcessor.getTimeLogMetadata(),
     };
   }
 
   public getTimeLogEntriesWithMetadata() {
     const timeLogEntriesWithMetadata = Array();
-    const tlp = this.getTimeLogParser();
-    this.parseDetectSessionsOneByOne(tlp);
+    const timeLogProcessor = this.getTimeLogProcessor();
+    this.parseDetectSessionsOneByOne(timeLogProcessor);
 
-    for (const session of Object.values(tlp.sessions)) {
+    for (const session of Object.values(timeLogProcessor.sessions)) {
       const timeLogEntriesWithMetadataArray = session.timeReportSourceComments;
 
       // if (empty($row_with_time_marker["durationSinceLast"]))
@@ -189,72 +193,74 @@ export class ProcessedTimeSpendingLog {
       )) {
         // for now skip rows without duration
         const gmtTimestamp = timeLogEntryWithMetadata.dateRaw.trim();
-        const sessionMeta = new stdClass();
+        const sessionMeta: any = {};
         sessionMeta.tzFirst = session.tzFirst;
         sessionMeta.session_ref = session.start.dateRaw;
-        const timeLogEntryWithMetadata = Object(timeLogEntryWithMetadata);
         timeLogEntryWithMetadata.gmtTimestamp = gmtTimestamp;
         timeLogEntryWithMetadata.sessionMeta = sessionMeta;
         timeLogEntriesWithMetadata.push(timeLogEntryWithMetadata);
       }
     }
 
-    delete tlp.sessions;
+    delete timeLogProcessor.sessions;
     return timeLogEntriesWithMetadata;
   }
 
-  public parseDetectSessionsOneByOne(tlp: TimeLogParser) {
-    tlp.sessions = Array();
-    const starts = tlp.sessionStarts;
+  public parseDetectSessionsOneByOne(timeLogProcessor: TimeLogProcessor) {
+    timeLogProcessor.sessions = [];
+    const starts = timeLogProcessor.sessionStarts;
 
-    for (const k in starts) {
+    // If only one session was detected, we will not parse the session, but instead simply use the current timeLogProcessor in order to avoid stack overflow
+
+    for (const k of Object.keys(starts)) {
       const start = starts[k];
 
-      try // If only one session was detected, we will not parse the session, but instead simply use the current tlp in order to avoid stack overflow
-      {
+      let sessionSpecificProcessedTimeSpendingLogTimeLogProcessor;
+
+      try {
         // var_dump($metadata);
         // Store the session metadata
         if (starts.length === 1) {
-          const sessionSpecificProcessedTimeSpendingLogTimeLogParser = tlp;
-        } // Get the section of the pre-processed log that corresponds to this session
-        else {
-          const preProcessedLines = tlp.preProcessedContents.split("\n");
-          const startLine = start.preprocessed_contents_source_line_index;
+          sessionSpecificProcessedTimeSpendingLogTimeLogProcessor = timeLogProcessor;
+        } else {
+          // Get the section of the pre-processed log that corresponds to this session
+          const preProcessedLines = timeLogProcessor.preProcessedContents.split(
+            "\n",
+          );
+          const startLine = start.preprocessedContentsSourceLineIndex;
 
+          let length;
           if (!starts[k + 1]) {
-            let length;
+            // do nothing
           } else {
             length =
-              starts[k + 1].preprocessed_contents_source_line_index -
-              1 -
-              startLine;
+              starts[k + 1].preprocessedContentsSourceLineIndex - 1 - startLine;
           }
 
-          const lines = preProcessedLines.slice(startLine, length, true);
+          const lines = array_slice(preProcessedLines, startLine, length, true);
           const sessionSpecificTimeSpendingLog = new TimeSpendingLog();
           sessionSpecificTimeSpendingLog.rawLogContents = lines.join("\n");
           sessionSpecificTimeSpendingLog.tzFirst = start.lastKnownTimeZone;
           const sessionSpecificProcessedTimeSpendingLog = new ProcessedTimeSpendingLog(
             sessionSpecificTimeSpendingLog,
           );
-          sessionSpecificProcessedTimeSpendingLogTimeLogParser =
-            sessionSpecificProcessedTimeSpendingLog.TimeLogParser;
+          sessionSpecificProcessedTimeSpendingLogTimeLogProcessor =
+            sessionSpecificProcessedTimeSpendingLog.timeLogProcessor;
         }
 
         const timeReportSourceComments =
-          sessionSpecificProcessedTimeSpendingLogTimeLogParser.timeReportSourceComments;
+          sessionSpecificProcessedTimeSpendingLogTimeLogProcessor.timeReportSourceComments;
         const tzFirst =
-          sessionSpecificProcessedTimeSpendingLogTimeLogParser.tzFirst;
-        const metadata = sessionSpecificProcessedTimeSpendingLogTimeLogParser.getTimeLogMetadata();
-        tlp.sessions.push(
-          compact(
-            "timeReportSourceComments",
-            "tzFirst",
-            "metadata",
-            "k",
-            "start",
-          ),
-        );
+          sessionSpecificProcessedTimeSpendingLogTimeLogProcessor.tzFirst;
+        const metadata = sessionSpecificProcessedTimeSpendingLogTimeLogProcessor.getTimeLogMetadata();
+        const timeLogSession: TimeLogSession = {
+          k,
+          metadata,
+          start,
+          timeReportSourceComments,
+          tzFirst,
+        };
+        timeLogProcessor.sessions.push(timeLogSession);
       } catch (e) {
         if (e instanceof TimeSpendingLogProcessingErrorsEncounteredException) {
           // $te = new TimeSpendingLogSessionSpecificProcessingException(
@@ -268,20 +274,20 @@ export class ProcessedTimeSpendingLog {
               this.addError(
                 "session-parsing",
                 "Encountered a processing error which was only evident when detecting/parsing sessions individually: " +
-                  e.getMessage(),
+                  e.message,
                 {
-                  sessionStartMetadata: start,
                   processingErrors: e.processedTimeSpendingLog.getProcessingErrors(),
+                  sessionStartMetadata: start,
                 },
               );
             } else {
               this.addError(
                 "session-parsing",
                 "Encountered a processing error when detecting/parsing sessions individually: " +
-                  e.getMessage(),
+                  e.message,
                 {
-                  sessionStartMetadata: start,
                   processingErrors: e.processedTimeSpendingLog.getProcessingErrors(),
+                  sessionStartMetadata: start,
                 },
               );
             }
@@ -289,7 +295,7 @@ export class ProcessedTimeSpendingLog {
             this.addError(
               "session-parsing",
               "Encountered a processing error when detecting/parsing sessions individually: " +
-                e.getMessage(),
+                e.message,
               {
                 sessionStartMetadata: start,
               },
@@ -300,21 +306,19 @@ export class ProcessedTimeSpendingLog {
     }
   }
 
+  /*
   public calculateTotalReportedTime() {
     let total = 0;
     {
-      const _tmp_0 = this.timeReportData;
+      const tmp0 = this.timeReportData;
 
-      for (const date in _tmp_0) {
-        const hoursOrHoursArrayByCategory = _tmp_0[date];
+      for (const date in tmp0) {
+        const hoursOrHoursArrayByCategory = tmp0[date];
 
-        if ("number" === typeof hoursOrHoursArrayByCategory) {
+        if (typeof hoursOrHoursArrayByCategory === "number") {
           total += hoursOrHoursArrayByCategory;
-        }
-
-        if (Array.isArray(hoursOrHoursArrayByCategory)) {
+        } else {
           delete hoursOrHoursArrayByCategory.text;
-
           for (const category in hoursOrHoursArrayByCategory) {
             const hours = hoursOrHoursArrayByCategory[category];
             total += hours;
@@ -324,7 +328,5 @@ export class ProcessedTimeSpendingLog {
     }
     return total;
   }
+  */
 }
-
-// @var ProcessedTimeSpendingLog
-class TimeSpendingLogProcessingErrorsEncounteredException extends Error {}
