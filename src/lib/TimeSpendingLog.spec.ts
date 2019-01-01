@@ -8,11 +8,7 @@ import {
 } from "locutus/php/filesystem";
 import { str_replace } from "locutus/php/strings";
 import { TimeSpendingLogProcessingErrorsEncounteredException } from "./exceptions/TimeSpendingLogProcessingErrorsEncounteredException";
-import {
-  file_put_contents,
-  is_file,
-  memory_get_usage,
-} from "./php-wrappers";
+import { file_put_contents, is_file, memory_get_usage } from "./php-wrappers";
 import { ProcessedTimeSpendingLog } from "./ProcessedTimeSpendingLog";
 import { TimeSpendingLog } from "./TimeSpendingLog";
 
