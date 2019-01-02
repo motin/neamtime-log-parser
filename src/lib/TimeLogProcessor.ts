@@ -1,4 +1,4 @@
-import { addMinutes, eachDayOfInterval } from "date-fns";
+import { addSeconds, eachDayOfInterval, subMinutes } from "date-fns";
 import {
   str_replace,
   strpos,
@@ -22,9 +22,9 @@ import {
 import { TimeLogParser } from "./TimeLogParser";
 
 export interface TimeLogSession {
-  timeReportSourceComments;
-  tzFirst;
-  metadata;
+  timeReportSourceComments: TimeLogEntryWithMetadata[];
+  tzFirst: string;
+  metadata: RowMetadata;
   k;
   start;
 }
@@ -40,10 +40,15 @@ export interface RowMetadata {
   line: any;
   lineWithComment: any;
   log: any;
-  preprocessedContentsSourceLineIndex: any;
-  rowsWithTimeMarkersHandled: any;
+  preprocessedContentsSourceLineIndex: number;
+  rowsWithTimeMarkersHandled: number;
   sourceLine: any;
-  ts: any;
+  ts: number;
+  // TODO: Possibly split into separate child interface
+  tsIsFaked?: boolean;
+  highlightWithNewlines?: boolean;
+  pauseDuration?: any;
+  durationSinceLast?: any;
 }
 
 export interface TimeReportSourceComment {
@@ -58,11 +63,17 @@ export interface TimeReportSourceComment {
   tz: any;
 }
 
+export interface TimeLogEntryWithMetadata {
+  dateRaw: any;
+  gmtTimestamp: any;
+  sessionMeta: any;
+}
+
 // Since date-fns can not handle UTC dates
 function eachDayOfIntervalUTC(dirtyInterval, dirtyOptions = null) {
   const borkyDates = eachDayOfInterval(dirtyInterval, dirtyOptions);
   const dates = borkyDates.map(date => {
-    return addMinutes(date, -date.getTimezoneOffset());
+    return subMinutes(date, date.getTimezoneOffset());
   });
   // console.debug({ borkyDates, dates });
   return dates;
@@ -78,17 +89,22 @@ export class TimeLogProcessor {
   public timeReportData: any = {};
 
   // Metadata arrays
-  public notParsedAddTimeMarkers: [] = [];
-  public notParsedTimeReport: [] = [];
-  public sessionStarts: [] = [];
+  public notParsedAddTimeMarkers: any[] = [];
+  public notParsedTimeReport: any[] = [];
+  public sessionStarts: any[] = [];
   public sessions: TimeLogSession[] = [];
   public timeReportSourceComments: TimeReportSourceComment[] = [];
-  public categories: [] = [];
+  public categories: any[] = [];
   public debugAddTimeMarkers: {
-    rowsWithTimeMarkers: [];
-    notParsed: [];
+    rowsWithTimeMarkers: RowMetadata[];
+    notParsed: RowMetadata[];
+    originalUnsortedRows?: any[];
   };
-  public debugGenerateTimeReport: [] = [];
+  public debugGenerateTimeReport: {
+    firstDateFound: any;
+    lastDateFound: any;
+    times: any;
+  };
 
   // The time log parser does a lot of the heavy lifting
   private timeLogParser: TimeLogParser;
@@ -143,19 +159,18 @@ export class TimeLogProcessor {
       const sourceLine = sourceLineIndex + 1;
 
       // Skip empty lines
-      const testEmpty = trimmedLine;
-      if (!testEmpty) {
+      if (!trimmedLine || trimmedLine === "") {
         processed.push(trimmedLine);
         phase1SourceLineContentsSourceLineMap[processed.length] = sourceLine;
         continue;
       }
 
+      // Convert typo "pause ->" to proper "pause->"
       let token = this.timeLogParser.startsWithOptionallySuffixedToken(
         trimmedLine,
         "pause",
         " ->",
       );
-
       if (token) {
         trimmedLine = str_replace(`${token} ->`, `${token}->`, trimmedLine);
       }
@@ -184,16 +199,19 @@ export class TimeLogProcessor {
           trimmedLineForDateCheck.length > 1 &&
           strpos(trimmedLineForDateCheck, "min") === false
         ) {
-          // var_dump($metadata["dateRaw"], $trimmedLineForDateCheck, $ts, $date);
-          // $invalid = empty($date);
           const { metadata } = this.timeLogParser.detectTimeStamp(
             trimmedLineForDateCheck,
           );
+
+          /*
           const { ts, date, datetime } = this.timeLogParser.interpretTsAndDate(
             metadata.dateRaw,
           );
+          // var_dump($metadata["dateRaw"], $trimmedLineForDateCheck, $ts, $date);
+          // $invalid = empty($date);
+          */
 
-          if (!!metadata.dateRaw) {
+          if (metadata.dateRaw && metadata.dateRaw.trim() !== "") {
             // $formattedDate = gmdate("Y-m-d H:i", $ts); //:s
             const implicitMessage =
               trimmedLineForDateCheck + `, <just before ${token}>`;
@@ -229,8 +247,7 @@ export class TimeLogProcessor {
         phase1SourceLineContentsSourceLineMap[phase1ProcessedLine];
 
       // Skip empty lines
-      const testEmpty = trimmedLine;
-      if (!testEmpty) {
+      if (!trimmedLine || trimmedLine === "") {
         processed.push(trimmedLine);
         this.preProcessedContentsSourceLineContentsSourceLineMap[
           processed.length
@@ -244,11 +261,12 @@ export class TimeLogProcessor {
 
       if (nextNeedToBeStart) {
         // We have a certain syntax that can recover a missing start line, let's check for that:
-        // @var DateTime $datetime
         const {
+          /*
           ts,
           date,
           dateRaw,
+          */
           datetime,
           lineWithoutDate,
           notTheFirstRowOfALogComment,
@@ -265,8 +283,8 @@ export class TimeLogProcessor {
 
           if (!!m) {
             apprtoken = m[1];
-            hours = Math.round(m[3]);
-            minutes = Math.round(m[4]) + hours * 60;
+            hours = Math.round(parseFloat(m[3]));
+            minutes = Math.round(parseFloat(m[4])) + hours * 60;
           } else {
             // Check for hours without minutes as well
             preg = /^(ca|appr)? ?(\d)+h/; // todo dynamic insertion of apprtokens
@@ -274,16 +292,13 @@ export class TimeLogProcessor {
 
             if (!!m2) {
               apprtoken = m2[1];
-              hours = Math.round(m2[2]);
+              hours = Math.round(parseFloat(m2[2]));
               minutes = hours * 60;
             }
           }
 
           if (!!minutes) {
             // Here we, instead of start, have a single line with a duration. We can calculate the start from this...
-            const interval = DateInterval.createFromDateString(
-              minutes + " minutes",
-            );
 
             if (!datetime) {
               throw new TimeLogParsingException(
@@ -291,7 +306,10 @@ export class TimeLogProcessor {
               );
             }
 
-            const probableStartDateTime = datetime.sub(interval);
+            const probableStartDateTime = new DateTime(
+              subMinutes(datetime.getDate(), minutes),
+              datetime.getTimezone(),
+            );
             const probableStart = probableStartDateTime.format("Y-m-d H:i"); // gmdate("Y-m-d H:i", $ts - $minutes * 60);
             // var_dump(__LINE__, $probableStart, $date, $minutes, $this->lastKnownTimeZone);
 
@@ -360,8 +378,8 @@ export class TimeLogProcessor {
   public addTimeMarkers() {
     this.timeLogParser.lastKnownTimeZone = this.tzFirst;
     this.preProcessContents();
-    const rowsWithTimeMarkers = [];
-    const notParsed = [];
+    const rowsWithTimeMarkers: RowMetadata[] = [];
+    const notParsed: RowMetadata[] = [];
 
     this.parsePreProcessedContents(
       this.preProcessedContents,
@@ -380,11 +398,11 @@ export class TimeLogProcessor {
 
   public parsePreProcessedContents(
     preProcessedContents,
-    rowsWithTimeMarkers,
-    notParsed,
+    rowsWithTimeMarkers: RowMetadata[],
+    notParsed: RowMetadata[],
   ) {
     const originalUnsortedRows = [];
-    let rowsWithTimeMarkersHandled = 0;
+    let rowsWithTimeMarkersHandled: number = 0;
     const lines = textIntoLinesArray(preProcessedContents);
 
     // skip empty rows
@@ -399,7 +417,11 @@ export class TimeLogProcessor {
     // Catch lines that has a timestamp but not in the beginning
     // Handle new-found rows with TimeMarker
     // While devving, just work on small subset of all rows
-    for (const preprocessedContentsSourceLineIndex of Object.keys(lines)) {
+    for (
+      let preprocessedContentsSourceLineIndex = 0;
+      preprocessedContentsSourceLineIndex < lines.length;
+      preprocessedContentsSourceLineIndex++
+    ) {
       const preprocessedContentsSourceLine =
         lines[preprocessedContentsSourceLineIndex];
       let trimmedLine = preprocessedContentsSourceLine.trim();
@@ -497,14 +519,15 @@ export class TimeLogProcessor {
 
       if (notTheFirstRowOfALogCommentAndProbableStartStopLine) {
         isNewRowWithTimeMarker = true;
-        this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine(
+
+        const updates = this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine(
           line,
           metadata,
           rowsWithTimeMarkers,
           rowsWithTimeMarkersHandled,
           notParsed,
-          isNewRowWithTimeMarker,
         );
+        isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
       } else if (notTheFirstRowOfALogComment) {
         this.processAdditionalLogCommentRowUntilNextLogComment(
           line,
@@ -520,15 +543,15 @@ export class TimeLogProcessor {
         );
         isNewRowWithTimeMarker = false;
       } else {
-        const theFirstRowOfALogComment = true;
-        this.processTheFirstRowOfALogComment(
+        // const theFirstRowOfALogComment = true;
+        const updates = this.processTheFirstRowOfALogComment(
           ts,
-          isNewRowWithTimeMarker,
           metadata,
           rowsWithTimeMarkers,
           rowsWithTimeMarkersHandled,
           notParsed,
         );
+        isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
       }
 
       if (isNewRowWithTimeMarker) {
@@ -538,11 +561,11 @@ export class TimeLogProcessor {
 
       originalUnsortedRows.push(metadata);
 
+      // TODO: Make configurable
       if (rowsWithTimeMarkersHandled >= 100000) {
         throw new TimeLogParsingException(
           "Time log exceeds maximum allowed size",
         );
-        break;
       }
     }
 
@@ -552,13 +575,15 @@ export class TimeLogProcessor {
   }
 
   public processNotTheFirstRowOfALogCommentAndProbableStartStopLine(
-    line,
-    metadata,
-    rowsWithTimeMarkers,
-    rowsWithTimeMarkersHandled,
+    line: string,
+    metadata: RowMetadata,
+    rowsWithTimeMarkers: RowMetadata[],
+    rowsWithTimeMarkersHandled: number,
     notParsed,
-    isNewRowWithTimeMarker, // Assume true // Check if it's a pause with written duration
-  ) {
+  ): { isNewRowWithTimeMarker: boolean } {
+    let isNewRowWithTimeMarker;
+    // Assume true
+    // Check if it's a pause with written duration
     const startsWithPauseToken = this.timeLogParser.startsWithOptionallySuffixedToken(
       line,
       "pause",
@@ -566,29 +591,31 @@ export class TimeLogProcessor {
     const isTheFirstRowWithTimeMarker = !rowsWithTimeMarkers[
       rowsWithTimeMarkersHandled - 1
     ];
-    const probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = true;
+    let probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = true;
     const pauseWithWrittenDuration =
       startsWithPauseToken && strpos(line, "min") !== false;
 
     if (pauseWithWrittenDuration) {
-      this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration(
+      const updates = this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration(
         metadata,
         rowsWithTimeMarkers,
         rowsWithTimeMarkersHandled,
         notParsed,
-        probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp,
       );
+      probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp =
+        updates.probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp;
     } else {
-      this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine_notPauseWithWrittenDuration(
+      const updates = this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine_notPauseWithWrittenDuration(
         line,
         startsWithPauseToken,
         metadata,
         rowsWithTimeMarkers,
         rowsWithTimeMarkersHandled,
         notParsed,
-        probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp,
-        isNewRowWithTimeMarker,
       );
+      probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp =
+        updates.probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp;
+      isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
     }
 
     if (!probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp) {
@@ -598,7 +625,7 @@ export class TimeLogProcessor {
       }
 
       metadata.ts = rowsWithTimeMarkers[rowsWithTimeMarkersHandled - 1].ts;
-      metadata.ts_is_faked = true;
+      metadata.tsIsFaked = true;
       const timezone = new DateTimeZone("UTC");
       const datetime = DateTime.createFromUnixTimestamp(
         metadata.ts,
@@ -618,34 +645,34 @@ export class TimeLogProcessor {
         this.sessionStarts.push(metadata);
       }
     }
+    return { isNewRowWithTimeMarker };
   }
 
   public processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration(
-    metadata,
-    rowsWithTimeMarkers,
-    rowsWithTimeMarkersHandled,
-    notParsed,
-    probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp, // preg_match('/([^-]-[^-]-2009) ([^:]*):([^c ]*)/', $lineForDateCheck, $m); // $metadata["duration_search_preg_debug"] = {linefordurationcheck","m");
-  ) {
+    metadata: RowMetadata,
+    rowsWithTimeMarkers: RowMetadata[],
+    rowsWithTimeMarkersHandled: number,
+    notParsed: RowMetadata[],
+  ): { probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp: boolean } {
+    let probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp;
+
+    // preg_match('/([^-]-[^-]-2009) ([^:]*):([^c ]*)/', $lineForDateCheck, $m); // $metadata["duration_search_preg_debug"] = {lineForDurationCheck","m");
     const methodName =
       "processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration";
     metadata.log.push("found a pause with written duration");
     metadata.ts = rowsWithTimeMarkers[rowsWithTimeMarkersHandled - 1].ts;
-    metadata.ts_is_faked = true;
+    metadata.tsIsFaked = true;
     const timezone = new DateTimeZone("UTC");
 
-    const _datetime = new DateTime();
-
-    _datetime.setTimezone(timezone);
-
-    _datetime.setTimestamp(metadata.ts);
+    const _datetime = DateTime.createFromUnixTimestamp(
+      metadata.ts,
+    ).cloneWithAnotherTimezone(timezone);
 
     metadata.formattedDate = _datetime.format("Y-m-d H:i:s");
     metadata.highlightWithNewlines = true;
     const parts = metadata.line.split("->");
-    const linefordurationcheck = parts[0];
-    preg_match_all("/(([0-9])*h)?([0-9]*)min/", linefordurationcheck, m);
-    // TODO: const m = dateRaw.match(/[0-9\.\,]+/);
+    const lineForDurationCheck = parts[0];
+    const m = lineForDurationCheck.match(/(([0-9])*h)?([0-9]*)min/);
 
     if (!!m && !!m[0]) {
       // var_dump($line, $m, $rowsWithTimeMarkersHandled, $rowsWithTimeMarkers);
@@ -653,19 +680,17 @@ export class TimeLogProcessor {
         "found pause duration, adding to accumulated pause duration (if any)",
       );
 
-      if (
-        !!rowsWithTimeMarkers[rowsWithTimeMarkersHandled - 1].pause_duration
-      ) {
-        metadata.pause_duration = Math.round(
-          rowsWithTimeMarkers[rowsWithTimeMarkersHandled - 1].pause_duration,
+      if (!!rowsWithTimeMarkers[rowsWithTimeMarkersHandled - 1].pauseDuration) {
+        metadata.pauseDuration = Math.round(
+          rowsWithTimeMarkers[rowsWithTimeMarkersHandled - 1].pauseDuration,
         );
       } else {
-        metadata.pause_duration = 0;
+        metadata.pauseDuration = 0;
       }
 
-      metadata.pause_duration +=
+      metadata.pauseDuration +=
         60 * (Math.round(m[2][0]) * 60 + Math.round(m[3][0]));
-      metadata.ts_is_faked = false;
+      metadata.tsIsFaked = false;
       probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = true;
     } // To easily see patterns amongst these lines
     else {
@@ -673,44 +698,55 @@ export class TimeLogProcessor {
       metadata.log.push("sent to notParsed in " + methodName);
       notParsed.push(metadata);
     }
+
+    return { probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp };
   }
 
   public processNotTheFirstRowOfALogCommentAndProbableStartStopLine_notPauseWithWrittenDuration(
-    line,
+    line: string,
     startsWithPauseToken,
-    metadata,
-    rowsWithTimeMarkers,
-    rowsWithTimeMarkersHandled,
-    notParsed,
-    probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp,
-    isNewRowWithTimeMarker, // Try to find a valid timestamp // Remove the pause specification before attempting to find a timestamp // @var DateTime $datetime // var_dump($ts, $date, $datetime); // Check if the timestamp is later or same as previous row with time marker (if not, something is wrong)
-  ) {
+    metadata: RowMetadata,
+    rowsWithTimeMarkers: RowMetadata[],
+    rowsWithTimeMarkersHandled: number,
+    notParsed: RowMetadata[],
+  ): {
+    isNewRowWithTimeMarker: boolean;
+    probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp: boolean;
+  } {
+    let probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp;
+    let isNewRowWithTimeMarker;
+    // Try to find a valid timestamp
+    // Remove the pause specification before attempting to find a timestamp
+    // @var DateTime $datetime // var_dump($ts, $date, $datetime);
+    // Check if the timestamp is later or same as previous row with time marker (if not, something is wrong)
     const methodName =
       "processNotTheFirstRowOfALogCommentAndProbableStartStopLine_notPauseWithWrittenDuration";
     let lineForDateCheck = line;
 
     if (startsWithPauseToken) {
-      lineForDateCheck = this.removeSuffixedToken(
+      lineForDateCheck = this.timeLogParser.removeSuffixedToken(
         lineForDateCheck,
         "pause",
         "->",
       );
-      lineForDateCheck = this.removeSuffixedToken(
+      lineForDateCheck = this.timeLogParser.removeSuffixedToken(
         lineForDateCheck,
         "pause",
         " ",
       );
-      lineForDateCheck = this.removeSuffixedToken(
+      lineForDateCheck = this.timeLogParser.removeSuffixedToken(
         lineForDateCheck,
         "pause",
         "",
       );
     }
-
-    const { metadata } = this.timeLogParser.detectTimeStamp(lineForDateCheck);
-    const { ts, date, datetime } = this.timeLogParser.interpretTsAndDate(
-      metadata.dateRaw,
+    let datetime;
+    const result = this.timeLogParser.detectTimeStamp(lineForDateCheck);
+    const interpretedTsAndDate = this.timeLogParser.interpretTsAndDate(
+      result.metadata.dateRaw,
     );
+    const { ts, date } = interpretedTsAndDate;
+    datetime = interpretedTsAndDate.datetime;
     const validTimestampFound = !!date;
     let thisTimestampIsLaterOrSameAsPreviousRowWithTimeMarker;
     let durationSinceLast;
@@ -758,8 +794,10 @@ export class TimeLogProcessor {
         "Timestamp found in probable start/pause-row, but was earlier than last found",
       );
       metadata.log.push(`Line: ${line}`);
-      const last = clone(datetime);
-      last.add(new DateInterval("PT" + Math.abs(durationSinceLast) + "S"));
+      const last = new DateTime(
+        addSeconds(datetime.getDate(), Math.abs(durationSinceLast)),
+        datetime.getTimezone(),
+      );
       metadata.log.push(
         `Timestamp found: ${datetime.format(
           "Y-m-d H:i:s",
@@ -781,23 +819,27 @@ export class TimeLogProcessor {
       metadata.ts = ts;
       metadata.date = date;
       const timezone = new DateTimeZone("UTC");
-      datetime = new DateTime();
-      datetime.setTimezone(timezone);
-      datetime.setTimestamp(ts);
+      datetime = DateTime.createFromUnixTimestamp(ts).cloneWithAnotherTimezone(
+        timezone,
+      );
       metadata.formattedDate = datetime.format("Y-m-d H:i:s");
-      metadata.ts_is_faked = false;
+      metadata.tsIsFaked = false;
       metadata.highlightWithNewlines = true;
-      metadata.line = metadata.line;
+      // metadata.line = metadata.line;
       probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = true;
     } else {
       probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = false;
     }
+    return {
+      isNewRowWithTimeMarker,
+      probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp,
+    };
   }
 
   public processAdditionalLogCommentRowUntilNextLogComment(
-    line,
-    rowsWithTimeMarkers,
-    rowsWithTimeMarkersHandled,
+    line: string,
+    rowsWithTimeMarkers: RowMetadata[],
+    rowsWithTimeMarkersHandled: number,
   ) {
     if (!(undefined !== rowsWithTimeMarkers[rowsWithTimeMarkersHandled - 1])) {
       throw new TimeLogParsingException(
@@ -809,14 +851,14 @@ export class TimeLogProcessor {
   }
 
   public processTheFirstRowOfALogComment(
-    ts,
-    isNewRowWithTimeMarker,
-    metadata,
-    rowsWithTimeMarkers,
-    rowsWithTimeMarkersHandled,
+    ts: number,
+    metadata: RowMetadata,
+    rowsWithTimeMarkers: RowMetadata[],
+    rowsWithTimeMarkersHandled: number,
     notParsed, // Get duration from last count
-  ) {
-    const durationSinceLast = this.durationFromLast(
+  ): { isNewRowWithTimeMarker: boolean } {
+    let isNewRowWithTimeMarker;
+    const durationSinceLast = this.timeLogParser.durationFromLast(
       ts,
       rowsWithTimeMarkersHandled,
       rowsWithTimeMarkers,
@@ -827,11 +869,13 @@ export class TimeLogProcessor {
       metadata.log.push("negative duration since last");
       isNewRowWithTimeMarker = false;
       const timezone = new DateTimeZone("UTC");
-      const datetime = new DateTime();
-      datetime.setTimezone(timezone);
-      datetime.setTimestamp(ts);
-      const last = clone(datetime);
-      last.add(new DateInterval("PT" + Math.abs(durationSinceLast) + "S"));
+      const datetime = DateTime.createFromUnixTimestamp(
+        ts,
+      ).cloneWithAnotherTimezone(timezone);
+      const last = new DateTime(
+        addSeconds(datetime.getDate(), Math.abs(durationSinceLast)),
+        datetime.getTimezone(),
+      );
       metadata.log.push(
         `Timestamp found: ${datetime.format(
           "Y-m-d H:i:s",
@@ -851,7 +895,7 @@ export class TimeLogProcessor {
       // TODO: Make limit configurable
       metadata.log.push(
         "excessive duration since last: " +
-          this.secondsToDuration(durationSinceLast),
+          this.timeLogParser.secondsToDuration(durationSinceLast),
       );
       notParsed.push(metadata);
       isNewRowWithTimeMarker = true;
@@ -859,16 +903,18 @@ export class TimeLogProcessor {
       metadata.durationSinceLast = durationSinceLast;
       isNewRowWithTimeMarker = true;
     }
+    return { isNewRowWithTimeMarker };
   }
 
   public generateStructuredTimeMarkedOutputBasedOnParsedRowsWithTimeMarkers(
-    rowsWithTimeMarkers,
-    notParsed, // Generate structured log output
+    rowsWithTimeMarkers: RowMetadata[],
+    notParsed: RowMetadata[], // Generate structured log output
   ) {
     if (!rowsWithTimeMarkers) {
       throw new TimeLogParsingException("No rows parsed...");
     }
 
+    /*
     const last = rowsWithTimeMarkers.pop();
 
     if (false) {
@@ -876,6 +922,7 @@ export class TimeLogProcessor {
     } else {
       rowsWithTimeMarkers.push(last);
     }
+    */
 
     return this.generateStructuredTimeMarkedOutput(
       rowsWithTimeMarkers,
@@ -883,12 +930,16 @@ export class TimeLogProcessor {
     );
   }
 
-  public generateStructuredTimeMarkedOutput(rowsWithTimeMarkers, notParsed) {
+  public generateStructuredTimeMarkedOutput(
+    rowsWithTimeMarkers: RowMetadata[],
+    notParsed: RowMetadata[],
+  ) {
     let contentsWithTimeMarkers = "";
     contentsWithTimeMarkers += ".:: Uncategorized\n";
 
     for (const k of Object.keys(rowsWithTimeMarkers)) {
       const metadata = rowsWithTimeMarkers[k];
+      const rowIndex = parseInt(k, 10) - 1;
 
       if (
         metadata.highlightWithNewlines !== undefined &&
@@ -904,9 +955,9 @@ export class TimeLogProcessor {
         metadata.durationSinceLast !== null
       ) {
         // Remove any known pause durations
-        if (!!rowsWithTimeMarkers[k - 1].pause_duration) {
+        if (!!rowsWithTimeMarkers[rowIndex].pauseDuration) {
           metadata.durationSinceLast -=
-            rowsWithTimeMarkers[k - 1].pause_duration;
+            rowsWithTimeMarkers[rowIndex].pauseDuration;
         }
 
         if (metadata.durationSinceLast < 0) {
@@ -925,12 +976,12 @@ export class TimeLogProcessor {
           this.timeLogParser.secondsToDuration(metadata.durationSinceLast);
 
         if (
-          !!rowsWithTimeMarkers[k - 1] &&
-          !!rowsWithTimeMarkers[k - 1].ts_is_faked
+          !!rowsWithTimeMarkers[rowIndex] &&
+          !!rowsWithTimeMarkers[rowIndex].tsIsFaked
         ) {
           // Treat this situation as invalid
           contentsWithTimeMarkers += " {!} ";
-          const previousRow = rowsWithTimeMarkers[k - 1];
+          const previousRow = rowsWithTimeMarkers[rowIndex];
           metadata.log.push(
             "duration since last is based on fake/interpolated timestamp",
           );
@@ -977,7 +1028,7 @@ export class TimeLogProcessor {
     return contentsWithTimeMarkers;
   }
 
-  public notParsedAddTimeMarkersErrorSummary(notParsed) {
+  public notParsedAddTimeMarkersErrorSummary(notParsed: RowMetadata[]) {
     if (!notParsed) {
       throw new TimeLogParsingException(
         "Can not summarize not-parsed errors without any unparsed contents",
@@ -1093,7 +1144,7 @@ export class TimeLogProcessor {
       const lineWithoutDate = parts.join(",");
       const _ = this.timeLogParser.lastKnownTimeZone;
       this.timeLogParser.lastKnownTimeZone = "UTC";
-      const { ts, date, datetime } = this.timeLogParser.interpretTsAndDate(
+      const { ts, date /*, datetime*/ } = this.timeLogParser.interpretTsAndDate(
         dateRaw,
       );
       this.timeLogParser.lastKnownTimeZone = _;
@@ -1302,7 +1353,7 @@ export class TimeLogProcessor {
 
   public getTimeLogMetadata() {
     // do {
-    // } while (!$last["ts_is_faked"]);
+    // } while (!$last["tsIsFaked"]);
 
     if (!this.contentsWithTimeMarkers) {
       return [];
@@ -1312,7 +1363,8 @@ export class TimeLogProcessor {
       return [];
     }
 
-    const rowsWithTimeMarkers = this.debugAddTimeMarkers.rowsWithTimeMarkers;
+    const rowsWithTimeMarkers: RowMetadata[] = this.debugAddTimeMarkers
+      .rowsWithTimeMarkers;
     const start = rowsWithTimeMarkers.shift();
     const startTs = start.ts;
     const name = start.dateRaw;

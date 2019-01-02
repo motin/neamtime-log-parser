@@ -4,12 +4,12 @@ import { LogParser, Metadata } from "./LogParser";
 import { DateTime } from "./php-wrappers";
 
 export interface ParsedLogComment {
-  dateRaw: any;
-  ts: any;
-  date: any;
-  lineWithoutDate: any;
-  notTheFirstRowOfALogComment: any;
-  datetime: any;
+  dateRaw: string;
+  ts: number;
+  date: string;
+  lineWithoutDate: string;
+  notTheFirstRowOfALogComment: boolean;
+  datetime: DateTime;
 }
 
 export class TimeLogParser extends LogParser {
@@ -53,7 +53,7 @@ export class TimeLogParser extends LogParser {
     return forReturn;
   }
 
-  public isProbableStartStopLine(line, dump = false) {
+  public isProbableStartStopLine(line) {
     const trimmedLine = line.trim();
     const startsWithPauseTokenFollowedByASpace = this.startsWithOptionallySuffixedToken(
       trimmedLine,
@@ -89,13 +89,7 @@ export class TimeLogParser extends LogParser {
       strpos(trimmedLine, "#") !== 0 &&
       true;
 
-    if (dump) {
-      console.log(
-        trimmedLine,
-        trimmedLine,
-        /*str_hex(trimmedLine),*/ forReturn,
-      );
-    }
+    // console.debug("{trimmedLine}", {trimmedLine}, /*str_hex(trimmedLine),*/ forReturn);
 
     return forReturn;
   }
@@ -233,9 +227,7 @@ export class TimeLogParser extends LogParser {
   public interpretTsAndDate(
     dateRaw,
   ): { ts: number; date?: string; datetime?: DateTime } {
-    console.debug("TimeLogParser.interpretTsAndDate - { dateRaw }", {
-      dateRaw,
-    });
+    // console.debug("TimeLogParser.interpretTsAndDate - { dateRaw }", {dateRaw});
     this.lastInterpretTsAndDateErrorMessage = "";
 
     const errorReturn = {

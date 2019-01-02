@@ -5,11 +5,24 @@ import { TimeSpendingLogProcessingErrorsEncounteredException } from "./exception
 import { TimeLogProcessor, TimeLogSession } from "./TimeLogProcessor";
 import { TimeSpendingLog } from "./TimeSpendingLog";
 
+export interface ProcessingError {
+  data;
+  ref;
+  message;
+}
+
 export class ProcessedTimeSpendingLog {
   public timeReportData: [];
-  public processingErrors: [];
+  public processingErrors: ProcessingError[];
   public unprocessedTimeSpendingLog: TimeSpendingLog;
   public timeReportCsv;
+
+  public preProcessedContents;
+  public processedLogContentsWithTimeMarkersDebug;
+  public timeReportCsvDebug;
+  public timeReportSourceComments;
+  public processedLogContentsWithTimeMarkers;
+  public timeReportICal;
 
   private timeLogProcessor: TimeLogProcessor;
 
@@ -101,7 +114,7 @@ export class ProcessedTimeSpendingLog {
     this.processedLogContentsWithTimeMarkers =
       timeLogProcessor.contentsWithTimeMarkers;
     this.parseProcessedLogContentsWithTimeMarkers();
-    this.timeReportICal = timeLogProcessor.generateIcal();
+    // this.timeReportICal = timeLogProcessor.generateIcal();
   }
 
   public parseProcessedLogContentsWithTimeMarkers() {
@@ -132,13 +145,13 @@ export class ProcessedTimeSpendingLog {
     this.timeReportCsv = timeLogProcessor.contentsOfTimeReport;
     this.timeReportData = timeLogProcessor.timeReportData;
     this.preProcessedContents = timeLogProcessor.preProcessedContents;
-    this.processedLogContentsWithTimeMarkers_debug = JSON.stringify(
+    this.processedLogContentsWithTimeMarkersDebug = JSON.stringify(
       timeLogProcessor.debugAddTimeMarkers,
     );
-    this.timeReportCsv_debug = JSON.stringify(
+    this.timeReportCsvDebug = JSON.stringify(
       timeLogProcessor.debugGenerateTimeReport,
     );
-    this.time_report_source_comments = JSON.stringify(
+    this.timeReportSourceComments = JSON.stringify(
       timeLogProcessor.timeReportSourceComments,
     );
 
@@ -208,7 +221,7 @@ export class ProcessedTimeSpendingLog {
 
   public parseDetectSessionsOneByOne(timeLogProcessor: TimeLogProcessor) {
     timeLogProcessor.sessions = [];
-    const starts = timeLogProcessor.sessionStarts;
+    const starts: any[] = timeLogProcessor.sessionStarts;
 
     // If only one session was detected, we will not parse the session, but instead simply use the current timeLogProcessor in order to avoid stack overflow
 

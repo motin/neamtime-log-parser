@@ -29,8 +29,7 @@ export function textIntoLinesArray(
 ): string[] {
   text = str_replace("\xA0", " ", text);
   text = this.newlineConvert(text, this.NL_NIX);
-  const lines = text.split(this.NL_NIX);
-  return lines;
+  return text.split(this.NL_NIX);
 }
 
 export function linesArrayIntoText(lines) {
