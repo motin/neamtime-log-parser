@@ -1,27 +1,22 @@
-// tslint:disable:no-expression-statement
-import test from "ava";
-import {
-  file_get_contents,
-  pathinfo,
-  PATHINFO_DIRNAME,
-  PATHINFO_FILENAME,
-} from "locutus/php/filesystem";
+import test, { ExecutionContext, Macro } from "ava";
+import { file_get_contents } from "locutus/php/filesystem";
 import { str_replace } from "locutus/php/strings";
+import path from "path";
+import { fixturesPath } from "../inc/testUtils";
+import {
+  getProcessedTimeSpendingLog,
+  processTimeSpendingLog,
+  timeSpendingLogPathsInFolder,
+} from "../index";
 import { TimeSpendingLogProcessingErrorsEncounteredException } from "./exceptions/TimeSpendingLogProcessingErrorsEncounteredException";
-import { file_put_contents, is_file, memory_get_usage } from "./php-wrappers";
-import { ProcessedTimeSpendingLog } from "./ProcessedTimeSpendingLog";
-import { TimeSpendingLog } from "./TimeSpendingLog";
-
-test("foo", t => {
-  // t.is(actual, expected);
-  t.is(1, 1);
-});
+import { file_put_contents, memory_get_usage } from "./php-wrappers";
 
 const correctTimeSpendingLogContents = () => {
-  const pathToFolderWhereTsLogsReside = codecept_data_dir(
+  const pathToFolderWhereTsLogsReside = path.join(
+    fixturesPath,
     "neamtime/time-spending-logs/correct",
   );
-  const timeSpendingLogPaths = this.timeSpendingLogPathsInFolder(
+  const timeSpendingLogPaths = timeSpendingLogPathsInFolder(
     pathToFolderWhereTsLogsReside,
   );
   const providerData = Array();
@@ -34,10 +29,11 @@ const correctTimeSpendingLogContents = () => {
 };
 
 const incorrectTimeSpendingLogContents = () => {
-  const pathToFolderWhereTsLogsReside = codecept_data_dir(
+  const pathToFolderWhereTsLogsReside = path.join(
+    fixturesPath,
     "neamtime/time-spending-logs/incorrect",
   );
-  const timeSpendingLogPaths = this.timeSpendingLogPathsInFolder(
+  const timeSpendingLogPaths = timeSpendingLogPathsInFolder(
     pathToFolderWhereTsLogsReside,
   );
   const providerData = Array();
@@ -54,33 +50,44 @@ const incorrectTimeSpendingLogContents = () => {
   return providerData;
 };
 
-const timeSpendingLogPathsInFolder = (
-  pathToFolderWhereTsLogsReside, // handle bear-exported txt-files // pick up properly named files for parsing
+const testProcessAndAssertCorrectTimeSpendingLog: Macro = (
+  t: ExecutionContext,
+  timeSpendingLogPath,
 ) => {
-  let timeSpendingLogPaths = glob(pathToFolderWhereTsLogsReside + "/*.txt");
-
-  for (const rawTimeSpendingLogPath of Object.values(timeSpendingLogPaths)) {
-    // first rename the file to make it shorter, and end with .tslog
-    const dirname = pathinfo(rawTimeSpendingLogPath, PATHINFO_DIRNAME);
-    const filename = pathinfo(rawTimeSpendingLogPath, PATHINFO_FILENAME);
-
-    const _ = filename.split(" - ");
-
-    const newFilename = _[0].trim();
-
-    const timeSpendingLogPath = dirname + "/" + newFilename + ".tslog";
-    rename(rawTimeSpendingLogPath, timeSpendingLogPath);
-  }
-
-  timeSpendingLogPaths = glob(pathToFolderWhereTsLogsReside + "/*.tslog");
-  return timeSpendingLogPaths;
-};
-
-const testprocessAndAssertCorrectTimeSpendingLog = (t, timeSpendingLogPath) => {
   processAndAssertCorrectTimeSpendingLog(t, timeSpendingLogPath);
 };
 
-const testCorrectTimeSpendingLogsCorrectness = timeSpendingLogPath => {
+const processAndAssertCorrectTimeSpendingLog = (t, timeSpendingLogPath) => {
+  const { processedTimeSpendingLog, thrownException } = processTimeSpendingLog(
+    t,
+    timeSpendingLogPath,
+  );
+  this.assertNotInstanceOf(
+    "TimeSpendingLogProcessingErrorsEncounteredException",
+    thrownException,
+    "We should not have encountered any log processing error, but we did. Check .latest-run.processing-errors.json for more info.",
+  );
+  t.log(
+    650 +
+      " - Memory usage: " +
+      Math.round((memory_get_usage(true) / 1024 / 1024) * 100) / 100 +
+      " MiB",
+  );
+  return processedTimeSpendingLog.calculateTotalReportedTime();
+};
+
+correctTimeSpendingLogContents().forEach((testData, index) => {
+  test(
+    "testProcessAndAssertCorrectTimeSpendingLog - " + index,
+    testProcessAndAssertCorrectTimeSpendingLog,
+    testData[0],
+  );
+});
+
+const testCorrectTimeSpendingLogsCorrectness: Macro = (
+  t: ExecutionContext,
+  timeSpendingLogPath,
+) => {
   const correspondingCsvDataFilePath = this.correspondingCsvDataFilePath(
     timeSpendingLogPath,
   );
@@ -90,17 +97,25 @@ const testCorrectTimeSpendingLogsCorrectness = timeSpendingLogPath => {
   const processedTimeSpendingLog = getProcessedTimeSpendingLog(
     timeSpendingLogPath,
   );
-  this.assertEquals(
-    correspondingCsvDataFileContents,
+  t.is(
     processedTimeSpendingLog.timeReportCsv,
+    correspondingCsvDataFileContents,
     `CSV contents for '${timeSpendingLogPath}' matches expected`,
   );
 };
 
-const testCorrectlyReportedProcessingErrors = (
-  t,
+correctTimeSpendingLogContents().forEach((testData, index) => {
+  test(
+    "testCorrectTimeSpendingLogsCorrectness - " + index,
+    testCorrectTimeSpendingLogsCorrectness,
+    testData[0],
+  );
+});
+
+const testCorrectlyReportedProcessingErrors: Macro = (
+  t: ExecutionContext,
   timeSpendingLogPath,
-  processingErrorsJsonFilePath, // Save preProcessedContents in order to make debugging easier // Save processedLogContentsWithTimeMarkers in order to make debugging easier
+  processingErrorsJsonFilePath,
 ) => {
   t.log(timeSpendingLogPath);
   let thrownException;
@@ -137,10 +152,12 @@ const testCorrectlyReportedProcessingErrors = (
     timeSpendingLogPath + ".latest-run.timeReportCsv.csv",
     processedTimeSpendingLog.timeReportCsv,
   );
+  // Save preProcessedContents in order to make debugging easier
   file_put_contents(
     timeSpendingLogPath + ".latest-run.preProcessedContents",
     processedTimeSpendingLog.preProcessedContents,
   );
+  // Save processedLogContentsWithTimeMarkers in order to make debugging easier
   file_put_contents(
     timeSpendingLogPath + ".latest-run.processedLogContentsWithTimeMarkers",
     processedTimeSpendingLog.processedLogContentsWithTimeMarkers,
@@ -165,131 +182,10 @@ const testCorrectlyReportedProcessingErrors = (
   );
 };
 
-const processAndAssertCorrectTimeSpendingLog = (t, timeSpendingLogPath) => {
-  const { processedTimeSpendingLog, thrownException } = processTimeSpendingLog(
-    t,
-    timeSpendingLogPath,
+incorrectTimeSpendingLogContents().forEach((testData, index) => {
+  test(
+    "testCorrectlyReportedProcessingErrors - " + index,
+    testCorrectlyReportedProcessingErrors,
+    testData[0],
   );
-  this.assertNotInstanceOf(
-    "TimeSpendingLogProcessingErrorsEncounteredException",
-    thrownException,
-    "We should not have encountered any log processing error, but we did. Check .latest-run.processing-errors.json for more info.",
-  );
-  t.log(
-    650 +
-      " - Memory usage: " +
-      Math.round((memory_get_usage(true) / 1024 / 1024) * 100) / 100 +
-      " MiB",
-  );
-  return processedTimeSpendingLog.calculateTotalReportedTime();
-};
-
-// Save processedLogContentsWithTimeMarkers in order to make debugging easier // Save processedLogContentsWithTimeMarkers_debug in order to make debugging easier
-const processTimeSpendingLog = (t, timeSpendingLogPath) => {
-  t.log(
-    660 +
-      " - Memory usage: " +
-      Math.round((memory_get_usage(true) / 1024 / 1024) * 100) / 100 +
-      " MiB",
-  );
-  t.log(timeSpendingLogPath);
-  const correspondingCsvDataFilePath = getCorrespondingCsvDataFilePath(
-    timeSpendingLogPath,
-  );
-  let thrownException;
-  let processedTimeSpendingLog;
-
-  try // t.log($processedTimeSpendingLog->timeReportCsv);
-  {
-    // To update the expected contents based on the current output (use only when certain that everything
-    // is correct and only the format of the output file has been changed)
-    // file_put_contents(
-    //                $correspondingCsvDataFilePath,
-    //                $processedTimeSpendingLog->timeReportCsv
-    //            );
-    // To make it easier to update with correct contents for the first time
-    // t.log($timeLogEntriesWithMetadata);
-    // All tested time logs should include at least 1 time log entry
-    // Save processedLogContentsWithTimeMarkers_debug in order to make debugging easier
-    t.log(
-      667 +
-        " - Memory usage: " +
-        Math.round((memory_get_usage(true) / 1024 / 1024) * 100) / 100 +
-        " MiB",
-    );
-    processedTimeSpendingLog = getProcessedTimeSpendingLog(timeSpendingLogPath);
-    t.log(
-      671 +
-        " - Memory usage: " +
-        Math.round((memory_get_usage(true) / 1024 / 1024) * 100) / 100 +
-        " MiB",
-    );
-    file_put_contents(
-      correspondingCsvDataFilePath + ".latest-run.csv",
-      processedTimeSpendingLog.timeReportCsv,
-    );
-    const timeLogEntriesWithMetadata = processedTimeSpendingLog.getTimeLogEntriesWithMetadata();
-    t.log(
-      692 +
-        " - Memory usage: " +
-        Math.round((memory_get_usage(true) / 1024 / 1024) * 100) / 100 +
-        " MiB",
-    );
-    t.log(timeLogEntriesWithMetadata.length + " time log entries");
-    this.assertGreaterThan(0, timeLogEntriesWithMetadata.length);
-    file_put_contents(
-      timeSpendingLogPath + ".latest-run.timeLogEntriesWithMetadata.json",
-      JSON.stringify(timeLogEntriesWithMetadata, null, 2),
-    );
-  } catch (e) {
-    if (e instanceof TimeSpendingLogProcessingErrorsEncounteredException) {
-      // To make it easier to update with correct contents for the first time
-      thrownException = e;
-      processedTimeSpendingLog = e.processedTimeSpendingLog;
-      const errorsJson = JSON.stringify(
-        e.processedTimeSpendingLog.getProcessingErrors(),
-      );
-      file_put_contents(
-        timeSpendingLogPath + ".latest-run.processing-errors.json",
-        errorsJson,
-      );
-    }
-  }
-
-  file_put_contents(
-    timeSpendingLogPath + ".latest-run.preProcessedContents",
-    processedTimeSpendingLog.preProcessedContents,
-  );
-  file_put_contents(
-    timeSpendingLogPath + ".latest-run.processedLogContentsWithTimeMarkers",
-    processedTimeSpendingLog.processedLogContentsWithTimeMarkers,
-  );
-  file_put_contents(
-    timeSpendingLogPath +
-      ".latest-run.processedLogContentsWithTimeMarkers_debug.json",
-    processedTimeSpendingLog.processedLogContentsWithTimeMarkers_debug,
-  );
-  return { processedTimeSpendingLog, thrownException };
-};
-
-const getProcessedTimeSpendingLog = (
-  timeSpendingLogPath,
-): ProcessedTimeSpendingLog => {
-  const timeSpendingLogContents = file_get_contents(timeSpendingLogPath);
-
-  const tzFirst = is_file(timeSpendingLogPath + ".tzFirst")
-    ? file_get_contents(timeSpendingLogPath + ".tzFirst").trim()
-    : "UTC";
-
-  const timeSpendingLog = new TimeSpendingLog();
-  timeSpendingLog.rawLogContents = timeSpendingLogContents;
-  timeSpendingLog.tzFirst = tzFirst;
-  const processedTimeSpendingLog = new ProcessedTimeSpendingLog(
-    timeSpendingLog,
-  );
-  return processedTimeSpendingLog;
-};
-
-const getCorrespondingCsvDataFilePath = timeSpendingLogPath => {
-  return str_replace(".tslog", ".csv", timeSpendingLogPath);
-};
+});
