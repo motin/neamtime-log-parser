@@ -1,4 +1,5 @@
-import { writeFileSync } from "fs";
+import fg from "fast-glob";
+import fs, { writeFileSync } from "fs";
 import { ini_set } from "locutus/php/info";
 import { substr } from "locutus/php/strings";
 export * from "./DateTime";
@@ -23,26 +24,18 @@ export function cloneVariable(variable) {
   return JSON.parse(JSON.stringify(variable));
 }
 
-export function glob(filePath): string[] {
-  console.log("TODO glob", filePath);
-  return ["foo"];
+export function glob(patternOrPatterns): string[] {
+  return fg.sync(patternOrPatterns).map(_ => _.toString());
 }
 
 export function file_put_contents(filePath, contents) {
-  console.log("TODO file_put_contents", filePath, contents);
   writeFileSync(filePath, contents, "utf-8");
 }
 
 export function is_file(filePath): boolean {
-  console.log("TODO is_file", filePath);
-  return false;
+  return fs.existsSync(filePath);
 }
 
-export function memory_get_usage(foo): number {
-  console.log("TODO memory_get_usage", foo);
-  return 0;
-}
-
-export function clone(variable) {
-  console.log("TODO clone", variable);
+export function memory_get_usage(realUsage = false): number {
+  return process.memoryUsage()[realUsage ? "heapTotal" : "heapUsed"];
 }

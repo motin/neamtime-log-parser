@@ -14,11 +14,9 @@ import { file_put_contents, memory_get_usage } from "./php-wrappers";
 
 const correctTimeSpendingLogContents = () => {
   const pathToFolderWhereTsLogsReside = path.join(fixturesPath, "correct");
-  console.log("pathToFolderWhereTsLogsReside", pathToFolderWhereTsLogsReside);
   const timeSpendingLogPaths = timeSpendingLogPathsInFolder(
     pathToFolderWhereTsLogsReside,
   );
-  console.log("timeSpendingLogPaths", timeSpendingLogPaths);
   const providerData = Array();
 
   for (const timeSpendingLogPath of Object.values(timeSpendingLogPaths)) {
@@ -28,7 +26,7 @@ const correctTimeSpendingLogContents = () => {
   return providerData;
 };
 
-test("there exists at least one correct time spending log fixture paths", t => {
+test("there exists at least one correct time spending log fixture paths", (t: ExecutionContext) => {
   const paths = correctTimeSpendingLogContents();
   t.true(paths.length > 0);
 });
@@ -52,7 +50,7 @@ const incorrectTimeSpendingLogContents = () => {
   return providerData;
 };
 
-test("there exists at least one incorrect time spending log fixture paths", t => {
+test("there exists at least one incorrect time spending log fixture paths", (t: ExecutionContext) => {
   const paths = incorrectTimeSpendingLogContents();
   t.true(paths.length > 0);
 });
@@ -64,14 +62,17 @@ const testProcessAndAssertCorrectTimeSpendingLog: Macro = (
   processAndAssertCorrectTimeSpendingLog(t, timeSpendingLogPath);
 };
 
-const processAndAssertCorrectTimeSpendingLog = (t, timeSpendingLogPath) => {
+const processAndAssertCorrectTimeSpendingLog = (
+  t: ExecutionContext,
+  timeSpendingLogPath,
+) => {
   const { processedTimeSpendingLog, thrownException } = processTimeSpendingLog(
     t,
     timeSpendingLogPath,
   );
-  this.assertNotInstanceOf(
-    "TimeSpendingLogProcessingErrorsEncounteredException",
-    thrownException,
+  t.false(
+    thrownException instanceof
+      TimeSpendingLogProcessingErrorsEncounteredException,
     "We should not have encountered any log processing error, but we did. Check .latest-run.processing-errors.json for more info.",
   );
   t.log(
@@ -156,6 +157,8 @@ const testCorrectlyReportedProcessingErrors: Macro = (
         timeSpendingLogPath + ".latest-run.processing-errors.json",
         errorsJson,
       );
+    } else {
+      throw e;
     }
   }
 

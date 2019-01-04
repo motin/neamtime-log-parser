@@ -1,5 +1,9 @@
+// Note: These methods are only used in currently commented-out
+// debug statements, thus they are commented below as well
+
 // http://snippets.dzone.com/posts/show/2039
 
+/*
 export function str_hex(str) {
   console.log("todo str_hex", str);
   const hex = "";
@@ -8,13 +12,15 @@ export function str_hex(str) {
   for (let i = 0; i < str.length; i++) {
     hex += dechex(str.charCodeAt(i));
   }
-  */
+  * /
 
   return hex;
 }
+*/
 
 // const WORD_COUNT_MASK = "/\\p{L}[\\p{L}\\p{Mn}\\p{Pd}'\\x{2019}]*/u";
 
+/*
 export function str_word_count_utf8(str, format = 0) {
   console.log("todo str_word_count_utf8", str, format);
   return 999;
@@ -36,8 +42,9 @@ export function str_word_count_utf8(str, format = 0) {
   }
 
   return preg_match_all(WORD_COUNT_MASK, str, matches);
-  */
+  * /
 }
+*/
 
 /*
 function utf8_decode(description: string): string {

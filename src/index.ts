@@ -1,15 +1,15 @@
-// import fs from "fs";
-import fg from "fast-glob";
+import fs from "fs";
 import {
   file_get_contents,
-  // pathinfo,
-  // PATHINFO_DIRNAME,
-  // PATHINFO_FILENAME,
+  pathinfo,
+  PATHINFO_DIRNAME,
+  PATHINFO_FILENAME,
 } from "locutus/php/filesystem";
 import { str_replace } from "locutus/php/strings";
 import { TimeSpendingLogProcessingErrorsEncounteredException } from "./lib/exceptions/TimeSpendingLogProcessingErrorsEncounteredException";
 import {
   file_put_contents,
+  glob,
   is_file,
   memory_get_usage,
 } from "./lib/php-wrappers";
@@ -24,16 +24,9 @@ export * from "./lib/TimeLogProcessor";
 export const timeSpendingLogPathsInFolder = (
   pathToFolderWhereTsLogsReside, // handle bear-exported txt-files // pick up properly named files for parsing
 ) => {
-  const timeSpendingLogTextPaths = fg.sync(
+  const timeSpendingLogTextPaths = glob(
     pathToFolderWhereTsLogsReside + "/*.txt",
   );
-  console.log(
-    "timeSpendingLogTextPaths",
-    timeSpendingLogTextPaths,
-    pathToFolderWhereTsLogsReside + "/*.txt",
-  );
-
-  /*
   for (const rawTimeSpendingLogPath of Object.values(
     timeSpendingLogTextPaths,
   )) {
@@ -42,22 +35,13 @@ export const timeSpendingLogPathsInFolder = (
     const filename = pathinfo(rawTimeSpendingLogPath, PATHINFO_FILENAME);
 
     const _ = filename.split(" - ");
-
     const newFilename = _[0].trim();
 
     const timeSpendingLogPath = dirname + "/" + newFilename + ".tslog";
     fs.renameSync(rawTimeSpendingLogPath, timeSpendingLogPath);
   }
-  */
 
-  const timeSpendingLogPaths = fg.sync(
-    pathToFolderWhereTsLogsReside + "/*.tslog",
-  );
-  console.log(
-    "timeSpendingLogPaths",
-    timeSpendingLogPaths,
-    pathToFolderWhereTsLogsReside + "/*.tslog",
-  );
+  const timeSpendingLogPaths = glob(pathToFolderWhereTsLogsReside + "/*.tslog");
   return timeSpendingLogPaths;
 };
 
