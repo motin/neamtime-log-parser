@@ -842,13 +842,15 @@ export class TimeLogProcessor {
       const notTheFirstRowOfALogCommentAndProbableStartStopLine =
         notTheFirstRowOfALogComment &&
         this.timeLogParser.isProbableStartStopLine(line);
+      const previousRowWithTimeMarkerIndex =
+        this.rowsWithTimeMarkersHandled - 1;
       const isTheFirstRowWithTimeMarker = !this.rowsWithTimeMarkers[
-        this.rowsWithTimeMarkersHandled - 1
+        previousRowWithTimeMarkerIndex
       ];
       const hasAPreviousRowWithTimeMarker = !isTheFirstRowWithTimeMarker;
       const previousRowWithTimeMarkerHasTheSameDate =
         hasAPreviousRowWithTimeMarker &&
-        this.rowsWithTimeMarkers[this.rowsWithTimeMarkersHandled - 1]
+        this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex]
           .formattedDate === formattedDate;
 
       if (notTheFirstRowOfALogCommentAndProbableStartStopLine) {
@@ -896,6 +898,7 @@ export class TimeLogProcessor {
     metadata: RowMetadata,
   ): { isNewRowWithTimeMarker: boolean } {
     let isNewRowWithTimeMarker;
+    const previousRowWithTimeMarkerIndex = this.rowsWithTimeMarkersHandled - 1;
     // Assume true
     // Check if it's a pause with written duration
     const startsWithPauseToken = this.timeLogParser.startsWithOptionallySuffixedToken(
@@ -903,7 +906,7 @@ export class TimeLogProcessor {
       "pause",
     );
     const isTheFirstRowWithTimeMarker = !this.rowsWithTimeMarkers[
-      this.rowsWithTimeMarkersHandled - 1
+      previousRowWithTimeMarkerIndex
     ];
     let probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = true;
     const pauseWithWrittenDuration =
@@ -932,9 +935,7 @@ export class TimeLogProcessor {
         throw new TimeLogParsingException("No valid start of log file");
       }
 
-      metadata.ts = this.rowsWithTimeMarkers[
-        this.rowsWithTimeMarkersHandled - 1
-      ].ts;
+      metadata.ts = this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex].ts;
       metadata.tsIsFaked = true;
       const timezone = new DateTimeZone("UTC");
       const datetime = DateTime.createFromUnixTimestamp(
@@ -962,14 +963,13 @@ export class TimeLogProcessor {
     metadata: RowMetadata,
   ): { probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp: boolean } {
     let probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp;
+    const previousRowWithTimeMarkerIndex = this.rowsWithTimeMarkersHandled - 1;
 
     // preg_match('/([^-]-[^-]-2009) ([^:]*):([^c ]*)/', $lineForDateCheck, $m); // $metadata["duration_search_preg_debug"] = {lineForDurationCheck","m");
     const methodName =
       "processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration";
     metadata.log.push("found a pause with written duration");
-    metadata.ts = this.rowsWithTimeMarkers[
-      this.rowsWithTimeMarkersHandled - 1
-    ].ts;
+    metadata.ts = this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex].ts;
     metadata.tsIsFaked = true;
     const timezone = new DateTimeZone("UTC");
 
@@ -990,11 +990,10 @@ export class TimeLogProcessor {
       );
 
       if (
-        !!this.rowsWithTimeMarkers[this.rowsWithTimeMarkersHandled - 1]
-          .pauseDuration
+        !!this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex].pauseDuration
       ) {
         metadata.pauseDuration = Math.round(
-          this.rowsWithTimeMarkers[this.rowsWithTimeMarkersHandled - 1]
+          this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex]
             .pauseDuration,
         );
       } else {
@@ -1143,18 +1142,19 @@ export class TimeLogProcessor {
   }
 
   private processAdditionalLogCommentRowUntilNextLogComment(line: string) {
-    if (
-      !(
-        undefined !==
-        this.rowsWithTimeMarkers[this.rowsWithTimeMarkersHandled - 1]
-      )
-    ) {
+    const previousRowWithTimeMarkerIndex = this.rowsWithTimeMarkersHandled - 1;
+    if (!this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex]) {
+      console.debug(
+        "before TimeLogParsingException - this.rowsWithTimeMarkers, this.rowsWithTimeMarkersHandled",
+        this.rowsWithTimeMarkers,
+        this.rowsWithTimeMarkersHandled,
+      );
       throw new TimeLogParsingException(
         "Incorrect parsing state: For some reason we are attempting to collect additional log comment rows until new log comment but we have no previous log comments",
       );
     }
 
-    this.rowsWithTimeMarkers[this.rowsWithTimeMarkersHandled - 1].line +=
+    this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex].line +=
       " | " + line;
   }
 
@@ -1163,6 +1163,7 @@ export class TimeLogProcessor {
     metadata: RowMetadata,
   ): { isNewRowWithTimeMarker: boolean } {
     let isNewRowWithTimeMarker;
+    const previousRowWithTimeMarkerIndex = this.rowsWithTimeMarkersHandled - 1;
     // Get duration from last count
     const durationSinceLast = this.timeLogParser.durationFromLast(
       ts,
@@ -1190,7 +1191,7 @@ export class TimeLogProcessor {
         )}`,
       );
       const previousRowWithTimeMarker = this.rowsWithTimeMarkers[
-        this.rowsWithTimeMarkersHandled - 1
+        previousRowWithTimeMarkerIndex
       ];
       metadata.log.push(
         `$previousRowWithTimeMarker line: ${previousRowWithTimeMarker.line}`,

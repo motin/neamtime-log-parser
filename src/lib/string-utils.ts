@@ -1,3 +1,7 @@
+export const prettyJson = variable => {
+  return JSON.stringify(variable, null, 2);
+};
+
 // Note: These methods are only used in currently commented-out
 // debug statements, thus they are commented below as well
 

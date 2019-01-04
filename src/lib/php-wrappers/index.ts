@@ -37,5 +37,5 @@ export function is_file(filePath): boolean {
 }
 
 export function memory_get_usage(realUsage = false): number {
-  return process.memoryUsage()[realUsage ? "heapTotal" : "heapUsed"];
+  return process.memoryUsage()[realUsage ? "heapUsed" : "heapUsed"]; // TODO: Figure out correct equivalent for realUsage = false
 }

@@ -12,13 +12,13 @@ export interface ProcessingError {
 }
 
 export class ProcessedTimeSpendingLog {
-  public timeReportData: [];
   public processingErrors: ProcessingError[];
   public unprocessedTimeSpendingLog: TimeSpendingLog;
-  public timeReportCsv;
 
+  public timeReportCsv: string;
+  public timeReportData: [];
   public preProcessedContents;
-  public debug;
+  public processingDebugInfo;
   public timeReportSourceComments;
   public processedLogContentsWithTimeMarkers;
   public timeReportICal;
@@ -139,12 +139,11 @@ export class ProcessedTimeSpendingLog {
     this.timeReportCsv = timeLogProcessor.timeReportCsv;
     this.timeReportData = timeLogProcessor.timeReportData;
     this.preProcessedContents = timeLogProcessor.preProcessedContents;
-    this.debug = {
+    this.processingDebugInfo = {
       notParsedAddTimeMarkers: timeLogProcessor.notParsedAddTimeMarkers,
       notParsedTimeReport: timeLogProcessor.notParsedTimeReport,
       rowsWithTimeMarkers: timeLogProcessor.rowsWithTimeMarkers,
     };
-    this.timeReportSourceComments = timeLogProcessor.timeReportSourceComments;
     this.timeReportSourceComments = timeLogProcessor.timeReportSourceComments;
 
     if (strpos(timeLogProcessor.timeReportCsv, "{!}") !== false) {
