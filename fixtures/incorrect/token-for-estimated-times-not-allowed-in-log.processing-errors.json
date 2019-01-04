@@ -1,0 +1,7 @@
+[
+    {
+        "ref": "timeReportCsv-contentsWithTimeMarkers",
+        "message": "{!} was found somewhere in the log file. Note: Estimated (marked with {!}) and needs to be manually adjusted before time report gives an accurate summary. If you already adjusted the durations, don't forget to also remove the \"{!}\"",
+        "data": null
+    }
+]

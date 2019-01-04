@@ -1,0 +1,96 @@
+[
+    {
+        "ref": "issues-during-initial-parsing",
+        "message": "The following content was not understood by the parser",
+        "data": {
+            "28": {
+                "rows_with_timemarkers_handled": 17,
+                "line": "2010-04-05 14:20, this timestamp is definitely wrong",
+                "line_with_comment": "2010-04-05 14:20, this timestamp is definitely wrong",
+                "formatted_date": "2010-04-05 14:20",
+                "date": "2010-04-05",
+                "date_raw": "2010-04-05 14:20",
+                "ts": "1270477200",
+                "log": [
+                    "negative duration since last",
+                    "Timestamp found: 2010-04-05 14:20:00 vs last found (based on duration since last which is -1200): 2010-04-05 14:40:00",
+                    "$previousRowWithTimeMarker line: pause->2010-04-05 14:40ca",
+                    "sent to not_parsed in processTheFirstRowOfALogComment"
+                ],
+                "source_line": 28,
+                "preprocessed_contents_source_line_index": 30,
+                "lastKnownTimeZone": "UTC",
+                "lastUsedTimeZone": "UTC",
+                "lastSetTsAndDateErrorMessage": ""
+            }
+        }
+    },
+    {
+        "ref": "timeReportCsv-notParsedAddTimeMarkers",
+        "message": "Time Report was generated upon log contents which had non-understood parts",
+        "data": null
+    },
+    {
+        "ref": "session-parsing",
+        "message": "Encountered a processing error when detecting\/parsing sessions individually: Issues encountered (see e->processedTimeSpendingLog->processingErrors for details)",
+        "data": {
+            "sessionStartMetadata": {
+                "rows_with_timemarkers_handled": 14,
+                "line": "start 2010-04-05 14:20",
+                "line_with_comment": "start 2010-04-05 14:20",
+                "formatted_date": "2010-04-05 14:20:00",
+                "date": "2010-04-05",
+                "date_raw": "2010-04-05 14:20",
+                "ts": "1270477200",
+                "log": [
+                    "Found a supported timestamp ('Y-m-d H:i')",
+                    "Found a valid timestamp in probable start\/pause-row... interpreted as start\/pause-row..."
+                ],
+                "source_line": 23,
+                "preprocessed_contents_source_line_index": 25,
+                "lastKnownTimeZone": "UTC",
+                "lastUsedTimeZone": "UTC",
+                "lastSetTsAndDateErrorMessage": "Timestamp not found",
+                "lastKnownDate": "2010-04-03",
+                "date_raw_was_nonempty_before_detectTimeStamp": "start 2010-04-05 14:20",
+                "date_raw_format": "Y-m-d H:i",
+                "time_raw": "14:20",
+                "ts_is_faked": false,
+                "highlight_with_newlines": true
+            },
+            "processingErrors": [
+                {
+                    "ref": "issues-during-initial-parsing",
+                    "message": "The following content was not understood by the parser",
+                    "data": {
+                        "6": {
+                            "rows_with_timemarkers_handled": 3,
+                            "line": "2010-04-05 14:20, this timestamp is definitely wrong",
+                            "line_with_comment": "2010-04-05 14:20, this timestamp is definitely wrong",
+                            "formatted_date": "2010-04-05 14:20",
+                            "date": "2010-04-05",
+                            "date_raw": "2010-04-05 14:20",
+                            "ts": "1270477200",
+                            "log": [
+                                "negative duration since last",
+                                "Timestamp found: 2010-04-05 14:20:00 vs last found (based on duration since last which is -1200): 2010-04-05 14:40:00",
+                                "$previousRowWithTimeMarker line: pause->2010-04-05 14:40ca",
+                                "sent to not_parsed in processTheFirstRowOfALogComment"
+                            ],
+                            "source_line": 6,
+                            "preprocessed_contents_source_line_index": 5,
+                            "lastKnownTimeZone": "UTC",
+                            "lastUsedTimeZone": "UTC",
+                            "lastSetTsAndDateErrorMessage": ""
+                        }
+                    }
+                },
+                {
+                    "ref": "timeReportCsv-notParsedAddTimeMarkers",
+                    "message": "Time Report was generated upon log contents which had non-understood parts",
+                    "data": null
+                }
+            ]
+        }
+    }
+]

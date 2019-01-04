@@ -4,6 +4,7 @@ import { str_replace } from "locutus/php/strings";
 import path from "path";
 import { fixturesPath } from "../inc/testUtils";
 import {
+  getCorrespondingCsvDataFilePath,
   getProcessedTimeSpendingLog,
   processTimeSpendingLog,
   timeSpendingLogPathsInFolder,
@@ -12,13 +13,12 @@ import { TimeSpendingLogProcessingErrorsEncounteredException } from "./exception
 import { file_put_contents, memory_get_usage } from "./php-wrappers";
 
 const correctTimeSpendingLogContents = () => {
-  const pathToFolderWhereTsLogsReside = path.join(
-    fixturesPath,
-    "neamtime/time-spending-logs/correct",
-  );
+  const pathToFolderWhereTsLogsReside = path.join(fixturesPath, "correct");
+  console.log("pathToFolderWhereTsLogsReside", pathToFolderWhereTsLogsReside);
   const timeSpendingLogPaths = timeSpendingLogPathsInFolder(
     pathToFolderWhereTsLogsReside,
   );
+  console.log("timeSpendingLogPaths", timeSpendingLogPaths);
   const providerData = Array();
 
   for (const timeSpendingLogPath of Object.values(timeSpendingLogPaths)) {
@@ -28,11 +28,13 @@ const correctTimeSpendingLogContents = () => {
   return providerData;
 };
 
+test("there exists at least one correct time spending log fixture paths", t => {
+  const paths = correctTimeSpendingLogContents();
+  t.true(paths.length > 0);
+});
+
 const incorrectTimeSpendingLogContents = () => {
-  const pathToFolderWhereTsLogsReside = path.join(
-    fixturesPath,
-    "neamtime/time-spending-logs/incorrect",
-  );
+  const pathToFolderWhereTsLogsReside = path.join(fixturesPath, "incorrect");
   const timeSpendingLogPaths = timeSpendingLogPathsInFolder(
     pathToFolderWhereTsLogsReside,
   );
@@ -49,6 +51,11 @@ const incorrectTimeSpendingLogContents = () => {
 
   return providerData;
 };
+
+test("there exists at least one incorrect time spending log fixture paths", t => {
+  const paths = incorrectTimeSpendingLogContents();
+  t.true(paths.length > 0);
+});
 
 const testProcessAndAssertCorrectTimeSpendingLog: Macro = (
   t: ExecutionContext,
@@ -88,7 +95,7 @@ const testCorrectTimeSpendingLogsCorrectness: Macro = (
   t: ExecutionContext,
   timeSpendingLogPath,
 ) => {
-  const correspondingCsvDataFilePath = this.correspondingCsvDataFilePath(
+  const correspondingCsvDataFilePath = getCorrespondingCsvDataFilePath(
     timeSpendingLogPath,
   );
   const correspondingCsvDataFileContents = file_get_contents(
@@ -125,6 +132,10 @@ const testCorrectlyReportedProcessingErrors: Macro = (
   try {
     processedTimeSpendingLog = getProcessedTimeSpendingLog(timeSpendingLogPath);
   } catch (e) {
+    console.debug(
+      "testCorrectlyReportedProcessingErrors - TODO HANDLE THIS ERROR PROPERLY",
+      e,
+    );
     if (e instanceof TimeSpendingLogProcessingErrorsEncounteredException) {
       // t.log($e->processedTimeSpendingLog->getTimeLogParser()->preProcessedContentsSourceLineContentsSourceLineMap);
       // To update all existing (when having changed the error log format for instance)

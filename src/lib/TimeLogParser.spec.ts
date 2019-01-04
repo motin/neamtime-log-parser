@@ -185,7 +185,7 @@ const testDetectTimeStampAndInterpretTsAndDate: Macro = (
   timeLogParser.lastKnownDate = lastKnownDate;
   timeLogParser.lastKnownTimeZone = lastKnownTimeZone;
   const { metadata } = timeLogParser.detectTimeStamp(lineForDateCheck);
-  t.log({ lineForDateCheck, metadata });
+  // t.log({ lineForDateCheck, metadata });
   t.is(
     expectedMetadataDateRaw,
     metadata.dateRaw,
@@ -201,13 +201,15 @@ const testDetectTimeStampAndInterpretTsAndDate: Macro = (
     metadata.dateRawFormat,
     "TimeLogParser->detectTimeStamp() detects the datetime with the expected format",
   );
-  const { ts, date, datetime } = timeLogParser.interpretTsAndDate(
-    metadata.dateRaw,
-  );
+  const {
+    // ts,
+    date,
+    datetime,
+  } = timeLogParser.interpretTsAndDate(metadata.dateRaw);
   const setTsAndDateError = timeLogParser.lastSetTsAndDateErrorMessage;
   const interpretTsAndDateError =
     timeLogParser.lastInterpretTsAndDateErrorMessage;
-  t.log({ ts, date, datetime, setTsAndDateError, interpretTsAndDateError });
+  // t.log({ ts, date, datetime, setTsAndDateError, interpretTsAndDateError });
   const valid = !!date;
   t.is(
     expectedToBeValid,
@@ -765,7 +767,7 @@ const testDetectTimeStampAndInterpretTsAndDateData = () => {
 
 testDetectTimeStampAndInterpretTsAndDateData().forEach((testData, index) => {
   test(
-    "testDetectTimeStampAndInterpretTsAndDate - " + index,
+    `testDetectTimeStampAndInterpretTsAndDate - ${index} ("${testData[0]}")`,
     testDetectTimeStampAndInterpretTsAndDate,
     testData[0],
     testData[1],
@@ -806,21 +808,21 @@ const testParseLogComment: Macro = (
   timeLogParser.lastKnownDate = lastKnownDate;
   timeLogParser.lastKnownTimeZone = lastKnownTimeZone;
   const {
-    ts,
-    date,
+    // ts,
+    // date,
     lineWithoutDate,
     notTheFirstRowOfALogComment,
     datetime,
   } = timeLogParser.parseLogComment(line);
   const invalid = notTheFirstRowOfALogComment;
-  t.log({ line, ts, date, datetime });
+  // t.log({ line, ts, date, datetime });
   const valid = !invalid;
   t.is(
     expectedLinewithoutdate,
     lineWithoutDate,
     "TimeLogParser->parseLogComment() detects lines without datetime as expected",
   );
-  t.log({ expectedToBeValidTimestampedLogComment, valid });
+  // t.log({ expectedToBeValidTimestampedLogComment, valid });
   t.is(
     expectedToBeValidTimestampedLogComment,
     valid,

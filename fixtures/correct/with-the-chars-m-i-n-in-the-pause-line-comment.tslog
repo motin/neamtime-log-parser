@@ -1,0 +1,10 @@
+
+start 2017-08-28, 12:59
+
+paus 2017-08-28, 13:21->2017-08-28, 13:30 # an ordinary comment after a pause statement works fine
+
+paus 2017-08-28, 14:21->2017-08-28, 14:30 # but this contains "min" in the comment - foominder
+
+2017-08-28, 14:35, foo
+
+paus->

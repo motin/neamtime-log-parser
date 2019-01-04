@@ -18,8 +18,7 @@ export class ProcessedTimeSpendingLog {
   public timeReportCsv;
 
   public preProcessedContents;
-  public processedLogContentsWithTimeMarkersDebug;
-  public timeReportCsvDebug;
+  public debug;
   public timeReportSourceComments;
   public processedLogContentsWithTimeMarkers;
   public timeReportICal;
@@ -105,14 +104,11 @@ export class ProcessedTimeSpendingLog {
       this.addError(
         "issues-during-initial-parsing",
         "The following content was not understood by the parser",
-        timeLogProcessor.notParsedAddTimeMarkersErrorSummary(
-          timeLogProcessor.notParsedAddTimeMarkers,
-        ),
+        timeLogProcessor.notParsedAddTimeMarkersErrorSummary(),
       );
     }
 
-    this.processedLogContentsWithTimeMarkers =
-      timeLogProcessor.contentsWithTimeMarkers;
+    this.processedLogContentsWithTimeMarkers = timeLogProcessor.timeReportCsv;
     this.parseProcessedLogContentsWithTimeMarkers();
     // this.timeReportICal = timeLogProcessor.generateIcal();
   }
@@ -136,28 +132,24 @@ export class ProcessedTimeSpendingLog {
       this.addError(
         "timeReportCsv-notParsedTimeReport",
         "The following content was not understood by the parser and was thus not regarded while generating the report above",
-        timeLogProcessor.notParsedTimeReportErrorSummary(
-          timeLogProcessor.notParsedTimeReport,
-        ),
+        timeLogProcessor.notParsedTimeReportErrorSummary(),
       );
     }
 
-    this.timeReportCsv = timeLogProcessor.contentsOfTimeReport;
+    this.timeReportCsv = timeLogProcessor.timeReportCsv;
     this.timeReportData = timeLogProcessor.timeReportData;
     this.preProcessedContents = timeLogProcessor.preProcessedContents;
-    this.processedLogContentsWithTimeMarkersDebug = JSON.stringify(
-      timeLogProcessor.debugAddTimeMarkers,
-    );
-    this.timeReportCsvDebug = JSON.stringify(
-      timeLogProcessor.debugGenerateTimeReport,
-    );
-    this.timeReportSourceComments = JSON.stringify(
-      timeLogProcessor.timeReportSourceComments,
-    );
+    this.debug = {
+      notParsedAddTimeMarkers: timeLogProcessor.notParsedAddTimeMarkers,
+      notParsedTimeReport: timeLogProcessor.notParsedTimeReport,
+      rowsWithTimeMarkers: timeLogProcessor.rowsWithTimeMarkers,
+    };
+    this.timeReportSourceComments = timeLogProcessor.timeReportSourceComments;
+    this.timeReportSourceComments = timeLogProcessor.timeReportSourceComments;
 
-    if (strpos(timeLogProcessor.contentsWithTimeMarkers, "{!}") !== false) {
+    if (strpos(timeLogProcessor.timeReportCsv, "{!}") !== false) {
       this.addError(
-        "timeReportCsv-contentsWithTimeMarkers",
+        "timeReportCsv",
         '{!} was found somewhere in the log file. Note: Estimated (marked with {!}) and needs to be manually adjusted before time report gives an accurate summary. If you already adjusted the durations, don\'t forget to also remove the "{!}"',
       );
     }

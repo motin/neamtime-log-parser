@@ -1,0 +1,130 @@
+[
+    {
+        "ref": "issues-during-initial-parsing",
+        "message": "The following content was not understood by the parser",
+        "data": {
+            "9": {
+                "rows_with_timemarkers_handled": 3,
+                "line": "start 2018-02-11, 09:05",
+                "line_with_comment": "start 2018-02-11, 09:05",
+                "formatted_date": "1970-01-01 00:00",
+                "date": false,
+                "date_raw": "start 2018-02-11, 09:05",
+                "ts": 0,
+                "log": [
+                    "Invalid timezone ('Unknown\/Timezone') encountered when parsing a row (source line: 9). Not treating this row as valid time-marked row",
+                    "Sent to not_parsed in parsePreProcessedContents"
+                ],
+                "source_line": 9,
+                "preprocessed_contents_source_line_index": 9,
+                "lastKnownTimeZone": "Unknown\/Timezone",
+                "lastUsedTimeZone": "UTC",
+                "lastSetTsAndDateErrorMessage": "Timestamp not found"
+            },
+            "11": {
+                "rows_with_timemarkers_handled": 4,
+                "line": "2018-02-11, 09:55, okok",
+                "line_with_comment": "2018-02-11, 09:55, okok",
+                "formatted_date": "2018-02-11 09:55",
+                "date": "2018-02-11",
+                "date_raw": "2018-02-11, 09:55",
+                "ts": "1518342900",
+                "log": [
+                    "Invalid timezone ('Unknown\/Timezone') encountered when parsing a row (source line: 11). Not treating this row as valid time-marked row",
+                    "Sent to not_parsed in parsePreProcessedContents"
+                ],
+                "source_line": 11,
+                "preprocessed_contents_source_line_index": 11,
+                "lastKnownTimeZone": "Unknown\/Timezone",
+                "lastUsedTimeZone": "UTC",
+                "lastSetTsAndDateErrorMessage": "DateTimeZone::__construct(): Unknown or bad timezone (Unknown\/Timezone)"
+            }
+        }
+    },
+    {
+        "ref": "timeReportCsv-notParsedAddTimeMarkers",
+        "message": "Time Report was generated upon log contents which had non-understood parts",
+        "data": null
+    },
+    {
+        "ref": "session-parsing",
+        "message": "Encountered a processing error when detecting\/parsing sessions individually: Issues encountered (see e->processedTimeSpendingLog->processingErrors for details)",
+        "data": {
+            "sessionStartMetadata": {
+                "rows_with_timemarkers_handled": 3,
+                "line": "start 2018-02-11, 09:05",
+                "line_with_comment": "start 2018-02-11, 09:05",
+                "formatted_date": "2018-02-11 09:05:00",
+                "date": "2018-02-11",
+                "date_raw": "2018-02-11, 09:05",
+                "ts": "1518339900",
+                "log": [
+                    "Invalid timezone ('Unknown\/Timezone') encountered when parsing a row (source line: 9). Not treating this row as valid time-marked row",
+                    "Sent to not_parsed in parsePreProcessedContents",
+                    "Found a supported timestamp ('Y-m-d, H:i')",
+                    "Found a valid timestamp in probable start\/pause-row... interpreted as start\/pause-row..."
+                ],
+                "source_line": 9,
+                "preprocessed_contents_source_line_index": 9,
+                "lastKnownTimeZone": "Unknown\/Timezone",
+                "lastUsedTimeZone": "UTC",
+                "lastSetTsAndDateErrorMessage": "Timestamp not found",
+                "lastKnownDate": "2017-12-16",
+                "date_raw_was_nonempty_before_detectTimeStamp": "start 2018-02-11, 09:05",
+                "date_raw_format": "Y-m-d, H:i",
+                "time_raw": "09:05",
+                "ts_is_faked": false,
+                "highlight_with_newlines": true
+            },
+            "processingErrors": [
+                {
+                    "ref": "issues-during-initial-parsing",
+                    "message": "The following content was not understood by the parser",
+                    "data": {
+                        "1": {
+                            "rows_with_timemarkers_handled": 0,
+                            "line": "start 2018-02-11, 09:05",
+                            "line_with_comment": "start 2018-02-11, 09:05",
+                            "formatted_date": "1970-01-01 00:00",
+                            "date": false,
+                            "date_raw": "start 2018-02-11, 09:05",
+                            "ts": 0,
+                            "log": [
+                                "Invalid timezone ('Unknown\/Timezone') encountered when parsing a row (source line: 1). Not treating this row as valid time-marked row",
+                                "Sent to not_parsed in parsePreProcessedContents"
+                            ],
+                            "source_line": 1,
+                            "preprocessed_contents_source_line_index": 0,
+                            "lastKnownTimeZone": "Unknown\/Timezone",
+                            "lastUsedTimeZone": "UTC",
+                            "lastSetTsAndDateErrorMessage": "Timestamp not found"
+                        },
+                        "3": {
+                            "rows_with_timemarkers_handled": 1,
+                            "line": "2018-02-11, 09:55, okok",
+                            "line_with_comment": "2018-02-11, 09:55, okok",
+                            "formatted_date": "2018-02-11 09:55",
+                            "date": "2018-02-11",
+                            "date_raw": "2018-02-11, 09:55",
+                            "ts": "1518342900",
+                            "log": [
+                                "Invalid timezone ('Unknown\/Timezone') encountered when parsing a row (source line: 3). Not treating this row as valid time-marked row",
+                                "Sent to not_parsed in parsePreProcessedContents"
+                            ],
+                            "source_line": 3,
+                            "preprocessed_contents_source_line_index": 2,
+                            "lastKnownTimeZone": "Unknown\/Timezone",
+                            "lastUsedTimeZone": "UTC",
+                            "lastSetTsAndDateErrorMessage": "DateTimeZone::__construct(): Unknown or bad timezone (Unknown\/Timezone)"
+                        }
+                    }
+                },
+                {
+                    "ref": "timeReportCsv-notParsedAddTimeMarkers",
+                    "message": "Time Report was generated upon log contents which had non-understood parts",
+                    "data": null
+                }
+            ]
+        }
+    }
+]

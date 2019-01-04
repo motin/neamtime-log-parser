@@ -81,45 +81,404 @@ function eachDayOfIntervalUTC(dirtyInterval, dirtyOptions = null) {
 
 export class TimeLogProcessor {
   // Main contents holders
-  public contents: string = "";
   public tzFirst: string;
+  public contents: string = "";
   public preProcessedContents: string = "";
   public contentsWithTimeMarkers: string = "";
-  public contentsOfTimeReport: string = "";
+  public timeReportCsv: string = "";
   public timeReportData: any = {};
-
-  // Metadata arrays
-  public notParsedAddTimeMarkers: any[] = [];
-  public notParsedTimeReport: any[] = [];
   public sessionStarts: any[] = [];
   public sessions: TimeLogSession[] = [];
-  public timeReportSourceComments: TimeReportSourceComment[] = [];
   public categories: any[] = [];
-  public debugAddTimeMarkers: {
-    rowsWithTimeMarkers: RowMetadata[];
-    notParsed: RowMetadata[];
-    originalUnsortedRows?: any[];
-  };
-  public debugGenerateTimeReport: {
+  public timeReportSourceComments: TimeReportSourceComment[] = [];
+  public metadataGenerateTimeReport: {
     firstDateFound: any;
     lastDateFound: any;
-    times: any;
   };
+  public debugOriginalUnsortedRows?: any[];
+
+  // Metadata arrays
+  public notParsedAddTimeMarkers: RowMetadata[] = [];
+  public notParsedTimeReport: RowMetadata[] = [];
+  public rowsWithTimeMarkers: RowMetadata[] = [];
+
+  // State / tmp
+  private rowsWithTimeMarkersHandled;
+  private readonly preProcessedContentsSourceLineContentsSourceLineMap: any = {};
 
   // The time log parser does a lot of the heavy lifting
   private timeLogParser: TimeLogParser;
 
   // Misc
   private readonly collectDebugInfo: boolean = false;
-  private readonly preProcessedContentsSourceLineContentsSourceLineMap: any = {};
 
   // Probably unused / abandoned already in PHP era:
-  // public reservedWords;
+  // private reservedWords;
   // var $notParsedAndNotStartStopLinesTimeReport = array();
 
   constructor() {
     this.timeLogParser = new TimeLogParser();
     // this.reservedWords = [      "accessible",      "add",      "all",      "alter",      "analyze",      "and",      "as",      "asc",      "asensitive",      "before",      "between",      "bigint",      "binary",      "blob",      "both",      "by",      "call",      "cascade",      "case",      "change",      "char",      "character",      "check",      "collate",      "column",      "condition",      "connection",      "constraint",      "continue",      "convert",      "create",      "cross",      "current_date",      "current_time",      "current_timestamp",      "current_user",      "cursor",      "database",      "databases",      "day_hour",      "day_microsecond",      "day_minute",      "day_second",      "dec",      "decimal",      "declare",      "default",      "delayed",      "delete",      "desc",      "describe",      "deterministic",      "distinct",      "distinctrow",      "div",      "double",      "drop",      "dual",      "each",      "else",      "elseif",      "enclosed",      "escaped",      "exists",      "exit",      "explain",      "false",      "fetch",      "float",      "float4",      "float8",      "for",      "force",      "foreign",      "from",      "fulltext",      "goto",      "grant",      "group",      "having",      "high_priority",      "hour_microsecond",      "hour_minute",      "hour_second",      "if",      "ignore",      "in",      "index",      "infile",      "inner",      "inout",      "insensitive",      "insert",      "int",      "int1",      "int2",      "int3",      "int4",      "int8",      "integer",      "interval",      "into",      "is",      "iterate",      "join",      "key",      "keys",      "kill",      "label",      "leading",      "leave",      "left",      "like",      "limit",      "linear",      "lines",      "load",      "localtime",      "localtimestamp",      "lock",      "long",      "longblob",      "longtext",      "loop",      "low_priority",      "master_ssl_verify_server_cert",      "match",      "mediumblob",      "mediumint",      "mediumtext",      "middleint",      "minute_microsecond",      "minute_second",      "mod",      "modifies",      "natural",      "no_write_to_binlog",      "not",      "null",      "numeric",      "on",      "optimize",      "option",      "optionally",      "or",      "order",      "out",      "outer",      "outfile",      "precision",      "primary",      "procedure",      "purge",      "range",      "read",      "read_only",      "read_write",      "reads",      "real",      "references",      "regexp",      "release",      "rename",      "repeat",      "replace",      "require",      "reserved",      "restrict",      "return",      "revoke",      "right",      "rlike",      "schema",      "schemas",      "second_microsecond",      "select",      "sensitive",      "separator",      "set",      "show",      "smallint",      "spatial",      "specific",      "sql",      "sql_big_result",      "sql_calc_found_rows",      "sql_small_result",      "sqlexception",      "sqlstate",      "sqlwarning",      "ssl",      "starting",      "straight_join",      "table",      "terminated",      "then",      "tinyblob",      "tinyint",      "tinytext",      "to",      "trailing",      "trigger",      "true",      "undo",      "union",      "unique",      "unlock",      "unsigned",      "update",      "upgrade",      "usage",      "use",      "using",      "utc_date",      "utc_time",      "utc_timestamp",      "values",      "varbinary",      "varchar",      "varcharacter",      "varying",      "when",      "where",      "while",      "with",      "write",      "xor",      "year_month",      "zerofill",      "__class__",      "__compiler_halt_offset__",      "__dir__",      "__file__",      "__function__",      "__method__",      "__namespace__",      "abday_1",      "abday_2",      "abday_3",      "abday_4",      "abday_5",      "abday_6",      "abday_7",      "abmon_1",      "abmon_10",      "abmon_11",      "abmon_12",      "abmon_2",      "abmon_3",      "abmon_4",      "abmon_5",      "abmon_6",      "abmon_7",      "abmon_8",      "abmon_9",      "abstract",      "alt_digits",      "am_str",      "array",      "assert_active",      "assert_bail",      "assert_callback",      "assert_quiet_eval",      "assert_warning",      "break",      "case_lower",      "case_upper",      "catch",      "cfunction",      "char_max",      "class",      "clone",      "codeset",      "connection_aborted",      "connection_normal",      "connection_timeout",      "const",      "count_normal",      "count_recursive",      "credits_all",      "credits_docs",      "credits_fullpage",      "credits_general",      "credits_group",      "credits_modules",      "credits_qa",      "credits_sapi",      "crncystr",      "crypt_blowfish",      "crypt_ext_des",      "crypt_md5",      "crypt_salt_length",      "crypt_std_des",      "currency_symbol",      "d_fmt",      "d_t_fmt",      "day_1",      "day_2",      "day_3",      "day_4",      "day_5",      "day_6",      "day_7",      "decimal_point",      "default_include_path",      "die",      "directory_separator",      "do",      "e_all",      "e_compile_error",      "e_compile_warning",      "e_core_error",      "e_core_warning",      "e_deprecated",      "e_error",      "e_notice",      "e_parse",      "e_strict",      "e_user_deprecated",      "e_user_error",      "e_user_notice",      "e_user_warning",      "e_warning",      "echo",      "empty",      "enddeclare",      "endfor",      "endforeach",      "endif",      "endswitch",      "endwhile",      "ent_compat",      "ent_noquotes",      "ent_quotes",      "era",      "era_d_fmt",      "era_d_t_fmt",      "era_t_fmt",      "era_year",      "eval",      "extends",      "extr_if_exists",      "extr_overwrite",      "extr_prefix_all",      "extr_prefix_if_exists",      "extr_prefix_invalid",      "extr_prefix_same",      "extr_skip",      "final",      "foreach",      "frac_digits",      "function",      "global",      "grouping",      "html_entities",      "html_specialchars",      "implements",      "include",      "include_once",      "info_all",      "info_configuration",      "info_credits",      "info_environment",      "info_general",      "info_license",      "info_modules",      "info_variables",      "ini_all",      "ini_perdir",      "ini_system",      "ini_user",      "instanceof",      "int_curr_symbol",      "int_frac_digits",      "interface",      "isset",      "lc_all",      "lc_collate",      "lc_ctype",      "lc_messages",      "lc_monetary",      "lc_numeric",      "lc_time",      "list",      "lock_ex",      "lock_nb",      "lock_sh",      "lock_un",      "log_alert",      "log_auth",      "log_authpriv",      "log_cons",      "log_crit",      "log_cron",      "log_daemon",      "log_debug",      "log_emerg",      "log_err",      "log_info",      "log_kern",      "log_local0",      "log_local1",      "log_local2",      "log_local3",      "log_local4",      "log_local5",      "log_local6",      "log_local7",      "log_lpr",      "log_mail",      "log_ndelay",      "log_news",      "log_notice",      "log_nowait",      "log_odelay",      "log_perror",      "log_pid",      "log_syslog",      "log_user",      "log_uucp",      "log_warning",      "m_1_pi",      "m_2_pi",      "m_2_sqrtpi",      "m_e",      "m_ln10",      "m_ln2",      "m_log10e",      "m_log2e",      "m_pi",      "m_pi_2",      "m_pi_4",      "m_sqrt1_2",      "m_sqrt2",      "mon_1",      "mon_10",      "mon_11",      "mon_12",      "mon_2",      "mon_3",      "mon_4",      "mon_5",      "mon_6",      "mon_7",      "mon_8",      "mon_9",      "mon_decimal_point",      "mon_grouping",      "mon_thousands_sep",      "n_cs_precedes",      "n_sep_by_space",      "n_sign_posn",      "namespace",      "negative_sign",      "new",      "noexpr",      "nostr",      "old_function",      "p_cs_precedes",      "p_sep_by_space",      "p_sign_posn",      "path_separator",      "pathinfo_basename",      "pathinfo_dirname",      "pathinfo_extension",      "pear_extension_dir",      "pear_install_dir",      "php_bindir",      "php_config_file_path",      "php_config_file_scan_dir",      "php_datadir",      "php_debug",      "php_eol",      "php_extension_dir",      "php_extra_version",      "php_int_max",      "php_int_size",      "php_libdir",      "php_localstatedir",      "php_major_version",      "php_maxpathlen",      "php_minor_version",      "php_os",      "php_output_handler_cont",      "php_output_handler_end",      "php_output_handler_start",      "php_prefix",      "php_release_version",      "php_sapi",      "php_shlib_suffix",      "php_sysconfdir",      "php_version",      "php_version_id",      "php_windows_nt_domain_controller",      "php_windows_nt_server",      "php_windows_nt_workstation",      "php_windows_version_build",      "php_windows_version_major",      "php_windows_version_minor",      "php_windows_version_platform",      "php_windows_version_producttype",      "php_windows_version_sp_major",      "php_windows_version_sp_minor",      "php_windows_version_suitemask",      "php_zts",      "pm_str",      "positive_sign",      "print",      "private",      "protected",      "public",      "radixchar",      "require_once",      "seek_cur",      "seek_end",      "seek_set",      "sort_asc",      "sort_desc",      "sort_numeric",      "sort_regular",      "sort_string",      "static",      "str_pad_both",      "str_pad_left",      "str_pad_right",      "switch",      "t_fmt",      "t_fmt_ampm",      "thousands_sep",      "thousep",      "throw",      "try",      "unset",      "var",      "yesexpr",      "yesstr",      "commit",      "start",    ];
+  }
+
+  public addTimeMarkers() {
+    this.timeLogParser.lastKnownTimeZone = this.tzFirst;
+    this.preProcessContents();
+
+    // Sets this.rowsWithTimeMarkers
+    this.parsePreProcessedContents(this.preProcessedContents);
+
+    this.contentsWithTimeMarkers = this.generateStructuredTimeMarkedOutputBasedOnParsedRowsWithTimeMarkers(
+      this.rowsWithTimeMarkers,
+    );
+  }
+
+  public notParsedAddTimeMarkersErrorSummary() {
+    if (!this.notParsedAddTimeMarkers) {
+      throw new TimeLogParsingException(
+        "Can not summarize not-parsed errors without any unparsed contents",
+      );
+    }
+
+    const summary = {};
+
+    for (const v of Object.values(this.notParsedAddTimeMarkers)) {
+      if (Array.isArray(v) && !!v.sourceLine) {
+        summary[v.sourceLine] = v;
+      } else {
+        throw new TimeLogParsingException(
+          "The unparsed contents did not contain information about the source line: " +
+            JSON.stringify({ v }),
+        );
+      }
+    }
+
+    return summary;
+  }
+
+  public notParsedTimeReportErrorSummary() {
+    if (!this.notParsedTimeReport) {
+      throw new TimeLogParsingException(
+        "Can not summarize not-parsed errors without any unparsed contents",
+      );
+    }
+
+    const summary = [];
+
+    for (const v of Object.values(this.notParsedTimeReport)) {
+      summary.push(v);
+    }
+
+    return summary;
+  }
+
+  /*
+    // Metadata arrays
+  private notParsedAddTimeMarkers: RowMetadata[] = [];
+  private notParsedTimeReport: RowMetadata[] = [];
+  private rowsWithTimeMarkers: RowMetadata[] = [];
+
+
+   */
+
+  public generateTimeReport() // Fill out and sort the times-array
+  // print in a csv-format:
+  // var_dump($times);
+  {
+    this.timeLogParser.lastKnownTimeZone = this.tzFirst;
+    let timeReportCsv = "";
+    const times = [];
+
+    if (!this.categories) {
+      this.detectCategories(this.contentsWithTimeMarkers);
+    }
+
+    const lines = textIntoLinesArray(this.contentsWithTimeMarkers);
+    let category = "Unspecified";
+
+    // Special care is necessary here - ts is already in UTC, so we parse it as such, but we keep lastKnownTimeZone since we want to know the source row's timezone
+    // Check for startstopline - they are not invalid, only ignored
+    // Only check until first |
+    // invalidate
+    // TEXT
+    // Save a useful form of the time-marked rows that build up the hours-sum:
+    for (const lineno of Object.keys(lines)) {
+      // skip empty rows
+      const line = lines[lineno];
+      const trimmedLine = line.trim();
+
+      if (trimmedLine === "") {
+        continue;
+      }
+
+      if (strpos(line, ".::") === 0) {
+        const categoryNeedle = str_replace(".::", "", trimmedLine).trim();
+
+        if (-1 !== this.categories.indexOf(categoryNeedle)) {
+          category = categoryNeedle;
+          continue;
+        }
+      }
+
+      if (category === "Ignored") {
+        continue;
+      }
+
+      if (strpos(trimmedLine, "|tz:") === 0) {
+        this.timeLogParser.lastKnownTimeZone = str_replace(
+          "|tz:",
+          "",
+          trimmedLine,
+        );
+        continue;
+      }
+
+      let parts = line.split(",");
+      const dateRaw = parts.shift();
+      const lineWithoutDate = parts.join(",");
+      const _ = this.timeLogParser.lastKnownTimeZone;
+      this.timeLogParser.lastKnownTimeZone = "UTC";
+      const { ts, date /*, datetime*/ } = this.timeLogParser.interpretTsAndDate(
+        dateRaw,
+      );
+      this.timeLogParser.lastKnownTimeZone = _;
+      parts = line.split(" | ");
+      const beforeVertLine = parts[0];
+
+      if (this.timeLogParser.isProbableStartStopLine(beforeVertLine)) {
+        continue;
+      }
+
+      let invalid =
+        !date ||
+        strpos(lineWithoutDate, "min") === false ||
+        ts < Date.now() / 1000 - 24 * 3600 * 365 * 10;
+
+      if (invalid) {
+        this.notParsedTimeReport.push(line);
+        continue;
+      }
+
+      parts = lineWithoutDate.split("min");
+      const tokens = this.timeLogParser.tokens();
+      const duration = str_replace(tokens.approx, "", parts[0]).trim() + "min";
+      const time = this.timeLogParser.durationToMinutes(duration);
+      invalid = !time && time !== 0;
+
+      if (invalid) {
+        this.notParsedTimeReport.push(line);
+        continue;
+      }
+
+      const hoursRounded = Math.round((time / 60) * 100) / 100;
+      const hours = time / 60;
+      /*const first =*/ parts.shift();
+      let text = parts.join("min");
+      invalid = !text;
+
+      if (invalid) {
+        // var_dump($first, $parts, $line); die();
+        // $this.notParsedTimeReport[] = $line; continue;
+        text = "<empty log item>";
+      }
+
+      if (!times[date]) {
+        times[date] = [];
+      }
+
+      if (!times[date].text) {
+        times[date].text = [];
+      }
+
+      times[date].text.push(trim(text, " ,\t\r\n"));
+
+      if (!times[date][category]) {
+        times[date][category] = hours;
+      } else {
+        times[date][category] += hours;
+      }
+
+      const sourceComment: TimeReportSourceComment = {
+        category,
+        date,
+        dateRaw,
+        hours,
+        hoursRounded,
+        lineWithoutDate,
+        text,
+        // timeMarker,
+        ts,
+        tz: this.timeLogParser.lastKnownTimeZone,
+      };
+      this.timeReportSourceComments.push(sourceComment);
+    }
+
+    this.timeReportData = this.addZeroFilledDates(times);
+    timeReportCsv +=
+      "Date;" +
+      this.categories.join(" (rounded);") +
+      " (rounded);" +
+      this.categories.join(";") +
+      ";Log_Items\n";
+
+    //
+    // replace point by comma
+    // $hoursByCategoryRounded = str_replace(".", ",", $hoursByCategoryRounded);
+    // replace point by comma
+    // $hoursByCategory = str_replace(".", ",", $hoursByCategory);
+    for (const date of Object.keys(this.timeReportData)) {
+      // Gotta limit the amount of data
+      const hours = this.timeReportData[date];
+      let activities = Array.from(hours.text).join(" | ");
+      activities = newlineConvert(activities, "");
+      activities = str_replace([";", "\t"], [",", "   "], activities);
+      activities = mb_substr(activities, 0, 1024).trim();
+      let hoursByCategoryRounded = "";
+
+      for (const c of Object.values(this.categories)) {
+        const hoursExact = undefined !== hours[c] ? hours[c] : 0;
+        const hoursRounded = Math.round(hoursExact * 100) / 100;
+        hoursByCategoryRounded += hoursRounded + ";";
+      }
+
+      let hoursByCategory = "";
+
+      for (const c of Object.values(this.categories)) {
+        const hoursExact = undefined !== hours[c] ? hours[c] : 0;
+        hoursByCategory += hoursExact + ";";
+      }
+
+      timeReportCsv +=
+        date +
+        ";" +
+        hoursByCategoryRounded +
+        hoursByCategory +
+        activities +
+        LogParser.NL_NIX;
+    }
+
+    /*
+    for (const line of Object.values(notParsed)) {
+      // maybe attempt to add some debugging metadata here?
+    }
+    */
+
+    this.timeReportCsv = timeReportCsv;
+  }
+
+  public addZeroFilledDates(times) {
+    let firstDateFound;
+    let lastDateFound;
+    const originalTimesArray = cloneVariable(times);
+    times = {};
+    const timezone = new DateTimeZone("UTC");
+
+    for (const date of Object.keys(originalTimesArray)) {
+      const hours = originalTimesArray[date];
+      const dateWithoutTime = DateTime.createFromFormat(
+        "Y-m-d H:i:s",
+        date + " 00:00:00",
+        timezone,
+      );
+
+      if (dateWithoutTime) {
+        if (!firstDateFound) {
+          firstDateFound = dateWithoutTime;
+        }
+
+        if (!lastDateFound) {
+          lastDateFound = dateWithoutTime;
+        }
+
+        if (dateWithoutTime.getTimestamp() < firstDateFound.getTimestamp()) {
+          firstDateFound = dateWithoutTime;
+        }
+
+        if (dateWithoutTime.getTimestamp() > lastDateFound.getTimestamp()) {
+          lastDateFound = dateWithoutTime;
+        }
+
+        times[dateWithoutTime.format("Y-m-d")] = hours;
+      }
+    }
+
+    this.metadataGenerateTimeReport = {
+      firstDateFound,
+      lastDateFound,
+    };
+
+    if (!firstDateFound) {
+      return [];
+    }
+
+    const interval = {
+      /* tslint:disable:object-literal-sort-keys */
+      start: firstDateFound.date,
+      end: lastDateFound.date,
+      /* tslint:enable:object-literal-sort-keys */
+    };
+    // console.debug({ times, interval, firstDateFound, lastDateFound });
+
+    const dates = eachDayOfIntervalUTC(interval);
+    // console.debug({ dates });
+
+    const timesArrayBeforePadding = cloneVariable(times);
+    times = {};
+
+    for (const date of dates) {
+      const dt = new DateTime(date, timezone);
+      // console.debug({ dt });
+      const xday = dt.format("Y-m-d");
+      times[xday] =
+        timesArrayBeforePadding[xday] !== undefined
+          ? timesArrayBeforePadding[xday]
+          : 0;
+    }
+
+    // console.debug({ times });
+
+    return times;
+  }
+
+  public getTimeLogMetadata() {
+    // do {
+    // } while (!$last["tsIsFaked"]);
+
+    if (!this.contentsWithTimeMarkers) {
+      return [];
+    }
+
+    if (!this.rowsWithTimeMarkers) {
+      return [];
+    }
+
+    const rowsWithTimeMarkers: RowMetadata[] = JSON.parse(
+      JSON.stringify(this.rowsWithTimeMarkers),
+    );
+    const start = rowsWithTimeMarkers.shift();
+    const startTs = start.ts;
+    const name = start.dateRaw;
+    const last = rowsWithTimeMarkers.pop();
+    const lastTs = last.ts;
+    const leadTime = lastTs - startTs;
+    let hoursTotal = 0;
+
+    for (const time of Object.values(this.timeReportData)) {
+      for (const category of Object.values(this.categories)) {
+        hoursTotal += time[category];
+      }
+    }
+
+    const hoursLeadTime = Math.round((leadTime / 60 / 60) * 100) / 100;
+    const nonHours = Math.round((hoursLeadTime - hoursTotal) * 100) / 100;
+    return {
+      hoursLeadTime,
+      hoursTotal,
+      lastTs,
+      name,
+      nonHours,
+      startTs,
+    };
   }
 
   public preProcessContents() {
@@ -129,7 +488,7 @@ export class TimeLogProcessor {
     );
   }
 
-  public getPreProcessedContents(tzFirst, contents) {
+  private getPreProcessedContents(tzFirst, contents) {
     this.timeLogParser.lastKnownTimeZone = tzFirst;
     let processed = [];
     const rawLines = textIntoLinesArray(contents);
@@ -375,34 +734,9 @@ export class TimeLogProcessor {
     return linesArrayIntoText(processed);
   }
 
-  public addTimeMarkers() {
-    this.timeLogParser.lastKnownTimeZone = this.tzFirst;
-    this.preProcessContents();
-    const rowsWithTimeMarkers: RowMetadata[] = [];
-    const notParsed: RowMetadata[] = [];
-
-    this.parsePreProcessedContents(
-      this.preProcessedContents,
-      rowsWithTimeMarkers,
-      notParsed,
-    );
-    this.contentsWithTimeMarkers = this.generateStructuredTimeMarkedOutputBasedOnParsedRowsWithTimeMarkers(
-      rowsWithTimeMarkers,
-      notParsed,
-    );
-
-    if (this.collectDebugInfo) {
-      this.debugAddTimeMarkers = { rowsWithTimeMarkers, notParsed };
-    }
-  }
-
-  public parsePreProcessedContents(
-    preProcessedContents,
-    rowsWithTimeMarkers: RowMetadata[],
-    notParsed: RowMetadata[],
-  ) {
-    const originalUnsortedRows = [];
-    let rowsWithTimeMarkersHandled: number = 0;
+  private parsePreProcessedContents(preProcessedContents) {
+    const debugOriginalUnsortedRows = [];
+    this.rowsWithTimeMarkersHandled = 0;
     const lines = textIntoLinesArray(preProcessedContents);
 
     // skip empty rows
@@ -412,7 +746,7 @@ export class TimeLogProcessor {
     // DATETIME
     // $line = utf8_encode($line);
     // :s
-    // If lastKnownTimeZone and lastUsedTimeZone are different: Send to notParsed but parse anyway (so that general parsing goes through but that the log is not considered correct)
+    // If lastKnownTimeZone and lastUsedTimeZone are different: Send to this.notParsedAddTimeMarkers but parse anyway (so that general parsing goes through but that the log is not considered correct)
     // console.debug(["first check", $notTheFirstRowOfALogComment, $metadata]); // While devving
     // Catch lines that has a timestamp but not in the beginning
     // Handle new-found rows with TimeMarker
@@ -485,7 +819,7 @@ export class TimeLogProcessor {
         lineWithComment,
         log,
         preprocessedContentsSourceLineIndex,
-        rowsWithTimeMarkersHandled,
+        rowsWithTimeMarkersHandled: this.rowsWithTimeMarkersHandled,
         sourceLine,
         ts,
       };
@@ -501,21 +835,21 @@ export class TimeLogProcessor {
           }') encountered when parsing a row (source line: ${sourceLine}). Not treating this row as valid time-marked row`,
         );
         metadata.log.push("Sent to notParsed in " + methodName);
-        notParsed.push(metadata);
+        this.notParsedAddTimeMarkers.push(metadata);
       }
 
       let isNewRowWithTimeMarker = false;
       const notTheFirstRowOfALogCommentAndProbableStartStopLine =
         notTheFirstRowOfALogComment &&
         this.timeLogParser.isProbableStartStopLine(line);
-      const isTheFirstRowWithTimeMarker = !rowsWithTimeMarkers[
-        rowsWithTimeMarkersHandled - 1
+      const isTheFirstRowWithTimeMarker = !this.rowsWithTimeMarkers[
+        this.rowsWithTimeMarkersHandled - 1
       ];
       const hasAPreviousRowWithTimeMarker = !isTheFirstRowWithTimeMarker;
       const previousRowWithTimeMarkerHasTheSameDate =
         hasAPreviousRowWithTimeMarker &&
-        rowsWithTimeMarkers[rowsWithTimeMarkersHandled - 1].formattedDate ===
-          formattedDate;
+        this.rowsWithTimeMarkers[this.rowsWithTimeMarkersHandled - 1]
+          .formattedDate === formattedDate;
 
       if (notTheFirstRowOfALogCommentAndProbableStartStopLine) {
         isNewRowWithTimeMarker = true;
@@ -523,46 +857,29 @@ export class TimeLogProcessor {
         const updates = this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine(
           line,
           metadata,
-          rowsWithTimeMarkers,
-          rowsWithTimeMarkersHandled,
-          notParsed,
         );
         isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
       } else if (notTheFirstRowOfALogComment) {
-        this.processAdditionalLogCommentRowUntilNextLogComment(
-          line,
-          rowsWithTimeMarkers,
-          rowsWithTimeMarkersHandled,
-        );
+        this.processAdditionalLogCommentRowUntilNextLogComment(line);
         isNewRowWithTimeMarker = false;
       } else if (previousRowWithTimeMarkerHasTheSameDate) {
-        this.processAdditionalLogCommentRowUntilNextLogComment(
-          line,
-          rowsWithTimeMarkers,
-          rowsWithTimeMarkersHandled,
-        );
+        this.processAdditionalLogCommentRowUntilNextLogComment(line);
         isNewRowWithTimeMarker = false;
       } else {
         // const theFirstRowOfALogComment = true;
-        const updates = this.processTheFirstRowOfALogComment(
-          ts,
-          metadata,
-          rowsWithTimeMarkers,
-          rowsWithTimeMarkersHandled,
-          notParsed,
-        );
+        const updates = this.processTheFirstRowOfALogComment(ts, metadata);
         isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
       }
 
       if (isNewRowWithTimeMarker) {
-        rowsWithTimeMarkers[rowsWithTimeMarkersHandled] = metadata;
-        rowsWithTimeMarkersHandled++;
+        this.rowsWithTimeMarkers[this.rowsWithTimeMarkersHandled] = metadata;
+        this.rowsWithTimeMarkersHandled++;
       }
 
-      originalUnsortedRows.push(metadata);
+      debugOriginalUnsortedRows.push(metadata);
 
       // TODO: Make configurable
-      if (rowsWithTimeMarkersHandled >= 100000) {
+      if (this.rowsWithTimeMarkersHandled >= 100000) {
         throw new TimeLogParsingException(
           "Time log exceeds maximum allowed size",
         );
@@ -570,16 +887,13 @@ export class TimeLogProcessor {
     }
 
     if (this.collectDebugInfo) {
-      this.debugAddTimeMarkers.originalUnsortedRows = originalUnsortedRows;
+      this.debugOriginalUnsortedRows = debugOriginalUnsortedRows;
     }
   }
 
-  public processNotTheFirstRowOfALogCommentAndProbableStartStopLine(
+  private processNotTheFirstRowOfALogCommentAndProbableStartStopLine(
     line: string,
     metadata: RowMetadata,
-    rowsWithTimeMarkers: RowMetadata[],
-    rowsWithTimeMarkersHandled: number,
-    notParsed,
   ): { isNewRowWithTimeMarker: boolean } {
     let isNewRowWithTimeMarker;
     // Assume true
@@ -588,8 +902,8 @@ export class TimeLogProcessor {
       line,
       "pause",
     );
-    const isTheFirstRowWithTimeMarker = !rowsWithTimeMarkers[
-      rowsWithTimeMarkersHandled - 1
+    const isTheFirstRowWithTimeMarker = !this.rowsWithTimeMarkers[
+      this.rowsWithTimeMarkersHandled - 1
     ];
     let probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = true;
     const pauseWithWrittenDuration =
@@ -598,9 +912,6 @@ export class TimeLogProcessor {
     if (pauseWithWrittenDuration) {
       const updates = this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration(
         metadata,
-        rowsWithTimeMarkers,
-        rowsWithTimeMarkersHandled,
-        notParsed,
       );
       probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp =
         updates.probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp;
@@ -609,9 +920,6 @@ export class TimeLogProcessor {
         line,
         startsWithPauseToken,
         metadata,
-        rowsWithTimeMarkers,
-        rowsWithTimeMarkersHandled,
-        notParsed,
       );
       probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp =
         updates.probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp;
@@ -624,7 +932,9 @@ export class TimeLogProcessor {
         throw new TimeLogParsingException("No valid start of log file");
       }
 
-      metadata.ts = rowsWithTimeMarkers[rowsWithTimeMarkersHandled - 1].ts;
+      metadata.ts = this.rowsWithTimeMarkers[
+        this.rowsWithTimeMarkersHandled - 1
+      ].ts;
       metadata.tsIsFaked = true;
       const timezone = new DateTimeZone("UTC");
       const datetime = DateTime.createFromUnixTimestamp(
@@ -632,9 +942,9 @@ export class TimeLogProcessor {
       ).cloneWithAnotherTimezone(timezone);
       metadata.formattedDate = datetime.format("Y-m-d H:i:s");
       metadata.highlightWithNewlines = true;
-      metadata.line = metadata.line;
-    } // We keep track of sessions starts for double-checking that time has registered on each of those dates
-    else {
+      // metadata.line = metadata.line;
+    } else {
+      // We keep track of sessions starts for double-checking that time has registered on each of those dates
       const startsWithStartTokenFollowedByASpace = this.timeLogParser.startsWithOptionallySuffixedToken(
         line,
         "start",
@@ -648,11 +958,8 @@ export class TimeLogProcessor {
     return { isNewRowWithTimeMarker };
   }
 
-  public processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration(
+  private processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration(
     metadata: RowMetadata,
-    rowsWithTimeMarkers: RowMetadata[],
-    rowsWithTimeMarkersHandled: number,
-    notParsed: RowMetadata[],
   ): { probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp: boolean } {
     let probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp;
 
@@ -660,7 +967,9 @@ export class TimeLogProcessor {
     const methodName =
       "processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration";
     metadata.log.push("found a pause with written duration");
-    metadata.ts = rowsWithTimeMarkers[rowsWithTimeMarkersHandled - 1].ts;
+    metadata.ts = this.rowsWithTimeMarkers[
+      this.rowsWithTimeMarkersHandled - 1
+    ].ts;
     metadata.tsIsFaked = true;
     const timezone = new DateTimeZone("UTC");
 
@@ -675,14 +984,18 @@ export class TimeLogProcessor {
     const m = lineForDurationCheck.match(/(([0-9])*h)?([0-9]*)min/);
 
     if (!!m && !!m[0]) {
-      // var_dump($line, $m, $rowsWithTimeMarkersHandled, $rowsWithTimeMarkers);
+      // var_dump($line, $m, $this.rowsWithTimeMarkersHandled, $this.rowsWithTimeMarkers);
       metadata.log.push(
         "found pause duration, adding to accumulated pause duration (if any)",
       );
 
-      if (!!rowsWithTimeMarkers[rowsWithTimeMarkersHandled - 1].pauseDuration) {
+      if (
+        !!this.rowsWithTimeMarkers[this.rowsWithTimeMarkersHandled - 1]
+          .pauseDuration
+      ) {
         metadata.pauseDuration = Math.round(
-          rowsWithTimeMarkers[rowsWithTimeMarkersHandled - 1].pauseDuration,
+          this.rowsWithTimeMarkers[this.rowsWithTimeMarkersHandled - 1]
+            .pauseDuration,
         );
       } else {
         metadata.pauseDuration = 0;
@@ -696,19 +1009,16 @@ export class TimeLogProcessor {
     else {
       probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = false;
       metadata.log.push("sent to notParsed in " + methodName);
-      notParsed.push(metadata);
+      this.notParsedAddTimeMarkers.push(metadata);
     }
 
     return { probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp };
   }
 
-  public processNotTheFirstRowOfALogCommentAndProbableStartStopLine_notPauseWithWrittenDuration(
+  private processNotTheFirstRowOfALogCommentAndProbableStartStopLine_notPauseWithWrittenDuration(
     line: string,
     startsWithPauseToken,
     metadata: RowMetadata,
-    rowsWithTimeMarkers: RowMetadata[],
-    rowsWithTimeMarkersHandled: number,
-    notParsed: RowMetadata[],
   ): {
     isNewRowWithTimeMarker: boolean;
     probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp: boolean;
@@ -755,8 +1065,8 @@ export class TimeLogProcessor {
       // Get duration from last count
       durationSinceLast = this.timeLogParser.durationFromLast(
         ts,
-        rowsWithTimeMarkersHandled,
-        rowsWithTimeMarkers,
+        this.rowsWithTimeMarkersHandled,
+        this.rowsWithTimeMarkers,
       );
 
       thisTimestampIsLaterOrSameAsPreviousRowWithTimeMarker =
@@ -775,16 +1085,12 @@ export class TimeLogProcessor {
           "Sent to processAdditionalLogCommentRowUntilNextLogComment in " +
             methodName,
         );
-        this.processAdditionalLogCommentRowUntilNextLogComment(
-          line,
-          rowsWithTimeMarkers,
-          rowsWithTimeMarkersHandled,
-        );
+        this.processAdditionalLogCommentRowUntilNextLogComment(line);
         isNewRowWithTimeMarker = false;
       } // To easily see patterns amongst these lines
       else {
         metadata.log.push("Sent to notParsed in " + methodName);
-        notParsed.push(metadata);
+        this.notParsedAddTimeMarkers.push(metadata);
       }
     }
 
@@ -806,7 +1112,7 @@ export class TimeLogProcessor {
         )}`,
       );
       metadata.log.push("Sent to notParsed in " + methodName);
-      notParsed.push(metadata);
+      this.notParsedAddTimeMarkers.push(metadata);
     }
 
     if (
@@ -836,32 +1142,32 @@ export class TimeLogProcessor {
     };
   }
 
-  public processAdditionalLogCommentRowUntilNextLogComment(
-    line: string,
-    rowsWithTimeMarkers: RowMetadata[],
-    rowsWithTimeMarkersHandled: number,
-  ) {
-    if (!(undefined !== rowsWithTimeMarkers[rowsWithTimeMarkersHandled - 1])) {
+  private processAdditionalLogCommentRowUntilNextLogComment(line: string) {
+    if (
+      !(
+        undefined !==
+        this.rowsWithTimeMarkers[this.rowsWithTimeMarkersHandled - 1]
+      )
+    ) {
       throw new TimeLogParsingException(
         "Incorrect parsing state: For some reason we are attempting to collect additional log comment rows until new log comment but we have no previous log comments",
       );
     }
 
-    rowsWithTimeMarkers[rowsWithTimeMarkersHandled - 1].line += " | " + line;
+    this.rowsWithTimeMarkers[this.rowsWithTimeMarkersHandled - 1].line +=
+      " | " + line;
   }
 
-  public processTheFirstRowOfALogComment(
+  private processTheFirstRowOfALogComment(
     ts: number,
     metadata: RowMetadata,
-    rowsWithTimeMarkers: RowMetadata[],
-    rowsWithTimeMarkersHandled: number,
-    notParsed, // Get duration from last count
   ): { isNewRowWithTimeMarker: boolean } {
     let isNewRowWithTimeMarker;
+    // Get duration from last count
     const durationSinceLast = this.timeLogParser.durationFromLast(
       ts,
-      rowsWithTimeMarkersHandled,
-      rowsWithTimeMarkers,
+      this.rowsWithTimeMarkersHandled,
+      this.rowsWithTimeMarkers,
     );
 
     if (durationSinceLast < 0) {
@@ -883,13 +1189,14 @@ export class TimeLogProcessor {
           "Y-m-d H:i:s",
         )}`,
       );
-      const previousRowWithTimeMarker =
-        rowsWithTimeMarkers[rowsWithTimeMarkersHandled - 1];
+      const previousRowWithTimeMarker = this.rowsWithTimeMarkers[
+        this.rowsWithTimeMarkersHandled - 1
+      ];
       metadata.log.push(
         `$previousRowWithTimeMarker line: ${previousRowWithTimeMarker.line}`,
       );
       metadata.log.push("sent to notParsed in processTheFirstRowOfALogComment");
-      notParsed.push(metadata);
+      this.notParsedAddTimeMarkers.push(metadata);
     } else if (durationSinceLast > 24 * 60 * 60) {
       // Warn on unlikely large entries (> 24h) - likely typos
       // TODO: Make limit configurable
@@ -897,7 +1204,7 @@ export class TimeLogProcessor {
         "excessive duration since last: " +
           this.timeLogParser.secondsToDuration(durationSinceLast),
       );
-      notParsed.push(metadata);
+      this.notParsedAddTimeMarkers.push(metadata);
       isNewRowWithTimeMarker = true;
     } else {
       metadata.durationSinceLast = durationSinceLast;
@@ -906,33 +1213,29 @@ export class TimeLogProcessor {
     return { isNewRowWithTimeMarker };
   }
 
-  public generateStructuredTimeMarkedOutputBasedOnParsedRowsWithTimeMarkers(
+  private generateStructuredTimeMarkedOutputBasedOnParsedRowsWithTimeMarkers(
     rowsWithTimeMarkers: RowMetadata[],
-    notParsed: RowMetadata[], // Generate structured log output
   ) {
     if (!rowsWithTimeMarkers) {
       throw new TimeLogParsingException("No rows parsed...");
     }
 
     /*
-    const last = rowsWithTimeMarkers.pop();
+    const last = this.rowsWithTimeMarkers.pop();
 
     if (false) {
       // The last pause was started some time after the last log message
     } else {
-      rowsWithTimeMarkers.push(last);
+      this.rowsWithTimeMarkers.push(last);
     }
     */
 
-    return this.generateStructuredTimeMarkedOutput(
-      rowsWithTimeMarkers,
-      notParsed,
-    );
+    // Generate structured log output
+    return this.generateStructuredTimeMarkedOutput(rowsWithTimeMarkers);
   }
 
-  public generateStructuredTimeMarkedOutput(
+  private generateStructuredTimeMarkedOutput(
     rowsWithTimeMarkers: RowMetadata[],
-    notParsed: RowMetadata[],
   ) {
     let contentsWithTimeMarkers = "";
     contentsWithTimeMarkers += ".:: Uncategorized\n";
@@ -965,7 +1268,7 @@ export class TimeLogProcessor {
           metadata.log.push(
             "sent to notParsed in generateStructuredTimeMarkedOutput",
           );
-          notParsed.push(metadata);
+          this.notParsedAddTimeMarkers.push(metadata);
         }
 
         const parts = metadata.line.split(",");
@@ -989,7 +1292,7 @@ export class TimeLogProcessor {
           metadata.log.push(
             "sent to notParsed in generateStructuredTimeMarkedOutput",
           );
-          notParsed.push(metadata);
+          this.notParsedAddTimeMarkers.push(metadata);
         }
 
         contentsWithTimeMarkers += parts.join(",");
@@ -1009,9 +1312,9 @@ export class TimeLogProcessor {
     }
 
     // Remove "pause->" from notParsed array
-    if (!!notParsed) {
-      for (const k of Object.keys(notParsed)) {
-        const metadata = notParsed[k];
+    if (!!this.notParsedAddTimeMarkers) {
+      for (const k of Object.keys(this.notParsedAddTimeMarkers)) {
+        const metadata = this.notParsedAddTimeMarkers[k];
         const token = this.timeLogParser.startsWithOptionallySuffixedToken(
           metadata.line + "|$",
           "pause",
@@ -1019,55 +1322,15 @@ export class TimeLogProcessor {
         );
 
         if (token) {
-          delete notParsed[k];
+          delete this.notParsedAddTimeMarkers[k];
         }
       }
     }
 
-    this.notParsedAddTimeMarkers = notParsed;
     return contentsWithTimeMarkers;
   }
 
-  public notParsedAddTimeMarkersErrorSummary(notParsed: RowMetadata[]) {
-    if (!notParsed) {
-      throw new TimeLogParsingException(
-        "Can not summarize not-parsed errors without any unparsed contents",
-      );
-    }
-
-    const summary = {};
-
-    for (const v of Object.values(notParsed)) {
-      if (Array.isArray(v) && !!v.sourceLine) {
-        summary[v.sourceLine] = v;
-      } else {
-        throw new TimeLogParsingException(
-          "The unparsed contents did not contain information about the source line: " +
-            JSON.stringify({ v }),
-        );
-      }
-    }
-
-    return summary;
-  }
-
-  public notParsedTimeReportErrorSummary(notParsed) {
-    if (!notParsed) {
-      throw new TimeLogParsingException(
-        "Can not summarize not-parsed errors without any unparsed contents",
-      );
-    }
-
-    const summary = [];
-
-    for (const v of Object.values(notParsed)) {
-      summary.push(v);
-    }
-
-    return summary;
-  }
-
-  public detectCategories(contentsWithTimeMarkers) {
+  private detectCategories(contentsWithTimeMarkers) {
     this.categories = [];
     const lines = textIntoLinesArray(contentsWithTimeMarkers);
 
@@ -1084,312 +1347,6 @@ export class TimeLogProcessor {
         this.categories.push(categoryNeedle);
       }
     }
-  }
-
-  public generateTimeReport() // Fill out and sort the times-array
-  // print in a csv-format:
-  // var_dump($times);
-  {
-    this.timeLogParser.lastKnownTimeZone = this.tzFirst;
-    let contentsOfTimeReport = "";
-    let times = [];
-    const notParsed = [];
-
-    if (!this.categories) {
-      this.detectCategories(this.contentsWithTimeMarkers);
-    }
-
-    const lines = textIntoLinesArray(this.contentsWithTimeMarkers);
-    let category = "Unspecified";
-
-    // Special care is necessary here - ts is already in UTC, so we parse it as such, but we keep lastKnownTimeZone since we want to know the source row's timezone
-    // Check for startstopline - they are not invalid, only ignored
-    // Only check until first |
-    // invalidate
-    // TEXT
-    // Save a useful form of the time-marked rows that build up the hours-sum:
-    for (const lineno of Object.keys(lines)) {
-      // skip empty rows
-      const line = lines[lineno];
-      const trimmedLine = line.trim();
-
-      if (trimmedLine === "") {
-        continue;
-      }
-
-      if (strpos(line, ".::") === 0) {
-        const categoryNeedle = str_replace(".::", "", trimmedLine).trim();
-
-        if (-1 !== this.categories.indexOf(categoryNeedle)) {
-          category = categoryNeedle;
-          continue;
-        }
-      }
-
-      if (category === "Ignored") {
-        continue;
-      }
-
-      if (strpos(trimmedLine, "|tz:") === 0) {
-        this.timeLogParser.lastKnownTimeZone = str_replace(
-          "|tz:",
-          "",
-          trimmedLine,
-        );
-        continue;
-      }
-
-      let parts = line.split(",");
-      const dateRaw = parts.shift();
-      const lineWithoutDate = parts.join(",");
-      const _ = this.timeLogParser.lastKnownTimeZone;
-      this.timeLogParser.lastKnownTimeZone = "UTC";
-      const { ts, date /*, datetime*/ } = this.timeLogParser.interpretTsAndDate(
-        dateRaw,
-      );
-      this.timeLogParser.lastKnownTimeZone = _;
-      parts = line.split(" | ");
-      const beforeVertLine = parts[0];
-
-      if (this.timeLogParser.isProbableStartStopLine(beforeVertLine)) {
-        continue;
-      }
-
-      let invalid =
-        !date ||
-        strpos(lineWithoutDate, "min") === false ||
-        ts < Date.now() / 1000 - 24 * 3600 * 365 * 10;
-
-      if (invalid) {
-        notParsed.push(line);
-        continue;
-      }
-
-      parts = lineWithoutDate.split("min");
-      const tokens = this.timeLogParser.tokens();
-      const duration = str_replace(tokens.approx, "", parts[0]).trim() + "min";
-      const time = this.timeLogParser.durationToMinutes(duration);
-      invalid = !time && time !== 0;
-
-      if (invalid) {
-        notParsed.push(line);
-        continue;
-      }
-
-      const hoursRounded = Math.round((time / 60) * 100) / 100;
-      const hours = time / 60;
-      /*const first =*/ parts.shift();
-      let text = parts.join("min");
-      invalid = !text;
-
-      if (invalid) {
-        // var_dump($first, $parts, $line); die();
-        // $notParsed[] = $line; continue;
-        text = "<empty log item>";
-      }
-
-      if (!times[date]) {
-        times[date] = [];
-      }
-
-      if (!times[date].text) {
-        times[date].text = [];
-      }
-
-      times[date].text.push(trim(text, " ,\t\r\n"));
-
-      if (!times[date][category]) {
-        times[date][category] = hours;
-      } else {
-        times[date][category] += hours;
-      }
-
-      const sourceComment: TimeReportSourceComment = {
-        category,
-        date,
-        dateRaw,
-        hours,
-        hoursRounded,
-        lineWithoutDate,
-        text,
-        // timeMarker,
-        ts,
-        tz: this.timeLogParser.lastKnownTimeZone,
-      };
-      this.timeReportSourceComments.push(sourceComment);
-    }
-
-    this.timeReportData = times = this.addZeroFilledDates(times);
-    contentsOfTimeReport +=
-      "Date;" +
-      this.categories.join(" (rounded);") +
-      " (rounded);" +
-      this.categories.join(";") +
-      ";Log_Items\n";
-
-    //
-    // replace point by comma
-    // $hoursByCategoryRounded = str_replace(".", ",", $hoursByCategoryRounded);
-    // replace point by comma
-    // $hoursByCategory = str_replace(".", ",", $hoursByCategory);
-    for (const date of Object.keys(times)) {
-      // Gotta limit the amount of data
-      const hours = times[date];
-      let activities = Array.from(hours.text).join(" | ");
-      activities = newlineConvert(activities, "");
-      activities = str_replace([";", "\t"], [",", "   "], activities);
-      activities = mb_substr(activities, 0, 1024).trim();
-      let hoursByCategoryRounded = "";
-
-      for (const c of Object.values(this.categories)) {
-        const hoursExact = undefined !== hours[c] ? hours[c] : 0;
-        const hoursRounded = Math.round(hoursExact * 100) / 100;
-        hoursByCategoryRounded += hoursRounded + ";";
-      }
-
-      let hoursByCategory = "";
-
-      for (const c of Object.values(this.categories)) {
-        const hoursExact = undefined !== hours[c] ? hours[c] : 0;
-        hoursByCategory += hoursExact + ";";
-      }
-
-      contentsOfTimeReport +=
-        date +
-        ";" +
-        hoursByCategoryRounded +
-        hoursByCategory +
-        activities +
-        LogParser.NL_NIX;
-    }
-
-    this.notParsedTimeReport = notParsed;
-
-    /*
-    for (const line of Object.values(notParsed)) {
-      // maybe attempt to add some debugging metadata here?
-    }
-    */
-
-    this.contentsOfTimeReport = contentsOfTimeReport;
-  }
-
-  public addZeroFilledDates(times) {
-    let firstDateFound;
-    let lastDateFound;
-    const originalTimesArray = cloneVariable(times);
-    times = {};
-    const timezone = new DateTimeZone("UTC");
-
-    for (const date of Object.keys(originalTimesArray)) {
-      const hours = originalTimesArray[date];
-      const dateWithoutTime = DateTime.createFromFormat(
-        "Y-m-d H:i:s",
-        date + " 00:00:00",
-        timezone,
-      );
-
-      if (dateWithoutTime) {
-        if (!firstDateFound) {
-          firstDateFound = dateWithoutTime;
-        }
-
-        if (!lastDateFound) {
-          lastDateFound = dateWithoutTime;
-        }
-
-        if (dateWithoutTime.getTimestamp() < firstDateFound.getTimestamp()) {
-          firstDateFound = dateWithoutTime;
-        }
-
-        if (dateWithoutTime.getTimestamp() > lastDateFound.getTimestamp()) {
-          lastDateFound = dateWithoutTime;
-        }
-
-        times[dateWithoutTime.format("Y-m-d")] = hours;
-      }
-    }
-
-    if (this.collectDebugInfo) {
-      this.debugGenerateTimeReport = {
-        firstDateFound,
-        lastDateFound,
-        times,
-      };
-    }
-
-    if (!firstDateFound) {
-      return [];
-    }
-
-    const interval = {
-      /* tslint:disable:object-literal-sort-keys */
-      start: firstDateFound.date,
-      end: lastDateFound.date,
-      /* tslint:enable:object-literal-sort-keys */
-    };
-    // console.debug({ times, interval, firstDateFound, lastDateFound });
-
-    const dates = eachDayOfIntervalUTC(interval);
-    // console.debug({ dates });
-
-    const timesArrayBeforePadding = cloneVariable(times);
-    times = {};
-
-    for (const date of dates) {
-      const dt = new DateTime(date, timezone);
-      // console.debug({ dt });
-      const xday = dt.format("Y-m-d");
-      times[xday] =
-        timesArrayBeforePadding[xday] !== undefined
-          ? timesArrayBeforePadding[xday]
-          : 0;
-    }
-
-    // console.debug({ times });
-
-    return times;
-  }
-
-  public getTimeLogMetadata() {
-    // do {
-    // } while (!$last["tsIsFaked"]);
-
-    if (!this.contentsWithTimeMarkers) {
-      return [];
-    }
-
-    if (!this.debugAddTimeMarkers.rowsWithTimeMarkers) {
-      return [];
-    }
-
-    const rowsWithTimeMarkers: RowMetadata[] = this.debugAddTimeMarkers
-      .rowsWithTimeMarkers;
-    const start = rowsWithTimeMarkers.shift();
-    const startTs = start.ts;
-    const name = start.dateRaw;
-    const last = rowsWithTimeMarkers.pop();
-    const lastTs = last.ts;
-    const leadTime = lastTs - startTs;
-    const times = this.debugGenerateTimeReport.times;
-    let hoursTotal = 0;
-
-    for (const time of Object.values(times)) {
-      for (const category of Object.values(this.categories)) {
-        hoursTotal += time[category];
-      }
-    }
-
-    const hoursLeadTime = Math.round((leadTime / 60 / 60) * 100) / 100;
-    const nonHours = Math.round((hoursLeadTime - hoursTotal) * 100) / 100;
-    return {
-      hoursLeadTime,
-      hoursTotal,
-      lastTs,
-      name,
-      nonHours,
-      startTs,
-    };
   }
 
   /*
@@ -1542,7 +1499,7 @@ export class TimeLogProcessor {
     return str;
   }
 
-  public setVcalendarDt(e, field, ts) {
+  private setVcalendarDt(e, field, ts) {
     e.setProperty(
       field,
       gmdate("Y", ts),

@@ -1,0 +1,12 @@
+|tz:UTC-6
+
+start 2017-12-16, 12:00
+
+paus 2017-12-16, 13:00->
+
+|tz:Unknown/Timezone
+
+start 2018-02-11, 09:05
+
+2018-02-11, 09:55, okok
+paus->

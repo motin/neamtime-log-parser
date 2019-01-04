@@ -1,0 +1,36 @@
+|tz:Europe/Helsinki
+
+start 2016-05-11 10:51
+
+2016-05-11 10:51, dags att förbättra felinformationen i frontend så att kan åtgärda worklogs så att de parsas
+
+2016-05-11 10:53, commit:
+Inactivated refresh of various items upon import since they are not displayed in frontend atm
+
+paus 2016-05-11 10:54->2016-05-11 11:06
+
+2016-05-11 11:06, current state:
+inputResult.processing_errors: {
+  "errors": [
+    {
+      "ref": "processedLogContentsWithTimeMarkers",
+      "message": "\nThe following content was not understood by the parser:<br/>\n<span title=\"Array\n(\n    [rows_with_timemarkers_handled] =&gt; 356\n    [line] =&gt; start 2016-02-09 10:48\n    [line_with_comment] =&gt; start 2016-02-09 10:48\n    [formatted_date] =&gt; 1970-01-01 00:00\n    [date] =&gt; \n    [date_raw] =&gt; 10:48\n    [ts] =&gt; 0\n    [log] =&gt; Array\n        (\n            [0] =&gt; Found some sort of time in start/pause-row...\n            [1] =&gt; Timestamp found in start/pause-row... but was earlier than last found...\n            [2] =&gt; Sent to not_parsed in line 557\n        )\n\n    [source_line] =&gt; 3072\n    [lastKnownTimeZone] =&gt; Europe/Stockholm\n    [date_search_preg_debug] =&gt; Array\n        (\n            [linefordatecheck] =&gt; start 2016-02-09 10:48\n            [m] =&gt; Array\n                (\n                    [0] =&gt; Array\n                        (\n                            [0] =&gt; 10:48\n                        )\n\n                    [1] =&gt; Array\n                        (\n                            [0] =&gt; :\n                        )\n\n                )\n\n        )\n\n)\n\">start 2016-02-09 10:48</span><br/>\n"
+    },
+    {
+      "ref": "timeReportCsv",
+      "message": "Time Report was generated upon log contents which had non-understood parts"
+    },
+    {
+      "ref": "timeReportCsv",
+      "message": "Some times were estimated (marked with {!}) and needs to be manually adjusted before time report gives an accurate summary. If you already adjusted the durations, don't forget to also remove the \"{!}\""
+    }
+  ],
+  "troubleShootingInfo": {
+    "foo": "bar"
+  }
+}
+
+2016-05-11 11:08, commit:
+Auto-formatting
+
+paus->
