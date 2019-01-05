@@ -24,16 +24,16 @@ export function newlineConvert(str, newline) {
   );
 }
 
-export function textIntoLinesArray(
-  text, // Remove weird skype-produced spaces (hex c2a0 as opposed to hex 20 for ordinary spaces) // Normalize line-endings
-): string[] {
+export function textIntoLinesArray(text): string[] {
+  // Remove weird skype-produced spaces (hex c2a0 as opposed to hex 20 for ordinary spaces)
   text = str_replace("\xA0", " ", text);
-  text = this.newlineConvert(text, this.NL_NIX);
-  return text.split(this.NL_NIX);
+  // Normalize line-endings
+  text = this.newlineConvert(text, LogParser.NL_NIX);
+  return text.split(LogParser.NL_NIX);
 }
 
 export function linesArrayIntoText(lines) {
-  return lines.join(this.NL_NIX);
+  return lines.join(LogParser.NL_NIX);
 }
 
 export function readFirstNonEmptyLineOfText(text) {

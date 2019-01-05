@@ -1,6 +1,38 @@
 import test, { ExecutionContext, Macro } from "ava";
-import { LogParser } from "./LogParser";
+import { linesArrayIntoText, LogParser } from "./LogParser";
 import { DateTime, DateTimeZone } from "./php-wrappers";
+
+const testLinesArrayIntoText: Macro = (
+  t: ExecutionContext,
+  lines,
+  expectedText,
+) => {
+  const text = linesArrayIntoText(lines);
+  // t.log("{lines, expectedText}", {lines, expectedText});
+  t.deepEqual(
+    text,
+    expectedText,
+    "LogParser's linesArrayIntoText() behaves as expected",
+  );
+};
+
+const testLinesArrayIntoTextData = () => {
+  return [
+    [
+      ["foo", "bar", "zoo"],
+      "foo" + LogParser.NL_NIX + "bar" + LogParser.NL_NIX + "zoo",
+    ],
+  ];
+};
+
+testLinesArrayIntoTextData().forEach((testData, index) => {
+  test(
+    "testLinesArrayIntoText - " + index,
+    testLinesArrayIntoText,
+    testData[0],
+    testData[1],
+  );
+});
 
 const testSecondsToDuration: Macro = (
   t: ExecutionContext,

@@ -2,6 +2,7 @@ import { array_slice } from "locutus/php/array";
 import { strpos } from "locutus/php/strings";
 import { TimeLogParsingException } from "./exceptions/TimeLogParsingException";
 import { TimeSpendingLogProcessingErrorsEncounteredException } from "./exceptions/TimeSpendingLogProcessingErrorsEncounteredException";
+import { cloneVariable } from "./php-wrappers";
 import { TimeLogProcessor, TimeLogSession } from "./TimeLogProcessor";
 import { TimeSpendingLog } from "./TimeSpendingLog";
 
@@ -15,18 +16,12 @@ export class ProcessedTimeSpendingLog {
   public processingErrors: ProcessingError[];
   public unprocessedTimeSpendingLog: TimeSpendingLog;
 
-  public timeReportCsv: string;
-  public timeReportData: [];
-  public preProcessedContents;
   public processingDebugInfo;
-  public timeReportSourceComments;
-  public processedLogContentsWithTimeMarkers;
   public timeReportICal;
 
   private timeLogProcessor: TimeLogProcessor;
 
   constructor(unprocessedTimeSpendingLog: TimeSpendingLog) {
-    this.timeReportData = [];
     this.processingErrors = [];
     this.unprocessedTimeSpendingLog = unprocessedTimeSpendingLog;
     this.ensureParsedRawLogContents();
@@ -44,6 +39,8 @@ export class ProcessedTimeSpendingLog {
     return this.timeLogProcessor;
   }
 
+  /*
+  TODO: Udpate and restore as dev documentation at least
   public attributeLabels() {
     return {
       preProcessedContents: "Pre-processed log contents",
@@ -57,6 +54,7 @@ export class ProcessedTimeSpendingLog {
       timeReportICal: "Time report iCal",
     };
   }
+  */
 
   public ensureParsedRawLogContents() {
     this.parseRawLogContents();
@@ -100,7 +98,7 @@ export class ProcessedTimeSpendingLog {
       }
     }
 
-    if (!!timeLogProcessor.notParsedAddTimeMarkers) {
+    if (timeLogProcessor.notParsedAddTimeMarkers.length > 0) {
       this.addError(
         "issues-during-initial-parsing",
         "The following content was not understood by the parser",
@@ -108,18 +106,20 @@ export class ProcessedTimeSpendingLog {
       );
     }
 
-    this.processedLogContentsWithTimeMarkers = timeLogProcessor.timeReportCsv;
     this.parseProcessedLogContentsWithTimeMarkers();
     // this.timeReportICal = timeLogProcessor.generateIcal();
   }
 
   public parseProcessedLogContentsWithTimeMarkers() {
-    if (!this.processedLogContentsWithTimeMarkers) {
-      throw new Error("No valid processedLogContentsWithTimeMarkers");
+    const timeLogProcessor = this.getTimeLogProcessor();
+
+    if (!timeLogProcessor.contentsWithTimeMarkers) {
+      throw new Error("No valid contentsWithTimeMarkers");
     }
 
-    const timeLogProcessor = this.getTimeLogProcessor();
-    timeLogProcessor.generateTimeReport();
+    timeLogProcessor.generateTimeReport(
+      timeLogProcessor.contentsWithTimeMarkers,
+    );
 
     if (!!timeLogProcessor.notParsedAddTimeMarkers) {
       this.addError(
@@ -136,15 +136,11 @@ export class ProcessedTimeSpendingLog {
       );
     }
 
-    this.timeReportCsv = timeLogProcessor.timeReportCsv;
-    this.timeReportData = timeLogProcessor.timeReportData;
-    this.preProcessedContents = timeLogProcessor.preProcessedContents;
     this.processingDebugInfo = {
       notParsedAddTimeMarkers: timeLogProcessor.notParsedAddTimeMarkers,
       notParsedTimeReport: timeLogProcessor.notParsedTimeReport,
       rowsWithTimeMarkers: timeLogProcessor.rowsWithTimeMarkers,
     };
-    this.timeReportSourceComments = timeLogProcessor.timeReportSourceComments;
 
     if (strpos(timeLogProcessor.timeReportCsv, "{!}") !== false) {
       this.addError(
@@ -310,20 +306,21 @@ export class ProcessedTimeSpendingLog {
     }
   }
 
-  /*
   public calculateTotalReportedTime() {
     let total = 0;
     {
-      const tmp0 = this.timeReportData;
+      const timeReportData = cloneVariable(
+        this.timeLogProcessor.timeReportData,
+      );
 
-      for (const date in tmp0) {
-        const hoursOrHoursArrayByCategory = tmp0[date];
+      for (const date of Object.keys(timeReportData)) {
+        const hoursOrHoursArrayByCategory = timeReportData[date];
 
         if (typeof hoursOrHoursArrayByCategory === "number") {
           total += hoursOrHoursArrayByCategory;
         } else {
           delete hoursOrHoursArrayByCategory.text;
-          for (const category in hoursOrHoursArrayByCategory) {
+          for (const category of Object.keys(hoursOrHoursArrayByCategory)) {
             const hours = hoursOrHoursArrayByCategory[category];
             total += hours;
           }
@@ -332,5 +329,4 @@ export class ProcessedTimeSpendingLog {
     }
     return total;
   }
-  */
 }

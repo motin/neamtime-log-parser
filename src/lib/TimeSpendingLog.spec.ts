@@ -10,6 +10,7 @@ import {
 } from "../index";
 import { TimeSpendingLogProcessingErrorsEncounteredException } from "./exceptions/TimeSpendingLogProcessingErrorsEncounteredException";
 import { file_put_contents } from "./php-wrappers";
+import { ProcessedTimeSpendingLog } from "./ProcessedTimeSpendingLog";
 import { prettyJson } from "./string-utils";
 
 const pathToFolderWhereCorrectTsLogsReside = path.join(fixturesPath, "correct");
@@ -96,7 +97,7 @@ const processTimeSpendingLog = (t: ExecutionContext, timeSpendingLogPath) => {
     timeSpendingLogPath,
   );
   let thrownException;
-  let processedTimeSpendingLog;
+  let processedTimeSpendingLog: ProcessedTimeSpendingLog;
 
   try // t.log($processedTimeSpendingLog->timeReportCsv);
   {
@@ -114,7 +115,7 @@ const processTimeSpendingLog = (t: ExecutionContext, timeSpendingLogPath) => {
     t.log(671 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
     file_put_contents(
       correspondingCsvDataFilePath + ".latest-run.csv",
-      processedTimeSpendingLog.timeReportCsv,
+      processedTimeSpendingLog.getTimeLogProcessor().timeReportCsv,
     );
     const timeLogEntriesWithMetadata = processedTimeSpendingLog.getTimeLogEntriesWithMetadata();
     t.log(692 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
@@ -136,23 +137,35 @@ const processTimeSpendingLog = (t: ExecutionContext, timeSpendingLogPath) => {
         timeSpendingLogPath + ".latest-run.processing-errors.json",
         errorsJson,
       );
+    } else {
+      throw e;
     }
   }
 
+  console.debug(
+    "after error potentially - processedTimeSpendingLog",
+    processedTimeSpendingLog,
+  );
+
+  t.truthy(
+    processedTimeSpendingLog,
+    "processedTimeSpendingLog should be available regardless of success or failure in the processing",
+  );
+
   file_put_contents(
     timeSpendingLogPath + ".latest-run.preProcessedContents",
-    processedTimeSpendingLog.preProcessedContents,
+    processedTimeSpendingLog.getTimeLogProcessor().preProcessedContents,
   );
   // Save processedLogContentsWithTimeMarkers in order to make debugging easier
   file_put_contents(
     timeSpendingLogPath + ".latest-run.processedLogContentsWithTimeMarkers",
-    processedTimeSpendingLog.processedLogContentsWithTimeMarkers,
+    processedTimeSpendingLog.getTimeLogProcessor().contentsWithTimeMarkers,
   );
   // Save processedLogContentsWithTimeMarkers_debug in order to make debugging easier
   file_put_contents(
     timeSpendingLogPath +
       ".latest-run.processedLogContentsWithTimeMarkers_debug.json",
-    processedTimeSpendingLog.processedLogContentsWithTimeMarkers_debug,
+    processedTimeSpendingLog.processingDebugInfo,
   );
   return { processedTimeSpendingLog, thrownException };
 };
@@ -179,7 +192,7 @@ const testCorrectTimeSpendingLogsCorrectness: Macro = (
     timeSpendingLogPath,
   );
   t.is(
-    processedTimeSpendingLog.timeReportCsv,
+    processedTimeSpendingLog.getTimeLogProcessor().timeReportCsv,
     correspondingCsvDataFileContents,
     `CSV contents for '${timeSpendingLogPath}' matches expected`,
   );
