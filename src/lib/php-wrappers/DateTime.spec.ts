@@ -9,15 +9,11 @@ const testDateFnsParse: Macro = (
   expectedParsedIsoString,
 ) => {
   const result = parse(dateString, formatString, new Date());
-  t.log("{dateString, formatString, result}", {
-    dateString,
-    formatString,
-    result,
-  });
+  // t.log("{dateString, formatString, result}", {dateString, formatString, result,});
   t.truthy(result);
   t.true(DateTime.isValidDate(result));
   const resultIso = result.toISOString();
-  t.log("{resultIso}", { resultIso });
+  // t.log("{resultIso}", { resultIso });
   t.is(expectedParsedIsoString, resultIso);
 };
 

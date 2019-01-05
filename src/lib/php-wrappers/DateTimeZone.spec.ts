@@ -9,14 +9,9 @@ const testTimeZoneSupportParseZonedTime: Macro = (
   formatString,
   expectedParsedTime,
 ) => {
-  t.log("{dateString, formatString}", {
-    dateString,
-    formatString,
-  });
+  // t.log("{dateString, formatString}", {dateString, formatString,});
   const result = parseZonedTime(dateString, formatString);
-  t.log("{result}", {
-    result,
-  });
+  // t.log("{result}", {result,});
   t.truthy(result);
   t.deepEqual(result, expectedParsedTime);
 };
@@ -133,14 +128,9 @@ const testDateTimeCreateFromZonedFormat: Macro = (
   dateString,
   expectedUtcDateTimeFormatted,
 ) => {
-  t.log("{dateString, phpFormatString}", {
-    dateString,
-    phpFormatString,
-  });
+  // t.log("{dateString, phpFormatString}", {dateString, phpFormatString,});
   const dt = DateTimeZone.createFromZonedFormat(phpFormatString, dateString);
-  t.log("{dt}", {
-    dt,
-  });
+  // t.log("{dt}", {dt,});
   t.truthy(dt);
   t.is(expectedUtcDateTimeFormatted, dt.format("Y-m-d H:i"));
 };
