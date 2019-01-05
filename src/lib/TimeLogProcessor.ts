@@ -487,180 +487,7 @@ export class TimeLogProcessor {
     );
   }
 
-  /**
-   * Note: Public only to allow for testing this endpoint specifically
-   * @param preProcessedContents
-   */
-  public parsePreProcessedContents(preProcessedContents: string) {
-    const debugOriginalUnsortedRows: RowMetadata[] = [];
-    this.rowsWithTimeMarkersHandled = 0;
-    const lines = textIntoLinesArray(preProcessedContents);
-
-    for (
-      let preprocessedContentsSourceLineIndex = 0;
-      preprocessedContentsSourceLineIndex < lines.length;
-      preprocessedContentsSourceLineIndex++
-    ) {
-      const preprocessedContentsSourceLine =
-        lines[preprocessedContentsSourceLineIndex];
-      let trimmedLine = preprocessedContentsSourceLine.trim();
-
-      // Actual source line is +1
-      const preprocessedContentsSourceLineRow =
-        preprocessedContentsSourceLineIndex + 1;
-
-      // Skip empty rows
-      if (trimmedLine === "") {
-        continue;
-      }
-
-      // Get raw contents source line
-      const sourceLine = this
-        .preProcessedContentsSourceLineContentsSourceLineMap[
-        preprocessedContentsSourceLineRow
-      ];
-
-      // Detect and switch timezone change
-      if (strpos(trimmedLine, "|tz:") === 0) {
-        this.timeLogParser.lastKnownTimeZone = str_replace(
-          "|tz:",
-          "",
-          trimmedLine,
-        );
-        continue;
-      }
-
-      // Remove any comments at the end before datecheck
-      const lineWithComment = trimmedLine;
-      trimmedLine = trimmedLine.replace(/#.* /g, "").trim();
-
-      // Remove whitespace noise
-      trimmedLine = newlineConvert(trimmedLine, "");
-
-      // Save the trimmed line as $line since the legacy code expects it to be called that
-      const line = trimmedLine;
-
-      // DATETIME
-      const {
-        ts,
-        date,
-        dateRaw,
-        // datetime,
-        // lineWithoutDate,
-        notTheFirstRowOfALogComment,
-      } = this.timeLogParser.parseLogComment(line);
-
-      // $line = utf8_encode($line);
-
-      // Use UTC dates
-      const timezone = new DateTimeZone("UTC");
-      const datetime = DateTime.createFromUnixTimestamp(
-        ts,
-      ).cloneWithAnotherTimezone(timezone);
-      const formattedDate = datetime.format("Y-m-d H:i"); // :s
-
-      const log = [];
-      const lastKnownTimeZone = this.timeLogParser.lastKnownTimeZone;
-      const lastUsedTimeZone = this.timeLogParser.lastUsedTimeZone;
-      const lastSetTsAndDateErrorMessage = this.timeLogParser
-        .lastSetTsAndDateErrorMessage;
-      const lastInterpretTsAndDateErrorMessage = this.timeLogParser
-        .lastInterpretTsAndDateErrorMessage;
-      const metadata: RowMetadata = {
-        date,
-        dateRaw,
-        formattedDate,
-        lastInterpretTsAndDateErrorMessage,
-        lastKnownTimeZone,
-        lastSetTsAndDateErrorMessage,
-        lastUsedTimeZone,
-        line,
-        lineWithComment,
-        log,
-        preprocessedContentsSourceLineIndex,
-        rowsWithTimeMarkersHandled: this.rowsWithTimeMarkersHandled,
-        sourceLine,
-        ts,
-      };
-
-      // If lastKnownTimeZone and lastUsedTimeZone are different: Send to this.notParsedAddTimeMarkers but parse anyway (so that general parsing goes through but that the log is not considered correct)
-      if (
-        this.timeLogParser.interpretLastKnownTimeZone() !==
-        this.timeLogParser.lastUsedTimeZone
-      ) {
-        const methodName = "parsePreProcessedContents";
-        metadata.log.push(
-          `Invalid timezone ('${
-            this.timeLogParser.lastKnownTimeZone
-          }') encountered when parsing a row (source line: ${sourceLine}). Not treating this row as valid time-marked row`,
-        );
-        metadata.log.push("Sent to notParsed in " + methodName);
-        this.notParsedAddTimeMarkers.push(metadata);
-      }
-
-      // Default
-      let isNewRowWithTimeMarker = false;
-
-      // console.debug(["first check", $notTheFirstRowOfALogComment, $metadata]);// While devving
-
-      const notTheFirstRowOfALogCommentAndProbableStartStopLine =
-        notTheFirstRowOfALogComment &&
-        this.timeLogParser.isProbableStartStopLine(line);
-      const previousRowWithTimeMarkerIndex =
-        this.rowsWithTimeMarkersHandled - 1;
-      const isTheFirstRowWithTimeMarker = !this.rowsWithTimeMarkers[
-        previousRowWithTimeMarkerIndex
-      ];
-      const hasAPreviousRowWithTimeMarker = !isTheFirstRowWithTimeMarker;
-      const previousRowWithTimeMarkerHasTheSameDate =
-        hasAPreviousRowWithTimeMarker &&
-        this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex]
-          .formattedDate === formattedDate;
-
-      // Catch lines that has a timestamp but not in the beginning
-      if (notTheFirstRowOfALogCommentAndProbableStartStopLine) {
-        isNewRowWithTimeMarker = true;
-        const updates = this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine(
-          line,
-          metadata,
-        );
-        isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
-      } else if (notTheFirstRowOfALogComment) {
-        this.processAdditionalLogCommentRowUntilNextLogComment(line);
-        isNewRowWithTimeMarker = false;
-      } else if (previousRowWithTimeMarkerHasTheSameDate) {
-        this.processAdditionalLogCommentRowUntilNextLogComment(line);
-        isNewRowWithTimeMarker = false;
-      } else {
-        // const theFirstRowOfALogComment = true;
-        const updates = this.processTheFirstRowOfALogComment(ts, metadata);
-        isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
-      }
-
-      // Handle new-found rows with time marker
-      if (isNewRowWithTimeMarker) {
-        this.rowsWithTimeMarkers[this.rowsWithTimeMarkersHandled] = metadata;
-        this.rowsWithTimeMarkersHandled++;
-      }
-
-      debugOriginalUnsortedRows.push(metadata);
-
-      // Limit the maximum amount of rows
-      // TODO: Make configurable
-      if (this.rowsWithTimeMarkersHandled >= 100000) {
-        throw new TimeLogParsingException(
-          "Time log exceeds maximum allowed size",
-        );
-      }
-      // if (this.rowsWithTimeMarkersHandled >= 10) break; // While devving
-    }
-
-    if (this.collectDebugInfo) {
-      this.debugOriginalUnsortedRows = debugOriginalUnsortedRows;
-    }
-  }
-
-  private getPreProcessedContents(tzFirst, contents) {
+  public getPreProcessedContents(tzFirst, contents) {
     this.timeLogParser.lastKnownTimeZone = tzFirst;
     let processed = [];
     const rawLines = textIntoLinesArray(contents);
@@ -934,6 +761,179 @@ export class TimeLogProcessor {
     }
 
     return linesArrayIntoText(processed);
+  }
+
+  /**
+   * Note: Public only to allow for testing this endpoint specifically
+   * @param preProcessedContents
+   */
+  public parsePreProcessedContents(preProcessedContents: string) {
+    const debugOriginalUnsortedRows: RowMetadata[] = [];
+    this.rowsWithTimeMarkersHandled = 0;
+    const lines = textIntoLinesArray(preProcessedContents);
+
+    for (
+      let preprocessedContentsSourceLineIndex = 0;
+      preprocessedContentsSourceLineIndex < lines.length;
+      preprocessedContentsSourceLineIndex++
+    ) {
+      const preprocessedContentsSourceLine =
+        lines[preprocessedContentsSourceLineIndex];
+      let trimmedLine = preprocessedContentsSourceLine.trim();
+
+      // Actual source line is +1
+      const preprocessedContentsSourceLineRow =
+        preprocessedContentsSourceLineIndex + 1;
+
+      // Skip empty rows
+      if (trimmedLine === "") {
+        continue;
+      }
+
+      // Get raw contents source line
+      const sourceLine = this
+        .preProcessedContentsSourceLineContentsSourceLineMap[
+        preprocessedContentsSourceLineRow
+      ];
+
+      // Detect and switch timezone change
+      if (strpos(trimmedLine, "|tz:") === 0) {
+        this.timeLogParser.lastKnownTimeZone = str_replace(
+          "|tz:",
+          "",
+          trimmedLine,
+        );
+        continue;
+      }
+
+      // Remove any comments at the end before datecheck
+      const lineWithComment = trimmedLine;
+      trimmedLine = trimmedLine.replace(/#.* /g, "").trim();
+
+      // Remove whitespace noise
+      trimmedLine = newlineConvert(trimmedLine, "");
+
+      // Save the trimmed line as $line since the legacy code expects it to be called that
+      const line = trimmedLine;
+
+      // DATETIME
+      const {
+        ts,
+        date,
+        dateRaw,
+        // datetime,
+        // lineWithoutDate,
+        notTheFirstRowOfALogComment,
+      } = this.timeLogParser.parseLogComment(line);
+
+      // $line = utf8_encode($line);
+
+      // Use UTC dates
+      const timezone = new DateTimeZone("UTC");
+      const datetime = DateTime.createFromUnixTimestamp(
+        ts,
+      ).cloneWithAnotherTimezone(timezone);
+      const formattedDate = datetime.format("Y-m-d H:i"); // :s
+
+      const log = [];
+      const lastKnownTimeZone = this.timeLogParser.lastKnownTimeZone;
+      const lastUsedTimeZone = this.timeLogParser.lastUsedTimeZone;
+      const lastSetTsAndDateErrorMessage = this.timeLogParser
+        .lastSetTsAndDateErrorMessage;
+      const lastInterpretTsAndDateErrorMessage = this.timeLogParser
+        .lastInterpretTsAndDateErrorMessage;
+      const metadata: RowMetadata = {
+        date,
+        dateRaw,
+        formattedDate,
+        lastInterpretTsAndDateErrorMessage,
+        lastKnownTimeZone,
+        lastSetTsAndDateErrorMessage,
+        lastUsedTimeZone,
+        line,
+        lineWithComment,
+        log,
+        preprocessedContentsSourceLineIndex,
+        rowsWithTimeMarkersHandled: this.rowsWithTimeMarkersHandled,
+        sourceLine,
+        ts,
+      };
+
+      // If lastKnownTimeZone and lastUsedTimeZone are different: Send to this.notParsedAddTimeMarkers but parse anyway (so that general parsing goes through but that the log is not considered correct)
+      if (
+        this.timeLogParser.interpretLastKnownTimeZone() !==
+        this.timeLogParser.lastUsedTimeZone
+      ) {
+        const methodName = "parsePreProcessedContents";
+        metadata.log.push(
+          `Invalid timezone ('${
+            this.timeLogParser.lastKnownTimeZone
+          }') encountered when parsing a row (source line: ${sourceLine}). Not treating this row as valid time-marked row`,
+        );
+        metadata.log.push("Sent to notParsed in " + methodName);
+        this.notParsedAddTimeMarkers.push(metadata);
+      }
+
+      // Default
+      let isNewRowWithTimeMarker = false;
+
+      // console.debug(["first check", $notTheFirstRowOfALogComment, $metadata]);// While devving
+
+      const notTheFirstRowOfALogCommentAndProbableStartStopLine =
+        notTheFirstRowOfALogComment &&
+        this.timeLogParser.isProbableStartStopLine(line);
+      const previousRowWithTimeMarkerIndex =
+        this.rowsWithTimeMarkersHandled - 1;
+      const isTheFirstRowWithTimeMarker = !this.rowsWithTimeMarkers[
+        previousRowWithTimeMarkerIndex
+      ];
+      const hasAPreviousRowWithTimeMarker = !isTheFirstRowWithTimeMarker;
+      const previousRowWithTimeMarkerHasTheSameDate =
+        hasAPreviousRowWithTimeMarker &&
+        this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex]
+          .formattedDate === formattedDate;
+
+      // Catch lines that has a timestamp but not in the beginning
+      if (notTheFirstRowOfALogCommentAndProbableStartStopLine) {
+        isNewRowWithTimeMarker = true;
+        const updates = this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine(
+          line,
+          metadata,
+        );
+        isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
+      } else if (notTheFirstRowOfALogComment) {
+        this.processAdditionalLogCommentRowUntilNextLogComment(line);
+        isNewRowWithTimeMarker = false;
+      } else if (previousRowWithTimeMarkerHasTheSameDate) {
+        this.processAdditionalLogCommentRowUntilNextLogComment(line);
+        isNewRowWithTimeMarker = false;
+      } else {
+        // const theFirstRowOfALogComment = true;
+        const updates = this.processTheFirstRowOfALogComment(ts, metadata);
+        isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
+      }
+
+      // Handle new-found rows with time marker
+      if (isNewRowWithTimeMarker) {
+        this.rowsWithTimeMarkers[this.rowsWithTimeMarkersHandled] = metadata;
+        this.rowsWithTimeMarkersHandled++;
+      }
+
+      debugOriginalUnsortedRows.push(metadata);
+
+      // Limit the maximum amount of rows
+      // TODO: Make configurable
+      if (this.rowsWithTimeMarkersHandled >= 100000) {
+        throw new TimeLogParsingException(
+          "Time log exceeds maximum allowed size",
+        );
+      }
+      // if (this.rowsWithTimeMarkersHandled >= 10) break; // While devving
+    }
+
+    if (this.collectDebugInfo) {
+      this.debugOriginalUnsortedRows = debugOriginalUnsortedRows;
+    }
   }
 
   private processNotTheFirstRowOfALogCommentAndProbableStartStopLine(
