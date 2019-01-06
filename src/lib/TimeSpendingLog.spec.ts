@@ -212,7 +212,7 @@ const testCorrectlyReportedProcessingErrors: Macro = (
   timeSpendingLogPath,
   processingErrorsJsonFilePath,
 ) => {
-  t.log(timeSpendingLogPath);
+  t.log("timeSpendingLogPath", timeSpendingLogPath);
   let thrownException;
   let processedTimeSpendingLog;
   let errorsJson;
@@ -221,17 +221,26 @@ const testCorrectlyReportedProcessingErrors: Macro = (
     processedTimeSpendingLog = getProcessedTimeSpendingLog(timeSpendingLogPath);
   } catch (e) {
     if (e instanceof TimeSpendingLogProcessingErrorsEncounteredException) {
-      // t.log($e->processedTimeSpendingLog->getTimeLogParser()->preProcessedContentsSourceLineContentsSourceLineMap);
-      // To update all existing (when having changed the error log format for instance)
-      // file_put_contents(
-      //                $processingErrorsJsonFilePath,
-      //                $errorsJson
-      //            );
-      // To make it easier to update with correct contents for the first time
       thrownException = e;
       processedTimeSpendingLog = e.processedTimeSpendingLog;
-      t.log(e.processedTimeSpendingLog.getTroubleshootingInfo());
+
+      t.log(
+        "e.processedTimeSpendingLog.getTroubleshootingInfo()",
+        e.processedTimeSpendingLog.getTroubleshootingInfo(),
+      );
+      // t.log(e.processedTimeSpendingLog.getTimeLogParser().preProcessedContentsSourceLineContentsSourceLineMap);
+
       errorsJson = prettyJson(e.processedTimeSpendingLog.getProcessingErrors());
+
+      // To update all existing (when having changed the error log format for instance)
+      /*
+      file_put_contents(
+        processingErrorsJsonFilePath,
+        errorsJson,
+      );
+      */
+
+      // To make it easier to update with correct contents for the first time
       file_put_contents(
         timeSpendingLogPath + ".latest-run.processing-errors.json",
         errorsJson,
@@ -256,21 +265,21 @@ const testCorrectlyReportedProcessingErrors: Macro = (
     processedTimeSpendingLog.processedLogContentsWithTimeMarkers,
   );
 
-  if (!!thrownException) {
+  if (thrownException) {
     const processingErrorsJsonFileContents = file_get_contents(
       processingErrorsJsonFilePath,
     );
-    this.assertEquals(
-      processingErrorsJsonFileContents,
+    t.deepEqual(
       errorsJson,
+      processingErrorsJsonFileContents,
       "Expected error json matches actual error json for " +
         timeSpendingLogPath,
     );
   }
 
-  this.assertInstanceOf(
-    "TimeSpendingLogProcessingErrorsEncounteredException",
-    thrownException,
+  t.true(
+    thrownException instanceof
+      TimeSpendingLogProcessingErrorsEncounteredException,
     "We should have encountered log processing error(s), but we did not",
   );
 };
@@ -286,5 +295,6 @@ incorrectTimeSpendingLogContents().forEach((testData, index) => {
     "testCorrectlyReportedProcessingErrors - " + index,
     testCorrectlyReportedProcessingErrors,
     testData[0],
+    testData[1],
   );
 });

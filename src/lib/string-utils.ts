@@ -1,4 +1,8 @@
+// import * as util from "util";
+
 export const prettyJson = variable => {
+  // Temporarily use util.inspect to avoid and debug maximum call stack for recursive variables
+  // return util.inspect(variable, { depth: 20 });
   return JSON.stringify(variable, null, 2);
 };
 

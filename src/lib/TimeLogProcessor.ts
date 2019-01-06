@@ -463,18 +463,25 @@ export class TimeLogProcessor {
     for (const date of Object.keys(this.timeReportData)) {
       const hours = this.timeReportData[date];
 
-      let activities = Array.from(hours.text).join(" | ");
-      activities = newlineConvert(activities, "");
-      activities = str_replace([";", "\t"], [",", "   "], activities);
+      let activities;
 
-      // Gotta limit the amount of data
-      activities = mb_substr(activities, 0, 1024).trim();
+      if (hours !== null) {
+        activities = Array.from(hours.text).join(" | ");
+        activities = newlineConvert(activities, "");
+        activities = str_replace([";", "\t"], [",", "   "], activities);
+
+        // Gotta limit the amount of data
+        activities = mb_substr(activities, 0, 1024).trim();
+      } else {
+        activities = "";
+      }
 
       //
       let hoursByCategoryRounded = "";
 
-      for (const c of Object.values(this.categories)) {
-        const hoursExact = undefined !== hours[c] ? hours[c] : 0;
+      for (const c of this.categories) {
+        const hoursExact =
+          hours !== null && undefined !== hours[c] ? hours[c] : 0;
         const hoursRounded = Math.round(hoursExact * 100) / 100;
         hoursByCategoryRounded += hoursRounded + ";";
       }
@@ -484,8 +491,9 @@ export class TimeLogProcessor {
 
       let hoursByCategory = "";
 
-      for (const c of Object.values(this.categories)) {
-        const hoursExact = undefined !== hours[c] ? hours[c] : 0;
+      for (const c of this.categories) {
+        const hoursExact =
+          hours !== null && undefined !== hours[c] ? hours[c] : 0;
         hoursByCategory +=
           Math.round(hoursExact * 10000000000000) / 10000000000000 + ";";
       }
@@ -534,9 +542,10 @@ export class TimeLogProcessor {
     const leadTime = lastTs - startTs;
     let hoursTotal = 0;
 
-    for (const time of Object.values(this.timeReportData)) {
-      for (const category of Object.values(this.categories)) {
-        hoursTotal += time[category];
+    for (const date of Object.keys(this.timeReportData)) {
+      const time = this.timeReportData[date];
+      for (const category of this.categories) {
+        hoursTotal += time !== null ? time[category] : 0;
       }
     }
 
@@ -567,9 +576,7 @@ export class TimeLogProcessor {
 
     // Phase 0 - skip lines after "#endts"
     const lines = [];
-    for (const k of Object.keys(rawLines)) {
-      const line = rawLines[k];
-
+    for (const line of rawLines) {
       if (line.trim() === "#endts") {
         break;
       }

@@ -96,7 +96,11 @@ export class ProcessedTimeSpendingLog {
       timeLogProcessor.addTimeMarkers();
     } catch (e) {
       if (e instanceof TimeLogParsingException) {
-        this.addError("addTimeMarkers TimeLogParsingException", e.message);
+        this.addError(
+          "addTimeMarkers TimeLogParsingException",
+          e.message,
+          e.debug,
+        );
         return;
       } else {
         throw e;
@@ -307,7 +311,9 @@ export class ProcessedTimeSpendingLog {
                 "Encountered a processing error when detecting/parsing sessions individually: " +
                   e.message,
                 {
-                  processingErrors: e.processedTimeSpendingLog.getProcessingErrors(),
+                  // TODO: Fix the circular reference with e.processedTimeSpendingLog.getProcessingErrors() here
+                  processingErrorsLength: e.processedTimeSpendingLog.getProcessingErrors()
+                    .length,
                   sessionStartMetadata: start,
                 },
               );
@@ -315,7 +321,7 @@ export class ProcessedTimeSpendingLog {
           } else {
             this.addError(
               "session-parsing",
-              "Encountered a processing error when detecting/parsing sessions individually: " +
+              "Encountered a processing error when detecting/parsing sessions individually, and no e.processedTimeSpendingLog was supplied: " +
                 e.message,
               {
                 sessionStartMetadata: start,
