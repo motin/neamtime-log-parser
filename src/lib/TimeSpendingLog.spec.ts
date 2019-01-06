@@ -29,7 +29,7 @@ const correctTimeSpendingLogContents = () => {
     providerData.push([timeSpendingLogPath]);
   }
 
-  return providerData.slice(0, 1);
+  return providerData;
 };
 
 test("there exists at least one correct time spending log fixture paths", (t: ExecutionContext) => {
@@ -243,7 +243,7 @@ const testCorrectlyReportedProcessingErrors: Macro = (
   };
   const migrateValue = (v, key = null) => {
     if (v instanceof Array) {
-      return v.map((el) => migrateValue(el));
+      return v.map(el => migrateValue(el));
     } else {
       if (typeof v === "object") {
         return migrateProcessingErrorsObject(v);

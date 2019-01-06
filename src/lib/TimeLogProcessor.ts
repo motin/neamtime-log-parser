@@ -494,8 +494,16 @@ export class TimeLogProcessor {
       for (const c of this.categories) {
         const hoursExact =
           hours !== null && undefined !== hours[c] ? hours[c] : 0;
+        // Mimic the same precision that PHP used to generate the fixture-csv:s
+        const existingPrecision =
+          hoursExact < 1
+            ? hoursExact < 0.1
+              ? -1
+              : 0
+            : parseInt(hoursExact, 10).toString.length;
+        const precisionFactor = Math.pow(10, 14 - existingPrecision);
         hoursByCategory +=
-          Math.round(hoursExact * 10000000000000) / 10000000000000 + ";";
+          Math.round(hoursExact * precisionFactor) / precisionFactor + ";";
       }
 
       // replace point by comma
@@ -875,7 +883,7 @@ export class TimeLogProcessor {
     ) {
       const preprocessedContentsSourceLine =
         lines[preprocessedContentsSourceLineIndex];
-      let trimmedLine = preprocessedContentsSourceLine.trim();
+      const trimmedLine = preprocessedContentsSourceLine.trim();
 
       // Actual source line is +1
       const preprocessedContentsSourceLineRow =
@@ -904,13 +912,16 @@ export class TimeLogProcessor {
 
       // Remove any comments at the end before datecheck
       const lineWithComment = trimmedLine;
-      trimmedLine = trimmedLine.replace(/#.* /g, "").trim();
+      const trimmedLineWithoutComment = trimmedLine.replace(/#.*/g, "").trim();
 
       // Remove whitespace noise
-      trimmedLine = newlineConvert(trimmedLine, "");
+      const trimmedLineWithoutCommentAndWhiteSpaceNoise = newlineConvert(
+        trimmedLineWithoutComment,
+        "",
+      );
 
       // Save the trimmed line as $line since the legacy code expects it to be called that
-      const line = trimmedLine;
+      const line = trimmedLineWithoutCommentAndWhiteSpaceNoise;
 
       // DATETIME
       const {
@@ -1083,8 +1094,10 @@ export class TimeLogProcessor {
     let probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = true;
 
     // Check if it's a pause with written duration
+    const trimmedLineWithoutComment = line.replace(/#.*/g, "").trim();
     const pauseWithWrittenDuration =
-      startsWithPauseToken && strpos(line, "min") !== false;
+      startsWithPauseToken &&
+      strpos(trimmedLineWithoutComment, "min") !== false;
 
     if (pauseWithWrittenDuration) {
       const updates = this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration(

@@ -74,14 +74,22 @@ export class ProcessedTimeSpendingLog {
 
   public parseRawLogContents() {
     if (!this.unprocessedTimeSpendingLog.tzFirst) {
-      this.addError("issues-during-initial-parsing", "Empty timezone");
+      this.addError(
+        "issues-during-initial-parsing",
+        "Empty timezone",
+        this.unprocessedTimeSpendingLog,
+      );
       throw new TimeSpendingLogProcessingErrorsEncounteredException(
         "Empty timezone",
       );
     }
 
     if (!this.unprocessedTimeSpendingLog.rawLogContents) {
-      this.addError("issues-during-initial-parsing", "Empty raw log contents");
+      this.addError(
+        "issues-during-initial-parsing",
+        "Empty raw log contents" +
+          JSON.stringify(this.unprocessedTimeSpendingLog),
+      );
       throw new TimeSpendingLogProcessingErrorsEncounteredException(
         "Empty raw log contents",
       );
@@ -250,17 +258,33 @@ export class ProcessedTimeSpendingLog {
         const startLine = start.preprocessedContentsSourceLineIndex;
         const nextStart = starts[k + 1];
 
-        let length;
+        let stopLine;
         if (!nextStart) {
-          // do nothing
+          // do nothing, resulting in stopLine being undefined and thus all remaining lines are returned
         } else {
-          length =
-            nextStart.preprocessedContentsSourceLineIndex - 1 - startLine;
+          stopLine = nextStart.preprocessedContentsSourceLineIndex - 1;
+        }
+        const lines = preProcessedLines.slice(startLine, stopLine);
+
+        if (lines.length === 0) {
+          console.debug(
+            "parseDetectSessionsOneByOne - {lines, nextStart, preProcessedLines, startLine, start, starts, stopLine}",
+            {
+              lines,
+              nextStart,
+              preProcessedLines,
+              start,
+              startLine,
+              starts,
+              stopLine,
+            },
+          );
+          throw new Error(
+            "Encountered an empty lines array after interpreting the starts metadata",
+          );
         }
 
-        const lines = preProcessedLines.slice(startLine, length);
         const sessionSpecificTimeSpendingLog = new TimeSpendingLog();
-        // console.debug("parseDetectSessionsOneByOne - {length, lines, nextStart, preProcessedLines, startLine, start, starts}", {length, lines, nextStart, preProcessedLines, start, startLine, starts,},);
         sessionSpecificTimeSpendingLog.rawLogContents = lines.join("\n");
         sessionSpecificTimeSpendingLog.tzFirst = start.lastKnownTimeZone;
 
