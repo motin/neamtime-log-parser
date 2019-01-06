@@ -119,11 +119,15 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone: Macro = (
   transposeTimeZone,
   expectedTransposedFormatted,
 ) => {
-  const tlp = new LogParser();
+  const logParser = new LogParser();
   const {
     gmtTimestamp,
     datetime,
-  } = tlp.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(str, timezone);
+  } = logParser.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
+    str,
+    timezone,
+  );
+  // t.log("{datetime, gmtTimestamp, str, timezone}", {datetime, gmtTimestamp, str, timezone,});
   t.true(typeof datetime !== "undefined");
   t.is(gmtTimestamp, expectedGmtTimestamp);
   const gmtTimestampFormattedAsNewDefaultDatetime = DateTime.createFromUnixTimestamp(
@@ -276,6 +280,16 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
       1464180600,
       "UTC",
       "2016-05-25 12:50", // verified using https://www.timeanddate.com/worldclock/converter.html?iso=20160625T145000&p1=1440&p2=37
+    ],
+    [
+      "2019-01-05 (+0200) 08:00",
+      "Europe/Stockholm",
+      1546668000,
+      "2019-01-05 06:00",
+      "+02:00",
+      1546668000,
+      "UTC",
+      "2019-01-05 06:00",
     ],
   ];
 };

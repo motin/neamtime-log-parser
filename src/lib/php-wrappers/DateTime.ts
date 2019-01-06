@@ -6,7 +6,7 @@ export class DateTime {
   public static ISO8601 = "Y-m-d\\TH:i:sP"; // 0000-00-00T00:00:00+00:00
   public static ISO8601Z = "Y-m-d\\TH:i:s\\Z"; // Literal "Z" to strictly only accept 0000-00-00T00:00:00Z
   public static YMDHI = "Y-m-d H:i";
-  public static TTBWSD = "Y-m-d \\(O\\) H:i:s";
+  public static TTBWSD = "Y-m-d \\(O\\) H:i";
 
   public static isValidDate(d) {
     return d instanceof Date && !isNaN(Number(d));
@@ -39,7 +39,7 @@ export class DateTime {
     } = phpToDateFnsFormatString(phpFormatString);
 
     if (formatStringIncludesTimezone) {
-      const parsedZonedDate = DateTimeZone.createFromZonedFormat(
+      const parsedZonedDate = DateTimeZone.createDateTimeFromZonedFormat(
         phpFormatString,
         dateString,
       );
@@ -47,12 +47,12 @@ export class DateTime {
       timezone = parsedZonedDate.getTimezone();
       // TODO: Emit warning/notice if the zoned timezone differs from the supplied timezone argument??
 
+      // console.debug("parsedDate", parsedDate);
       if (!DateTime.isValidDate(parsedDate)) {
         throw new Error(
-          "DateTime parse error (toZonedDate, required to detect the timezone, failed)",
+          "DateTime parse error (DateTimeZone.createFromZonedFormat, required to detect the timezone, failed)",
         );
       }
-      // console.debug("parsedDate", parsedDate);
 
       return new DateTime(parsedDate, timezone);
     } else {
@@ -104,6 +104,9 @@ export class DateTime {
 
   constructor(date: Date, timezone = null) {
     this.date = date;
+    if (!timezone) {
+      timezone = new DateTimeZone("UTC");
+    }
     this.timezone = timezone;
   }
 
@@ -128,9 +131,6 @@ export class DateTime {
   }
 
   public getTimezone() {
-    if (!this.timezone) {
-      return new DateTimeZone("UTC");
-    }
     return this.timezone;
   }
 

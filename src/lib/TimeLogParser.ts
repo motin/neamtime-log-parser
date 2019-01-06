@@ -118,14 +118,14 @@ export class TimeLogParser extends LogParser {
       this.supportedTimestampFormats(),
     )) {
       // The most straight-forward date format
-      const format = supportedTimestampFormat.format;
-      const detectRegex = supportedTimestampFormat.detectRegex;
-      const acceptApproxTokenInsteadOfMinutes =
-        supportedTimestampFormat.acceptApproxTokenInsteadOfMinutes;
-      const detectRegexDateRawMatchIndex =
-        supportedTimestampFormat.detectRegexDateRawMatchIndex;
-      const detectRegexTimeRawMatchIndex =
-        supportedTimestampFormat.detectRegexTimeRawMatchIndex;
+      const {
+        acceptApproxTokenInsteadOfMinutes,
+        detectRegex,
+        detectRegexDateRawMatchIndex,
+        detectRegexTimeRawMatchIndex,
+        detectRegexTimeZoneRawMatchIndex,
+        format,
+      } = supportedTimestampFormat;
 
       // TODO: Try case-insensitive flag as well: g -> ig
 
@@ -159,10 +159,14 @@ export class TimeLogParser extends LogParser {
           metadata.dateRaw = m[detectRegexDateRawMatchIndex];
         }
 
+        metadata.timeZoneRaw = !is_null(detectRegexTimeZoneRawMatchIndex)
+          ? m[detectRegexTimeZoneRawMatchIndex]
+          : false;
+
         if (!is_null(detectRegexTimeRawMatchIndex)) {
-          // If this is a format with only time detection, we use the raw time as the raw date
           metadata.timeRaw = m[detectRegexTimeRawMatchIndex];
 
+          // If this is a format with only time detection, we use the raw time as the raw date
           if (is_null(detectRegexDateRawMatchIndex)) {
             metadata.dateRaw = metadata.timeRaw;
           }
@@ -198,9 +202,10 @@ export class TimeLogParser extends LogParser {
     }
 
     metadata.log.push("Did not find a supported timestamp");
+    metadata.dateRawFormat = false;
     metadata.dateRaw = false;
     metadata.timeRaw = false;
-    metadata.dateRawFormat = false;
+    metadata.timeZoneRaw = false;
     return { metadata };
   }
 

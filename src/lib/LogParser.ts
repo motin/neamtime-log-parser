@@ -14,6 +14,7 @@ export interface Metadata {
   dateRawWasNonemptyBeforeDetectTimestamp?: string;
   dateRaw_with_approx_token_instead_of_minutes?: string | false;
   log?: string[];
+  timeZoneRaw?: string | false;
 }
 
 export function newlineConvert(str, newline) {
@@ -123,6 +124,7 @@ export class LogParser {
           regexDetectYmd + "T" + regexDetectHis + regexDetectLiteralZAsTimezone,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
+        detectRegexTimeZoneRawMatchIndex: 3,
         format: DateTime.ISO8601Z,
       },
       {
@@ -131,6 +133,7 @@ export class LogParser {
           regexDetectYmd + "T" + regexDetectHis + regexDetectIsoTimezone,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
+        detectRegexTimeZoneRawMatchIndex: 3,
         format: DateTime.ISO8601,
       },
       {
@@ -139,6 +142,7 @@ export class LogParser {
           regexDetectYmd + "T" + regexDetectHis + regexDetectUtcTimezone,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
+        detectRegexTimeZoneRawMatchIndex: 3,
         format: DateTime.ISO8601Z,
         pre_datetime_parsing_callback: str => {
           // Convert to ISO8601Z
@@ -148,9 +152,23 @@ export class LogParser {
       {
         acceptApproxTokenInsteadOfMinutes: true,
         detectRegex:
+          regexDetectYmd +
+          " (" +
+          regexDetectIsoTimezone +
+          ") " +
+          regexDetectHcoloniAcceptingApproxToken,
+        detectRegexDateRawMatchIndex: 0,
+        detectRegexTimeRawMatchIndex: 3,
+        detectRegexTimeZoneRawMatchIndex: 2,
+        format: DateTime.TTBWSD,
+      },
+      {
+        acceptApproxTokenInsteadOfMinutes: true,
+        detectRegex:
           regexDetectYmd + "\\s" + regexDetectHcoloniAcceptingApproxToken,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
+        detectRegexTimeZoneRawMatchIndex: null,
         format: "Y-m-d H:i",
       },
       {
@@ -159,6 +177,7 @@ export class LogParser {
           regexDetectYmd + ",\\s" + regexDetectHcoloniAcceptingApproxToken,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
+        detectRegexTimeZoneRawMatchIndex: null,
         format: "Y-m-d, H:i",
       },
       {
@@ -167,6 +186,7 @@ export class LogParser {
           regexDetectYmd + "\\s" + regexDetectHdotiAcceptingApproxToken,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
+        detectRegexTimeZoneRawMatchIndex: null,
         format: "Y-m-d H.i",
       },
       {
@@ -175,6 +195,7 @@ export class LogParser {
           regexDetectYmd + ",\\s" + regexDetectHdotiAcceptingApproxToken,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
+        detectRegexTimeZoneRawMatchIndex: null,
         format: "Y-m-d, H.i",
       },
       {
@@ -183,6 +204,7 @@ export class LogParser {
           regexDetectdmY + "\\s" + regexDetectHcoloniAcceptingApproxToken,
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 2,
+        detectRegexTimeZoneRawMatchIndex: null,
         format: "d-m-Y H:i",
       },
       {
@@ -190,6 +212,7 @@ export class LogParser {
         detectRegex: regexDetectHcoloni,
         detectRegexDateRawMatchIndex: null,
         detectRegexTimeRawMatchIndex: 0,
+        detectRegexTimeZoneRawMatchIndex: null,
         format: "H:i",
       },
       {
@@ -197,6 +220,7 @@ export class LogParser {
         detectRegex: regexDetectHdoti,
         detectRegexDateRawMatchIndex: null,
         detectRegexTimeRawMatchIndex: 0,
+        detectRegexTimeZoneRawMatchIndex: null,
         format: "H.i",
       },
     ];
@@ -302,6 +326,7 @@ export class LogParser {
       );
       ts = gmtTimestamp;
       datetimeParseResult = datetimeReturned;
+      // TODO: Should use timezoneRaw instead...
       this.lastUsedTimeZone = datetimeParseResult.getTimezone().getName();
     } catch (e) {
       if (e instanceof InvalidDateTimeZoneException) {
@@ -357,7 +382,7 @@ export class LogParser {
   }
 
   /**
-   *
+   * TODO: Support forcing a specific supporting timestamp format, so that the same format as was detected can be ensured to have been used + avoiding unnecessary checks
    * @param str
    * @param timezoneStringToUseInCaseDateStringHasNoTimezoneInfo
    */
@@ -396,6 +421,8 @@ export class LogParser {
       } catch (e) {
         if (e.message.indexOf("DateTime parse error") > -1) {
           // ignore, since we will try another supported format until something works
+          // unless debugging during dev:
+          // console.debug("DateTime parse error - {format, str, timezoneToUseInCaseDateStringHasNoTimezoneInfo}", { format, str, timezoneToUseInCaseDateStringHasNoTimezoneInfo },);
         } else {
           throw e;
         }

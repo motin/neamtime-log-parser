@@ -1,7 +1,26 @@
-import { convertTimeToDate, findTimeZone } from "timezone-support";
+import { findTimeZone } from "timezone-support";
+import { convertTimeToDate } from "timezone-support/dist/lookup-convert";
 import { parseZonedTime } from "timezone-support/dist/parse-format";
 import { InvalidDateTimeZoneException } from "../exceptions/InvalidDateTimeZoneException";
 import { DateTime } from "./DateTime";
+
+// Duplicated from node_modules/timezone-support since the interface is not exported
+export interface TimeZoneOffset {
+  abbreviation?: string;
+  offset: number;
+}
+export interface Time {
+  year: number;
+  month: number;
+  day: number;
+  hours: number;
+  minutes: number;
+  seconds?: number;
+  milliseconds?: number;
+  dayOfWeek?: number;
+  epoch?: number;
+  zone?: TimeZoneOffset;
+}
 
 export class DateTimeZone {
   // https://github.com/prantlf/date-fns-timezone/blob/master/src/parseFromString.js
@@ -34,7 +53,10 @@ export class DateTimeZone {
    * @param phpFormatString
    * @param dateString
    */
-  public static createFromZonedFormat(phpFormatString, dateString): DateTime {
+  public static createDateTimeFromZonedFormat(
+    phpFormatString,
+    dateString,
+  ): DateTime {
     let parsedZonedDate;
     let detectedTimeZone;
 
@@ -55,13 +77,37 @@ export class DateTimeZone {
       const time = parseZonedTime(dateString, formatString);
       // console.debug("{time}", { time });
       parsedZonedDate = convertTimeToDate(time);
-      detectedTimeZone = null;
+      detectedTimeZone = DateTimeZone.createFromTimeZoneOffset(time.zone);
     } catch (e) {
       // console.error("Zoned time parse error: ", e);
       parsedZonedDate = false;
     }
 
     return new DateTime(parsedZonedDate, detectedTimeZone);
+  }
+
+  public static createFromTimeZoneOffset(
+    timeZoneOffset: TimeZoneOffset,
+  ): DateTimeZone {
+    if (timeZoneOffset.abbreviation) {
+      return new DateTimeZone(timeZoneOffset.abbreviation);
+    }
+    if (typeof timeZoneOffset.offset === "number") {
+      const hours = (timeZoneOffset.offset / 60) % 60;
+      const minutes = timeZoneOffset.offset % 60;
+      const absFloorAndPad = num => {
+        return String(Math.floor(Math.abs(num))).padStart(2, "0");
+      };
+      // Set ISO-style "timezone", representing the known offset
+      const timeZoneString =
+        (timeZoneOffset.offset <= 0 ? "+" : "-") +
+        `${absFloorAndPad(hours)}:${absFloorAndPad(minutes)}`;
+      return new DateTimeZone(timeZoneString);
+    }
+    throw new Error(
+      "Could not determine a timezone string from the following timeZoneOffset: " +
+        JSON.stringify(timeZoneOffset),
+    );
   }
 
   private readonly timezone: string;
@@ -88,13 +134,29 @@ export class DateTimeZone {
 
   public getTimeZoneInfo() {
     if (!this.timezoneInfo) {
-      try {
-        this.timezoneInfo = findTimeZone(this.timezone);
-      } catch (e) {
-        if (e.message.indexOf("Unknown time zone") > -1) {
-          throw new InvalidDateTimeZoneException(e.message, undefined, e);
+      // Support ISO-style "timezones", representing known offsets
+      const m = this.timezone.match(/^(\+|\-)?(\d\d):?(\d\d)?$/);
+      if (m) {
+        const [timeZoneName, sign, hoursString, minutesString] = m;
+        const hours = parseInt(hoursString, 10);
+        const minutes = parseInt(minutesString, 10);
+        const timeZoneOffset = (sign === "-" ? 1 : -1) * hours * 60 + minutes;
+        this.timezoneInfo = {
+          abbreviations: [timeZoneName],
+          name: timeZoneName,
+          offsets: [timeZoneOffset],
+          population: 0,
+          untils: [Infinity],
+        };
+      } else {
+        try {
+          this.timezoneInfo = findTimeZone(this.timezone);
+        } catch (e) {
+          if (e.message.indexOf("Unknown time zone") > -1) {
+            throw new InvalidDateTimeZoneException(e.message, undefined, e);
+          }
+          throw e;
         }
-        throw e;
       }
     }
     return this.timezoneInfo;

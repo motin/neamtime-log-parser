@@ -142,11 +142,6 @@ const processTimeSpendingLog = (t: ExecutionContext, timeSpendingLogPath) => {
     }
   }
 
-  console.debug(
-    "after error potentially - processedTimeSpendingLog",
-    processedTimeSpendingLog,
-  );
-
   t.truthy(
     processedTimeSpendingLog,
     "processedTimeSpendingLog should be available regardless of success or failure in the processing",
