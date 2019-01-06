@@ -3,7 +3,11 @@ import { strpos } from "locutus/php/strings";
 import { TimeLogParsingException } from "./exceptions/TimeLogParsingException";
 import { TimeSpendingLogProcessingErrorsEncounteredException } from "./exceptions/TimeSpendingLogProcessingErrorsEncounteredException";
 import { cloneVariable } from "./php-wrappers";
-import { TimeLogProcessor, TimeLogSession } from "./TimeLogProcessor";
+import {
+  TimeLogEntryWithMetadata,
+  TimeLogProcessor,
+  TimeLogSession,
+} from "./TimeLogProcessor";
 import { TimeSpendingLog } from "./TimeSpendingLog";
 
 export interface ProcessingError {
@@ -58,8 +62,8 @@ export class ProcessedTimeSpendingLog {
 
   public ensureParsedRawLogContents() {
     this.parseRawLogContents();
-    const tlp = this.getTimeLogProcessor();
-    this.parseDetectSessionsOneByOne(tlp);
+    const timeLogProcessor = this.getTimeLogProcessor();
+    this.parseDetectSessionsOneByOne(timeLogProcessor);
 
     if (!!this.processingErrors) {
       const e = new TimeSpendingLogProcessingErrorsEncounteredException(
@@ -95,6 +99,8 @@ export class ProcessedTimeSpendingLog {
       if (e instanceof TimeLogParsingException) {
         this.addError("addTimeMarkers TimeLogParsingException", e.message);
         return;
+      } else {
+        throw e;
       }
     }
 
@@ -115,6 +121,9 @@ export class ProcessedTimeSpendingLog {
     // this.timeReportICal = timeLogProcessor.generateIcal();
   }
 
+  /**
+   * TODO: Possible restore the ability to parse user-supplied ContentsWithTimeMarkers
+   */
   public parseProcessedLogContentsWithTimeMarkers() {
     const timeLogProcessor = this.getTimeLogProcessor();
 
@@ -191,20 +200,20 @@ export class ProcessedTimeSpendingLog {
   }
 
   public getTimeLogEntriesWithMetadata() {
-    const timeLogEntriesWithMetadata = Array();
+    const timeLogEntriesWithMetadata: TimeLogEntryWithMetadata[] = [];
     const timeLogProcessor = this.getTimeLogProcessor();
     this.parseDetectSessionsOneByOne(timeLogProcessor);
 
     for (const session of Object.values(timeLogProcessor.sessions)) {
       const timeLogEntriesWithMetadataArray = session.timeReportSourceComments;
 
-      // if (empty($row_with_time_marker["durationSinceLast"]))
-      // Clues needs a gmtTimestamp - we use dateRaw since it is already in UTC
       // TODO: Add a way to set the session_ref based on log contents in a way that doesn't result in duplicates after re-importing a session with changed start-line-date. Something like a convention to append "#previous-start-ref: start [dateRaw]" or similar to the source line
       for (const timeLogEntryWithMetadata of Object.values(
         timeLogEntriesWithMetadataArray,
       )) {
         // for now skip rows without duration
+        // if (empty($row_with_time_marker["durationSinceLast"]))
+        // Clues needs a gmtTimestamp - we use dateRaw since it is already in UTC
         const gmtTimestamp = timeLogEntryWithMetadata.dateRaw.trim();
         const sessionMeta: any = {};
         sessionMeta.tzFirst = session.tzFirst;

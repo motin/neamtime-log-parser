@@ -160,7 +160,7 @@ const processTimeSpendingLog = (t: ExecutionContext, timeSpendingLogPath) => {
   file_put_contents(
     timeSpendingLogPath +
       ".latest-run.processedLogContentsWithTimeMarkers_debug.json",
-    processedTimeSpendingLog.processingDebugInfo,
+    prettyJson(processedTimeSpendingLog.processingDebugInfo),
   );
   return { processedTimeSpendingLog, thrownException };
 };

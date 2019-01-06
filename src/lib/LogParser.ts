@@ -80,12 +80,14 @@ export class LogParser {
   public lastKnownDate;
   public lastKnownTimeZone;
   public lastUsedTimeZone;
+  public lastSetTsAndDateErrorClass;
   public lastSetTsAndDateErrorMessage;
 
   constructor() {
     this.lastKnownDate = "";
     this.lastKnownTimeZone = "";
     this.lastUsedTimeZone = "";
+    this.lastSetTsAndDateErrorClass = "";
     this.lastSetTsAndDateErrorMessage = "";
   }
 
@@ -317,8 +319,13 @@ export class LogParser {
       );
       ts = gmtTimestamp;
       datetimeParseResult = datetimeReturned;
-      // TODO: Should use timezoneRaw instead...
+      // TODO: Should probably use timezoneRaw instead...
       this.lastUsedTimeZone = datetimeParseResult.getTimezone().getName();
+      if (this.lastUsedTimeZone === "") {
+        throw new InvalidDateTimeZoneException(
+          "Empty last used time zone encountered",
+        );
+      }
     } catch (e) {
       if (e instanceof InvalidDateTimeZoneException) {
         // If invalid timezone is encountered, use UTC and at least detect the timestamp correctly, but make a note about that the wrong timezone was used
@@ -333,6 +340,7 @@ export class LogParser {
         ts = gmtTimestamp;
         datetimeParseResult = datetimeReturned;
         this.lastSetTsAndDateErrorMessage = e.message;
+        this.lastSetTsAndDateErrorClass = "InvalidDateTimeZoneException";
         this.lastUsedTimeZone = "UTC";
       }
     }
@@ -341,7 +349,7 @@ export class LogParser {
 
     if (!ts) {
       ts = 0;
-      this.lastSetTsAndDateErrorMessage = "Timestamp not found";
+      this.lastSetTsAndDateErrorMessage = "Timestamp not found"; // TODO: Figure out why start rows gets this error message
     } else if (
       ts > 0 &&
       ts < new Date().getTime() / 1000 - 24 * 3600 * 365 * 10

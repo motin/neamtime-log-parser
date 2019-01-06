@@ -1,5 +1,5 @@
 export class InvalidDateTimeZoneException extends Error {
-  constructor(message, _errCode, _previous) {
+  constructor(message, _errCode = null, _previous = null) {
     super(message);
   }
 }

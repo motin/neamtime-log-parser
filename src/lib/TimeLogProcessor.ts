@@ -25,48 +25,48 @@ export interface TimeLogSession {
   timeReportSourceComments: TimeLogEntryWithMetadata[];
   tzFirst: string;
   metadata: RowMetadata;
-  k;
-  start;
+  k: any;
+  start: any;
 }
 
 export interface RowMetadata {
   date: any;
   dateRaw: any;
   formattedUtcDate: string;
-  lastInterpretTsAndDateErrorMessage: any;
-  lastKnownTimeZone: any;
-  lastParseLogCommentErrorMessage: any;
-  lastSetTsAndDateErrorMessage: any;
-  lastUsedTimeZone: any;
-  line: any;
-  lineWithComment: any;
-  log: any;
+  lastInterpretTsAndDateErrorMessage: string;
+  lastKnownTimeZone: string;
+  lastParseLogCommentErrorMessage: string;
+  lastSetTsAndDateErrorMessage: string;
+  lastUsedTimeZone: string;
+  line: string;
+  lineWithComment: string;
+  log: string[];
   preprocessedContentsSourceLineIndex: number;
   rowsWithTimeMarkersHandled: number;
-  sourceLine: any;
+  sourceLine: number;
   ts: number;
   // TODO: Possibly split into separate child interface
   tsIsFaked?: boolean;
   highlightWithNewlines?: boolean;
-  pauseDuration?: any;
-  durationSinceLast?: any;
+  pauseDuration?: number;
+  durationSinceLast?: number;
 }
 
 export interface TimeReportSourceComment {
-  category: any;
-  date: any;
-  dateRaw: any;
+  category: string;
+  date: string;
+  dateRaw: string;
   hours: any;
   hoursRounded: any;
-  lineWithoutDate: any;
-  text: any;
-  ts: any;
-  tz: any;
+  lineWithoutDate: string;
+  text: string;
+  ts: number;
+  tz: string;
 }
 
 export interface TimeLogEntryWithMetadata {
-  dateRaw: any;
-  gmtTimestamp: any;
+  dateRaw: string;
+  gmtTimestamp: string; // Not a unix timestamp, but a UTC-based datetime string timestamp
   sessionMeta: any;
 }
 
@@ -196,9 +196,7 @@ export class TimeLogProcessor {
     return summary;
   }
 
-  public generateTimeReport(
-    contentsWithTimeMarkers: string, // Fill out and sort the times-array // print in a csv-format: // var_dump($times);
-  ) {
+  public generateTimeReport(contentsWithTimeMarkers: string) {
     this.timeLogParser.lastKnownTimeZone = this.tzFirst;
     let timeReportCsv = "";
     const times = [];
@@ -210,21 +208,16 @@ export class TimeLogProcessor {
     const lines = textIntoLinesArray(contentsWithTimeMarkers);
     let category = "Unspecified";
 
-    // Special care is necessary here - ts is already in UTC, so we parse it as such, but we keep lastKnownTimeZone since we want to know the source row's timezone
-    // Check for startstopline - they are not invalid, only ignored
-    // Only check until first |
-    // invalidate
-    // TEXT
-    // Save a useful form of the time-marked rows that build up the hours-sum:
     for (const lineno of Object.keys(lines)) {
-      // skip empty rows
       const line = lines[lineno];
       const trimmedLine = line.trim();
 
+      // skip empty rows
       if (trimmedLine === "") {
         continue;
       }
 
+      // Detect and switch category
       if (strpos(line, ".::") === 0) {
         const categoryNeedle = str_replace(".::", "", trimmedLine).trim();
 
@@ -234,10 +227,12 @@ export class TimeLogProcessor {
         }
       }
 
+      // skip all in the "Ignored" category
       if (category === "Ignored") {
         continue;
       }
 
+      // Detect and switch timezone change
       if (strpos(trimmedLine, "|tz:") === 0) {
         this.timeLogParser.lastKnownTimeZone = str_replace(
           "|tz:",
@@ -247,9 +242,12 @@ export class TimeLogProcessor {
         continue;
       }
 
+      // DATETIME
       let parts = line.split(",");
       const dateRaw = parts.shift();
       const lineWithoutDate = parts.join(",");
+
+      // Special care is necessary here - ts is already in UTC, so we parse it as such, but we keep lastKnownTimeZone since we want to know the source row's timezone
       const _ = this.timeLogParser.lastKnownTimeZone;
       this.timeLogParser.lastKnownTimeZone = "UTC";
       const { metadata } = this.timeLogParser.detectTimeStamp(dateRaw);
@@ -258,6 +256,9 @@ export class TimeLogProcessor {
         metadata.dateRawFormat,
       );
       this.timeLogParser.lastKnownTimeZone = _;
+
+      // Check for startstopline - they are not invalid, only ignored
+      // Only check until first |
       parts = line.split(" | ");
       const beforeVertLine = parts[0];
 
@@ -265,6 +266,7 @@ export class TimeLogProcessor {
         continue;
       }
 
+      // invalidate
       let invalid =
         !date ||
         strpos(lineWithoutDate, "min") === false ||
@@ -275,27 +277,33 @@ export class TimeLogProcessor {
         continue;
       }
 
+      // DURATION
+
       parts = lineWithoutDate.split("min");
       const tokens = this.timeLogParser.tokens();
       const duration = str_replace(tokens.approx, "", parts[0]).trim() + "min";
       const time = this.timeLogParser.durationToMinutes(duration);
       invalid = !time && time !== 0;
 
+      // invalidate
       if (invalid) {
         this.notParsedTimeReport.push(line);
         continue;
       }
 
+      // convert into hours
       const hoursRounded = Math.round((time / 60) * 100) / 100;
       const hours = time / 60;
+
+      // TEXT
       /*const first =*/ parts.shift();
       let text = parts.join("min");
       invalid = !text;
 
       if (invalid) {
+        text = "<empty log item>";
         // var_dump($first, $parts, $line); die();
         // $this.notParsedTimeReport[] = $line; continue;
-        text = "<empty log item>";
       }
 
       if (!times[date]) {
@@ -314,6 +322,7 @@ export class TimeLogProcessor {
         times[date][category] += hours;
       }
 
+      // Save a useful form of the time-marked rows that build up the hours-sum:
       const sourceComment: TimeReportSourceComment = {
         category,
         date,
@@ -329,7 +338,12 @@ export class TimeLogProcessor {
       this.timeReportSourceComments.push(sourceComment);
     }
 
+    // Fill out and sort the times-array
+
     this.timeReportData = this.addZeroFilledDates(times);
+
+    // print in a csv-format:
+
     timeReportCsv +=
       "Date;" +
       this.categories.join(" (rounded);") +
@@ -337,18 +351,17 @@ export class TimeLogProcessor {
       this.categories.join(";") +
       ";Log_Items\n";
 
-    //
-    // replace point by comma
-    // $hoursByCategoryRounded = str_replace(".", ",", $hoursByCategoryRounded);
-    // replace point by comma
-    // $hoursByCategory = str_replace(".", ",", $hoursByCategory);
     for (const date of Object.keys(this.timeReportData)) {
-      // Gotta limit the amount of data
       const hours = this.timeReportData[date];
+
       let activities = Array.from(hours.text).join(" | ");
       activities = newlineConvert(activities, "");
       activities = str_replace([";", "\t"], [",", "   "], activities);
+
+      // Gotta limit the amount of data
       activities = mb_substr(activities, 0, 1024).trim();
+
+      //
       let hoursByCategoryRounded = "";
 
       for (const c of Object.values(this.categories)) {
@@ -357,12 +370,18 @@ export class TimeLogProcessor {
         hoursByCategoryRounded += hoursRounded + ";";
       }
 
+      // replace point by comma
+      // $hours_by_category_rounded = str_replace(".", ",", $hours_by_category_rounded);
+
       let hoursByCategory = "";
 
       for (const c of Object.values(this.categories)) {
         const hoursExact = undefined !== hours[c] ? hours[c] : 0;
         hoursByCategory += hoursExact + ";";
       }
+
+      // replace point by comma
+      // $hours_by_category = str_replace(".", ",", $hours_by_category);
 
       timeReportCsv +=
         date +
@@ -383,6 +402,7 @@ export class TimeLogProcessor {
   }
 
   public addZeroFilledDates(times) {
+    // Find time span:
     let firstDateFound;
     let lastDateFound;
     const originalTimesArray = cloneVariable(times);
@@ -423,6 +443,7 @@ export class TimeLogProcessor {
       lastDateFound,
     };
 
+    // Check if no times were found...
     if (!firstDateFound) {
       return [];
     }
@@ -880,16 +901,20 @@ export class TimeLogProcessor {
         ts,
       };
 
-      // If lastKnownTimeZone and lastUsedTimeZone are different: Send to this.notParsedAddTimeMarkersParsePreProcessedContents but parse anyway (so that general parsing goes through but that the log is not considered correct)
+      // If an invalid timezone was encountered, send to this.notParsedAddTimeMarkersParsePreProcessedContents but parse anyway (so that general parsing goes through but that the log is not considered correct)
       if (
-        this.timeLogParser.interpretLastKnownTimeZone() !==
-        this.timeLogParser.lastUsedTimeZone
+        this.timeLogParser.lastSetTsAndDateErrorClass ===
+        "InvalidDateTimeZoneException"
       ) {
         const methodName = "parsePreProcessedContents";
         metadata.log.push(
           `Invalid timezone ('${
             this.timeLogParser.lastKnownTimeZone
           }') encountered when parsing a row (source line: ${sourceLine}). Not treating this row as valid time-marked row`,
+        );
+        metadata.log.push(
+          "lastSetTsAndDateErrorMessage: " +
+            this.timeLogParser.lastSetTsAndDateErrorMessage,
         );
         metadata.log.push("Sent to notParsed in " + methodName);
         this.notParsedAddTimeMarkersParsePreProcessedContents.push(metadata);
@@ -1087,7 +1112,8 @@ export class TimeLogProcessor {
       metadata.log.push(
         "found pause duration, adding to accumulated pause duration (if any)",
       );
-      // var_dump($line, $m, $this.rowsWithTimeMarkersHandled, $this.rowsWithTimeMarkers);
+      // console.debug("processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration - metadata.line, m", metadata.line, m,);
+      // var_dump($line, $m, this.rowsWithTimeMarkersHandled, this.rowsWithTimeMarkers);
       if (
         !!this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex].pauseDuration
       ) {
@@ -1098,8 +1124,11 @@ export class TimeLogProcessor {
       } else {
         metadata.pauseDuration = 0;
       }
-      metadata.pauseDuration +=
-        60 * (Math.round(m[2][0]) * 60 + Math.round(m[3][0]));
+      const hoursString = m[2];
+      const minutesString = m[3];
+      const hours = parseInt(hoursString, 10);
+      const minutes = parseInt(minutesString, 10);
+      metadata.pauseDuration += 60 * (hours * 60 + minutes);
       metadata.tsIsFaked = false;
       probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = true;
     } else {
