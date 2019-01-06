@@ -6,17 +6,6 @@ import { DateTime, DateTimeZone } from "./php-wrappers";
 import { is_null } from "locutus/php/var";
 */
 
-export interface Metadata {
-  timeRaw?: string | false;
-  lastKnownDate?: string;
-  dateRaw?: string | false;
-  dateRawFormat?: string | false;
-  dateRawWasNonemptyBeforeDetectTimestamp?: string;
-  dateRaw_with_approx_token_instead_of_minutes?: string | false;
-  log?: string[];
-  timeZoneRaw?: string | false;
-}
-
 export function newlineConvert(str, newline) {
   return str_replace(
     [LogParser.NL_WIN, LogParser.NL_MAC, LogParser.NL_NIX],
@@ -144,7 +133,7 @@ export class LogParser {
         detectRegexTimeRawMatchIndex: 2,
         detectRegexTimeZoneRawMatchIndex: 3,
         format: DateTime.ISO8601Z,
-        pre_datetime_parsing_callback: str => {
+        preDatetimeParsingCallback: str => {
           // Convert to ISO8601Z
           return str_replace("+UTC", "Z", str);
         },
@@ -402,8 +391,8 @@ export class LogParser {
     )) {
       const format = supportedTimestampFormat.format;
 
-      if (supportedTimestampFormat.pre_datetime_parsing_callback) {
-        str = supportedTimestampFormat.pre_datetime_parsing_callback(str);
+      if (supportedTimestampFormat.preDatetimeParsingCallback) {
+        str = supportedTimestampFormat.preDatetimeParsingCallback(str);
       }
 
       try {

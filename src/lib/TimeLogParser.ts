@@ -1,7 +1,18 @@
 import { str_replace, strpos } from "locutus/php/strings";
 import { is_null } from "locutus/php/var";
-import { LogParser, Metadata } from "./LogParser";
+import { LogParser } from "./LogParser";
 import { DateTime } from "./php-wrappers";
+
+export interface DetectTimeStampMetadata {
+  timeRaw?: string | false;
+  lastKnownDate?: string;
+  dateRaw?: string | false;
+  dateRawFormat?: string | false;
+  dateRawWasNonemptyBeforeDetectTimestamp?: string;
+  dateRawWithApproxTokenInsteadOfMinutes?: string | false;
+  log?: string[];
+  timeZoneRaw?: string | false;
+}
 
 export interface ParsedLogComment {
   dateRaw: string;
@@ -105,7 +116,7 @@ export class TimeLogParser extends LogParser {
   }
 
   public detectTimeStamp(lineForDateCheck) {
-    const metadata: Metadata = {
+    const metadata: DetectTimeStampMetadata = {
       log: [],
     };
     metadata.lastKnownDate = this.lastKnownDate;
@@ -176,7 +187,7 @@ export class TimeLogParser extends LogParser {
             if (
               this.startsWithOptionallySuffixedToken(metadata.timeRaw, "approx")
             ) {
-              metadata.dateRaw_with_approx_token_instead_of_minutes =
+              metadata.dateRawWithApproxTokenInsteadOfMinutes =
                 metadata.dateRaw;
               const tokens = this.tokens();
               metadata.dateRaw = str_replace(
