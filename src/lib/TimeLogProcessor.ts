@@ -953,6 +953,35 @@ export class TimeLogProcessor {
       }
       // if (this.rowsWithTimeMarkersHandled >= 10) break; // While devving
     }
+
+    // Remove "pause->" from notParsed array since it (probably accidentally)
+    // lands there in processing, but in essence the "pause->" lines should already
+    // have played out their role as session markers and are no longer necessary when
+    // parsing the preProcessedContents of a single session like we are doing here
+    if (!!this.notParsedAddTimeMarkersParsePreProcessedContents) {
+      for (
+        let k = 0;
+        k < this.notParsedAddTimeMarkersParsePreProcessedContents.length;
+        k++
+      ) {
+        const metadata = this.notParsedAddTimeMarkersParsePreProcessedContents[
+          k
+        ];
+        const token = this.timeLogParser.startsWithOptionallySuffixedToken(
+          metadata.line + "|$",
+          "pause",
+          "->|$",
+        );
+
+        if (token) {
+          delete this.notParsedAddTimeMarkersParsePreProcessedContents[k];
+        }
+      }
+      // Filter away deleted items in the not-parsed array
+      this.notParsedAddTimeMarkersParsePreProcessedContents = this.notParsedAddTimeMarkersParsePreProcessedContents.filter(
+        _ => _ !== undefined,
+      );
+    }
   }
 
   private processNotTheFirstRowOfALogCommentAndProbableStartStopLine(
@@ -1416,27 +1445,6 @@ export class TimeLogProcessor {
         metadata.highlightWithNewlines
       ) {
         contentsWithTimeMarkers += LogParser.NL_NIX;
-      }
-    }
-
-    // Remove "pause->" from notParsed array
-    if (!!this.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput) {
-      for (const k of Object.keys(
-        this.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput,
-      )) {
-        const metadata = this
-          .notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput[k];
-        const token = this.timeLogParser.startsWithOptionallySuffixedToken(
-          metadata.line + "|$",
-          "pause",
-          "->|$",
-        );
-
-        if (token) {
-          delete this.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput[
-            k
-          ];
-        }
       }
     }
 

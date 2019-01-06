@@ -131,6 +131,7 @@ const testParsePreProcessedContents: Macro = (
 ) => {
   const timeLogProcessor = new TimeLogProcessor();
   timeLogProcessor.parsePreProcessedContents(preProcessedContents);
+  /*
   t.log(
     "timeLogProcessor.preProcessedContentsSourceLineContentsSourceLineMap",
     timeLogProcessor.preProcessedContentsSourceLineContentsSourceLineMap,
@@ -147,6 +148,7 @@ const testParsePreProcessedContents: Macro = (
     "timeLogProcessor.rowsWithTimeMarkers",
     timeLogProcessor.rowsWithTimeMarkers,
   );
+  */
   t.deepEqual(
     timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents,
     expectedNotParsedAddTimeMarkersParsePreProcessedContents,
@@ -202,7 +204,7 @@ const testParsePreProcessedContentsData = () => {
         {
           date: "2019-01-05",
           dateRaw: "2019-01-05 (+0200) 08:50",
-          durationSinceLast: 0,
+          durationSinceLast: 3000,
           formattedUtcDate: "2019-01-05 06:50",
           lastInterpretTsAndDateErrorMessage: "",
           lastKnownTimeZone: "+02:00",
@@ -213,7 +215,7 @@ const testParsePreProcessedContentsData = () => {
           lineWithComment: "2019-01-05 (+0200) 08:50, foo",
           log: [],
           preprocessedContentsSourceLineIndex: 2,
-          rowsWithTimeMarkersHandled: 0,
+          rowsWithTimeMarkersHandled: 1,
           sourceLine: undefined,
           ts: 1546671000,
         },
@@ -231,7 +233,7 @@ const testParsePreProcessedContentsData = () => {
           lineWithComment: "2019-01-05 (+0200) 12:15, bar",
           log: [],
           preprocessedContentsSourceLineIndex: 4,
-          rowsWithTimeMarkersHandled: 1,
+          rowsWithTimeMarkersHandled: 2,
           sourceLine: undefined,
           ts: 1546683300,
         },
@@ -246,6 +248,7 @@ testParsePreProcessedContentsData().forEach((testData, index) => {
     testParsePreProcessedContents,
     testData[0],
     testData[1],
+    testData[2],
   );
 });
 
