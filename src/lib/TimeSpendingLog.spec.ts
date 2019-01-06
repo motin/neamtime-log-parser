@@ -120,10 +120,10 @@ const processTimeSpendingLog = (t: ExecutionContext, timeSpendingLogPath) => {
     const timeLogEntriesWithMetadata = processedTimeSpendingLog.getTimeLogEntriesWithMetadata();
     t.log(692 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
     t.log(timeLogEntriesWithMetadata.length + " time log entries");
-    this.assertGreaterThan(0, timeLogEntriesWithMetadata.length);
+    t.true(timeLogEntriesWithMetadata.length > 0);
     file_put_contents(
       timeSpendingLogPath + ".latest-run.timeLogEntriesWithMetadata.json",
-      JSON.stringify(timeLogEntriesWithMetadata, null, 2),
+      prettyJson(timeLogEntriesWithMetadata),
     );
   } catch (e) {
     if (e instanceof TimeSpendingLogProcessingErrorsEncounteredException) {
@@ -166,7 +166,7 @@ const processTimeSpendingLog = (t: ExecutionContext, timeSpendingLogPath) => {
 };
 
 correctTimeSpendingLogContents().forEach((testData, index) => {
-  test.only(
+  test(
     "testProcessAndAssertCorrectTimeSpendingLog - " + index,
     testProcessAndAssertCorrectTimeSpendingLog,
     testData[0],

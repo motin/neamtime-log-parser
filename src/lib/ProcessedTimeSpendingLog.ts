@@ -17,7 +17,7 @@ export interface ProcessingError {
 }
 
 export class ProcessedTimeSpendingLog {
-  public processingErrors: ProcessingError[];
+  public processingErrors: ProcessingError[] = [];
   public unprocessedTimeSpendingLog: TimeSpendingLog;
 
   public processingDebugInfo;
@@ -26,7 +26,6 @@ export class ProcessedTimeSpendingLog {
   private timeLogProcessor: TimeLogProcessor;
 
   constructor(unprocessedTimeSpendingLog: TimeSpendingLog) {
-    this.processingErrors = [];
     this.unprocessedTimeSpendingLog = unprocessedTimeSpendingLog;
     this.ensureParsedRawLogContents();
   }
@@ -65,7 +64,7 @@ export class ProcessedTimeSpendingLog {
     const timeLogProcessor = this.getTimeLogProcessor();
     this.parseDetectSessionsOneByOne(timeLogProcessor);
 
-    if (!!this.processingErrors) {
+    if (this.processingErrors.length > 0) {
       const e = new TimeSpendingLogProcessingErrorsEncounteredException(
         "Issues encountered (see e->processedTimeSpendingLog->processingErrors for details)",
       );
@@ -142,14 +141,14 @@ export class ProcessedTimeSpendingLog {
         .length > 0
     ) {
       this.addError(
-        "timeReportCsv-notParsedAddTimeMarkers",
+        "timeReportData-notParsedAddTimeMarkers",
         "Time Report was generated upon log contents which had non-understood parts",
       );
     }
 
-    if (!!timeLogProcessor.notParsedTimeReport) {
+    if (timeLogProcessor.notParsedTimeReport.length > 0) {
       this.addError(
-        "timeReportCsv-notParsedTimeReport",
+        "timeReportData-notParsedTimeReport",
         "The following content was not understood by the parser and was thus not regarded while generating the report above",
         timeLogProcessor.notParsedTimeReportErrorSummary(),
       );
