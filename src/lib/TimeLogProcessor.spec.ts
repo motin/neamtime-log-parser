@@ -243,7 +243,7 @@ const testParsePreProcessedContentsData = () => {
 };
 
 testParsePreProcessedContentsData().forEach((testData, index) => {
-  test.only(
+  test(
     "testParsePreProcessedContents - " + index,
     testParsePreProcessedContents,
     testData[0],
@@ -277,9 +277,26 @@ const testAddTimeMarkersData = () => {
         LogParser.NL_NIX +
         "2019-01-05 (+0200) 08:50, foo" +
         LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "2019-01-05 (+0200) 12:15, bar" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
         "paus->" +
         LogParser.NL_NIX,
-      "sdfsdfsfsdfsdfsd",
+      ".:: Uncategorized" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "\tstart 2019-01-05 (+0200) 08:00 {2019-01-05 06:00:00}" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "\t2019-01-05 06:50, 50min foo" +
+        LogParser.NL_NIX +
+        "\t2019-01-05 10:15, 3h25min bar" +
+        LogParser.NL_NIX,
     ],
   ];
 };
