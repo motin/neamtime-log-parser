@@ -52,7 +52,7 @@ const incorrectTimeSpendingLogContents = () => {
     providerData.push([timeSpendingLogPath, processingErrorsJsonFilePath]);
   }
 
-  return providerData.slice(0, 1);
+  return providerData;
 };
 
 test("there exists at least one incorrect time spending log fixture paths", (t: ExecutionContext) => {
@@ -331,6 +331,12 @@ const testCorrectlyReportedProcessingErrors: Macro = (
   file_put_contents(
     timeSpendingLogPath + ".latest-run.processedLogContentsWithTimeMarkers",
     processedTimeSpendingLog.getTimeLogProcessor().contentsWithTimeMarkers,
+  );
+  // Save processedLogContentsWithTimeMarkers_debug in order to make debugging easier
+  file_put_contents(
+    timeSpendingLogPath +
+      ".latest-run.processedLogContentsWithTimeMarkers_debug.json",
+    prettyJson(processedTimeSpendingLog.processingDebugInfo),
   );
 
   if (thrownException) {

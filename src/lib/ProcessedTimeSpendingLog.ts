@@ -174,9 +174,9 @@ export class ProcessedTimeSpendingLog {
       rowsWithTimeMarkers: timeLogProcessor.rowsWithTimeMarkers,
     };
 
-    if (strpos(timeLogProcessor.timeReportCsv, "{!}") !== false) {
+    if (strpos(timeLogProcessor.contentsWithTimeMarkers, "{!}") !== false) {
       this.addError(
-        "timeReportCsv",
+        "timeReportData-contentsWithTimeMarkers",
         '{!} was found somewhere in the log file. Note: Estimated (marked with {!}) and needs to be manually adjusted before time report gives an accurate summary. If you already adjusted the durations, don\'t forget to also remove the "{!}"',
       );
     }
@@ -267,18 +267,7 @@ export class ProcessedTimeSpendingLog {
         const lines = preProcessedLines.slice(startLine, stopLine);
 
         if (lines.length === 0) {
-          console.debug(
-            "parseDetectSessionsOneByOne - {lines, nextStart, preProcessedLines, startLine, start, starts, stopLine}",
-            {
-              lines,
-              nextStart,
-              preProcessedLines,
-              start,
-              startLine,
-              starts,
-              stopLine,
-            },
-          );
+          // console.debug("parseDetectSessionsOneByOne - {lines, nextStart, preProcessedLines, startLine, start, starts, stopLine}", {lines, nextStart, preProcessedLines, start, startLine, starts, stopLine});
           throw new Error(
             "Encountered an empty lines array after interpreting the starts metadata",
           );

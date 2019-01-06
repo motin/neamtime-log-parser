@@ -251,6 +251,30 @@ const testParsePreProcessedContentsData = () => {
           sourceLine: undefined,
           ts: 1546683300,
         },
+        {
+          date: null,
+          dateRaw: "pause->",
+          formattedUtcDate: "2019-01-05 10:15:00",
+          highlightWithNewlines: true,
+          lastInterpretTsAndDateErrorMessage: "",
+          lastKnownTimeZone: "+02:00",
+          lastParseLogCommentErrorMessage:
+            "Invalidate lines without any number or comma or period at all",
+          lastSetTsAndDateErrorMessage: "",
+          lastUsedTimeZone: "+02:00",
+          line: "pause->",
+          lineWithComment: "pause->",
+          log: [
+            "Did NOT find a valid timestamp in a probable start/pause-row. Not treating this row as a time-marked row",
+            "Line: pause->",
+            "Sent to notParsed in processNotTheFirstRowOfALogCommentAndProbableStartStopLine_notPauseWithWrittenDuration",
+          ],
+          preprocessedContentsSourceLineIndex: 6,
+          rowsWithTimeMarkersHandled: 3,
+          sourceLine: undefined,
+          ts: 1546683300,
+          tsIsFaked: true,
+        },
       ],
     ],
   ];
@@ -327,6 +351,12 @@ const testAddTimeMarkersData = () => {
         "\t2019-01-05 06:50, 50min foo" +
         LogParser.NL_NIX +
         "\t2019-01-05 10:15, 3h25min bar" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "\tpause-> {2019-01-05 10:15:00}" +
+        LogParser.NL_NIX +
+        "" +
         LogParser.NL_NIX,
     ],
     [
@@ -365,6 +395,12 @@ const testAddTimeMarkersData = () => {
         "" +
         LogParser.NL_NIX +
         "\t2019-01-05 06:06, 3min bar" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "\tpause-> {2019-01-05 06:06:00}" +
+        LogParser.NL_NIX +
+        "" +
         LogParser.NL_NIX,
     ],
   ];

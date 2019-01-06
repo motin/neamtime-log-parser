@@ -963,7 +963,9 @@ export class TimeLogProcessor {
         lineWithComment,
         log,
         preprocessedContentsSourceLineIndex,
-        rowsWithTimeMarkersHandled: this.rowsWithTimeMarkersHandled,
+        rowsWithTimeMarkersHandled: cloneVariable(
+          this.rowsWithTimeMarkersHandled,
+        ),
         sourceLine,
         ts,
       };
@@ -1013,7 +1015,9 @@ export class TimeLogProcessor {
           line,
           metadata,
         );
-        isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
+        if (updates.isNewRowWithTimeMarker !== undefined) {
+          isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
+        }
       } else if (notTheFirstRowOfALogComment) {
         this.processAdditionalLogCommentRowUntilNextLogComment(line, metadata);
         isNewRowWithTimeMarker = false;
