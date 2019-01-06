@@ -486,7 +486,7 @@ export class TimeLogProcessor {
 
       for (const c of Object.values(this.categories)) {
         const hoursExact = undefined !== hours[c] ? hours[c] : 0;
-        hoursByCategory += hoursExact + ";";
+        hoursByCategory += Math.round(hoursExact*10000000000000)/10000000000000 + ";";
       }
 
       // replace point by comma
