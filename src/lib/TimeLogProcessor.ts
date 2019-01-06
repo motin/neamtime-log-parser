@@ -1073,6 +1073,7 @@ export class TimeLogProcessor {
         probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp =
           updates.probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp;
       }
+      isNewRowWithTimeMarker = true;
     } else {
       const updates = this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine_notPauseWithWrittenDuration(
         line,
@@ -1145,22 +1146,19 @@ export class TimeLogProcessor {
       metadata.log.push(
         "found pause duration, adding to accumulated pause duration (if any)",
       );
-      // console.debug("processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration - metadata.line, m", metadata.line, m,);
-      // var_dump($line, $m, this.rowsWithTimeMarkersHandled, this.rowsWithTimeMarkers);
-      if (
-        !!this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex].pauseDuration
-      ) {
-        metadata.pauseDuration = Math.round(
-          this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex]
-            .pauseDuration,
-        );
-      } else {
-        metadata.pauseDuration = 0;
-      }
+      const previousRowWithTimeMarker = this.rowsWithTimeMarkers[
+        previousRowWithTimeMarkerIndex
+      ];
+      // console.debug("processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration - metadata.line, m, previousRowWithTimeMarker", metadata.line, m, previousRowWithTimeMarker);
+      metadata.pauseDuration = previousRowWithTimeMarker.pauseDuration
+        ? previousRowWithTimeMarker.pauseDuration
+        : 0;
       const hoursString = m[2];
       const minutesString = m[3];
-      const hours = parseInt(hoursString, 10);
-      const minutes = parseInt(minutesString, 10);
+      const hours = hoursString !== undefined ? parseInt(hoursString, 10) : 0;
+      const minutes =
+        minutesString !== undefined ? parseInt(minutesString, 10) : 0;
+      // console.debug("processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration - {hours, hoursString, minutes, minutesString}", {hours, hoursString, minutes, minutesString});
       metadata.pauseDuration += 60 * (hours * 60 + minutes);
       metadata.tsIsFaked = false;
       probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = true;
@@ -1436,12 +1434,12 @@ export class TimeLogProcessor {
     contentsWithTimeMarkers += ".:: Uncategorized" + LogParser.NL_NIX;
 
     for (let k = 0; k < rowsWithTimeMarkers.length; k++) {
-      const metadata: RowMetadata = rowsWithTimeMarkers[k];
-      const rowIndex = k - 1;
+      const rowWithTimeMarker: RowMetadata = rowsWithTimeMarkers[k];
+      const previousRowWithTimeMarker = rowsWithTimeMarkers[k - 1];
 
       if (
-        metadata.highlightWithNewlines !== undefined &&
-        metadata.highlightWithNewlines
+        rowWithTimeMarker.highlightWithNewlines !== undefined &&
+        rowWithTimeMarker.highlightWithNewlines
       ) {
         contentsWithTimeMarkers += LogParser.NL_NIX;
       }
@@ -1449,62 +1447,68 @@ export class TimeLogProcessor {
       contentsWithTimeMarkers += "\t";
 
       if (
-        metadata.durationSinceLast !== undefined &&
-        metadata.durationSinceLast !== null
+        rowWithTimeMarker.durationSinceLast !== undefined &&
+        rowWithTimeMarker.durationSinceLast !== null
       ) {
         // Remove any known pause durations
-        if (!!rowsWithTimeMarkers[rowIndex].pauseDuration) {
-          metadata.durationSinceLast -=
-            rowsWithTimeMarkers[rowIndex].pauseDuration;
+        if (previousRowWithTimeMarker.pauseDuration !== undefined) {
+          rowWithTimeMarker.durationSinceLast -=
+            previousRowWithTimeMarker.pauseDuration;
         }
 
-        if (metadata.durationSinceLast < 0) {
-          metadata.log.push("negative duration since last");
-          metadata.log.push(
+        if (rowWithTimeMarker.durationSinceLast < 0) {
+          rowWithTimeMarker.log.push("negative duration since last");
+          rowWithTimeMarker.log.push(
             "sent to notParsed in generateStructuredTimeMarkedOutput",
           );
           this.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput.push(
-            metadata,
+            rowWithTimeMarker,
           );
         }
 
-        const parts = metadata.line.split(",");
+        const parts = rowWithTimeMarker.line.split(",");
         parts.shift();
-        contentsWithTimeMarkers += metadata.formattedUtcDate;
+        contentsWithTimeMarkers += rowWithTimeMarker.formattedUtcDate;
         contentsWithTimeMarkers +=
           ", " +
-          this.timeLogParser.secondsToDuration(metadata.durationSinceLast);
+          this.timeLogParser.secondsToDuration(
+            rowWithTimeMarker.durationSinceLast,
+          );
 
         if (
-          !!rowsWithTimeMarkers[rowIndex] &&
-          !!rowsWithTimeMarkers[rowIndex].tsIsFaked
+          !!previousRowWithTimeMarker &&
+          !!previousRowWithTimeMarker.tsIsFaked
         ) {
           // Treat this situation as invalid
           contentsWithTimeMarkers += " {!} ";
-          const previousRow = rowsWithTimeMarkers[rowIndex];
-          metadata.log.push(
+          rowWithTimeMarker.log.push(
             "duration since last is based on fake/interpolated timestamp",
           );
-          metadata.log.push("$previousRow line: " + previousRow.line);
-          metadata.log.push(
+          rowWithTimeMarker.log.push(
+            "previousRowWithTimeMarker.line: " + previousRowWithTimeMarker.line,
+          );
+          rowWithTimeMarker.log.push(
             "sent to notParsed in generateStructuredTimeMarkedOutput",
           );
           this.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput.push(
-            metadata,
+            rowWithTimeMarker,
           );
         }
 
         contentsWithTimeMarkers += parts.join(",");
       } else {
         contentsWithTimeMarkers +=
-          metadata.line + " {" + metadata.formattedUtcDate + "}";
+          rowWithTimeMarker.line +
+          " {" +
+          rowWithTimeMarker.formattedUtcDate +
+          "}";
       }
 
       contentsWithTimeMarkers += LogParser.NL_NIX;
 
       if (
-        metadata.highlightWithNewlines !== undefined &&
-        metadata.highlightWithNewlines
+        rowWithTimeMarker.highlightWithNewlines !== undefined &&
+        rowWithTimeMarker.highlightWithNewlines
       ) {
         contentsWithTimeMarkers += LogParser.NL_NIX;
       }

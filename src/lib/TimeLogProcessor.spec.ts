@@ -100,7 +100,7 @@ const testPreProcessContentsData = () => {
         LogParser.NL_NIX +
         "2019-01-05 (+0200) 08:50, foo" +
         LogParser.NL_NIX +
-        "paus->" +
+        "pause->" +
         LogParser.NL_NIX,
       "start 2019-01-05 (+0200) 08:00" +
         LogParser.NL_NIX +
@@ -108,7 +108,7 @@ const testPreProcessContentsData = () => {
         LogParser.NL_NIX +
         "2019-01-05 (+0200) 08:50, foo" +
         LogParser.NL_NIX +
-        "paus->" +
+        "pause->" +
         LogParser.NL_NIX,
     ],
   ];
@@ -176,7 +176,7 @@ const testParsePreProcessedContentsData = () => {
         LogParser.NL_NIX +
         "" +
         LogParser.NL_NIX +
-        "paus->" +
+        "pause->" +
         LogParser.NL_NIX,
       [],
       [
@@ -260,7 +260,24 @@ const testAddTimeMarkers: Macro = (
   const timeLogProcessor = new TimeLogProcessor();
   timeLogProcessor.contents = contents;
   timeLogProcessor.addTimeMarkers();
-  // t.log("timeLogProcessor.preProcessedContentsSourceLineContentsSourceLineMap", timeLogProcessor.preProcessedContentsSourceLineContentsSourceLineMap)
+  /*
+  t.log(
+    "timeLogProcessor.preProcessedContentsSourceLineContentsSourceLineMap",
+    timeLogProcessor.preProcessedContentsSourceLineContentsSourceLineMap,
+  );
+  t.log(
+    "timeLogProcessor.debugOriginalUnsortedRows",
+    timeLogProcessor.debugOriginalUnsortedRows,
+  );
+  t.log(
+    "timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents",
+    timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents,
+  );
+  t.log(
+    "timeLogProcessor.rowsWithTimeMarkers",
+    timeLogProcessor.rowsWithTimeMarkers,
+  );
+  */
   t.deepEqual(
     timeLogProcessor.contentsWithTimeMarkers,
     expectedContentsWithTimeMarkers,
@@ -283,7 +300,7 @@ const testAddTimeMarkersData = () => {
         LogParser.NL_NIX +
         "" +
         LogParser.NL_NIX +
-        "paus->" +
+        "pause->" +
         LogParser.NL_NIX,
       ".:: Uncategorized" +
         LogParser.NL_NIX +
@@ -296,6 +313,44 @@ const testAddTimeMarkersData = () => {
         "\t2019-01-05 06:50, 50min foo" +
         LogParser.NL_NIX +
         "\t2019-01-05 10:15, 3h25min bar" +
+        LogParser.NL_NIX,
+    ],
+    [
+      "start 2019-01-05 (+0200) 08:00" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "2019-01-05 (+0200) 08:01, foo" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "pause 2min" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "2019-01-05 (+0200) 08:06, bar" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "pause->" +
+        LogParser.NL_NIX,
+      ".:: Uncategorized" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "\tstart 2019-01-05 (+0200) 08:00 {2019-01-05 06:00:00}" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "\t2019-01-05 06:01, 1min foo" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "\tpause 2min {2019-01-05 06:01:00}" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "\t2019-01-05 06:06, 3min bar" +
         LogParser.NL_NIX,
     ],
   ];
