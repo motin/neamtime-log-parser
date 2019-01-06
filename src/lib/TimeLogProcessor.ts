@@ -486,7 +486,8 @@ export class TimeLogProcessor {
 
       for (const c of Object.values(this.categories)) {
         const hoursExact = undefined !== hours[c] ? hours[c] : 0;
-        hoursByCategory += Math.round(hoursExact*10000000000000)/10000000000000 + ";";
+        hoursByCategory +=
+          Math.round(hoursExact * 10000000000000) / 10000000000000 + ";";
       }
 
       // replace point by comma
@@ -722,7 +723,6 @@ export class TimeLogProcessor {
       }
 
       if (nextNeedToBeStart) {
-        // We have a certain syntax that can recover a missing start line, let's check for that:
         const {
           /*
           ts,
@@ -736,17 +736,21 @@ export class TimeLogProcessor {
         const trimmedLinewithoutdate = lineWithoutDate;
 
         if (!notTheFirstRowOfALogComment) {
+          // A start row is missing, but we have a certain syntax that can
+          // recover a missing start line, let's check for that:
           let preg = /^(ca|appr)? ?((\d)+h)?(\d+)min/; // todo dynamic insertion of apprtokens
           const m = trimmedLinewithoutdate.match(preg);
 
           let apprtoken;
-          let hours;
-          let minutes;
+          let hoursString;
+          let minutesString;
+          let foundADurationInFirstLine = false;
 
           if (!!m) {
             apprtoken = m[1];
-            hours = Math.round(parseFloat(m[3]));
-            minutes = Math.round(parseFloat(m[4])) + hours * 60;
+            hoursString = m[3];
+            minutesString = m[4];
+            foundADurationInFirstLine = true;
           } else {
             // Check for hours without minutes as well
             preg = /^(ca|appr)? ?(\d)+h/; // todo dynamic insertion of apprtokens
@@ -754,13 +758,22 @@ export class TimeLogProcessor {
 
             if (!!m2) {
               apprtoken = m2[1];
-              hours = Math.round(parseFloat(m2[2]));
-              minutes = hours * 60;
+              hoursString = m2[2];
+              foundADurationInFirstLine = true;
             }
           }
 
-          if (!!minutes) {
+          if (foundADurationInFirstLine) {
             // Here we, instead of start, have a single line with a duration. We can calculate the start from this...
+
+            const hours =
+              hoursString !== undefined ? parseInt(hoursString, 10) : 0;
+            const minutes =
+              minutesString !== undefined ? parseInt(minutesString, 10) : 0;
+
+            const durationInMinutes = hours * 60 + minutes;
+
+            // console.debug("getPreProcessedContents - {apprtoken, durationInMinutes, hours, minutes}", { apprtoken, durationInMinutes, hours, minutes },);
 
             if (!datetime) {
               throw new TimeLogParsingException(
@@ -769,13 +782,16 @@ export class TimeLogProcessor {
             }
 
             const probableStartDateTime = new DateTime(
-              subMinutes(datetime.getDate(), minutes),
+              subMinutes(datetime.getDate(), durationInMinutes),
               datetime.getTimezone(),
             );
             const probableStart = probableStartDateTime.format("Y-m-d H:i"); // gmdate("Y-m-d H:i", $ts - $minutes * 60);
             // var_dump(__LINE__, $probableStart, $date, $minutes, $this->lastKnownTimeZone);
 
-            processed.push(`start ${probableStart}` + apprtoken); // note: timestamp generated from duration info in line below;
+            // TODO: Also include timezone in the generated start-line (based on the first time marked line's last used timezone)
+            processed.push(
+              `start ${probableStart}` + (apprtoken ? apprtoken : ""),
+            ); // note: timestamp generated from duration info in line below;
             this.preProcessedContentsSourceLineContentsSourceLineMap[
               processed.length
             ] = sourceLine;

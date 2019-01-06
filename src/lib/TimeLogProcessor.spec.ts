@@ -111,6 +111,20 @@ const testPreProcessContentsData = () => {
         "pause->" +
         LogParser.NL_NIX,
     ],
+    [
+      "2019-01-05 (+0200) 08:50, 50min, foo" +
+        LogParser.NL_NIX +
+        "pause->" +
+        LogParser.NL_NIX,
+      "start 2019-01-05 08:00" + // TODO: Also include timezone in the generated start-line (based on the first time marked line's last used timezone)
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "2019-01-05 (+0200) 08:50, 50min, foo" +
+        LogParser.NL_NIX +
+        "pause->" +
+        LogParser.NL_NIX,
+    ],
   ];
 };
 
