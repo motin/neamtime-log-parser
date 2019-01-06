@@ -820,7 +820,7 @@ const testDetectTimeStampAndInterpretTsAndDateData = () => {
     /*
     [
       "start 2019-01-05 (+0200) 08:00",
-      DateTime.TTBWSD,
+      DateTime.YMD_TZWITHIN,
       "2019-01-05 (+0200) 08:00",
       "08:00",
       "+0200",

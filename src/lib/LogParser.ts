@@ -149,7 +149,7 @@ export class LogParser {
         detectRegexDateRawMatchIndex: 0,
         detectRegexTimeRawMatchIndex: 3,
         detectRegexTimeZoneRawMatchIndex: 2,
-        format: DateTime.TTBWSD,
+        format: DateTime.YMD_TZWITHIN,
       },
       {
         acceptApproxTokenInsteadOfMinutes: true,

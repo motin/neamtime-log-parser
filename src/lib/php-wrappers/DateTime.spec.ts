@@ -172,7 +172,7 @@ const testCreateFromFormatWhenTimeZonesAreInvolvedData = () => {
       "+01:00",
     ],
     [
-      DateTime.TTBWSD,
+      DateTime.YMD_TZWITHIN,
       "2016-05-25 (+0100) 14:50",
       "UTC",
       "2016-05-25 14:50",
