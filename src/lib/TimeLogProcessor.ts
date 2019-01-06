@@ -980,16 +980,24 @@ export class TimeLogProcessor {
       const updates = this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration(
         metadata,
       );
-      probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp =
-        updates.probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp;
+      if (
+        probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp !== null
+      ) {
+        probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp =
+          updates.probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp;
+      }
     } else {
       const updates = this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine_notPauseWithWrittenDuration(
         line,
         startsWithPauseToken,
         metadata,
       );
-      probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp =
-        updates.probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp;
+      if (
+        probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp !== null
+      ) {
+        probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp =
+          updates.probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp;
+      }
       isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
     }
 
@@ -1083,7 +1091,7 @@ export class TimeLogProcessor {
     isNewRowWithTimeMarker: boolean;
     probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp: boolean;
   } {
-    let probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp;
+    let probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = null;
     let isNewRowWithTimeMarker;
     const methodName =
       "processNotTheFirstRowOfALogCommentAndProbableStartStopLine_notPauseWithWrittenDuration";
@@ -1160,6 +1168,11 @@ export class TimeLogProcessor {
         metadata.log.push("Sent to notParsed in " + methodName);
         this.notParsedAddTimeMarkersParsePreProcessedContents.push(metadata);
       }
+
+      return {
+        isNewRowWithTimeMarker,
+        probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp,
+      };
     }
 
     if (thisTimestampIsLaterOrSameAsPreviousRowWithTimeMarker === false) {
@@ -1182,6 +1195,11 @@ export class TimeLogProcessor {
       // To easily see patterns amongst these lines
       metadata.log.push("Sent to notParsed in " + methodName);
       this.notParsedAddTimeMarkersParsePreProcessedContents.push(metadata);
+
+      return {
+        isNewRowWithTimeMarker,
+        probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp,
+      };
     }
 
     if (
@@ -1200,6 +1218,7 @@ export class TimeLogProcessor {
       metadata.tsIsFaked = false;
       metadata.highlightWithNewlines = true;
       // metadata.line = metadata.line;
+      isNewRowWithTimeMarker = true;
       probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = true;
     } else {
       probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = false;
