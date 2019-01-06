@@ -107,7 +107,7 @@ testDurationFromLastData().forEach((testData, index) => {
   );
 });
 
-const testStartsWithOptionallySuffixedTokenMethod: Macro = (
+const testStartsWithOptionallySuffixedToken: Macro = (
   t: ExecutionContext,
   haystack: string,
   keyword: string,
@@ -126,7 +126,7 @@ const testStartsWithOptionallySuffixedTokenMethod: Macro = (
     "TimeLogParser->startsWithOptionallySuffixedToken() behaves as expected",
   );
 };
-testStartsWithOptionallySuffixedTokenMethod.title = (
+testStartsWithOptionallySuffixedToken.title = (
   providedTitle: string,
   haystack: string,
   keyword: string,
@@ -135,7 +135,7 @@ testStartsWithOptionallySuffixedTokenMethod.title = (
 ) =>
   `: ${providedTitle} ${keyword} with suffix "${suffix}" in "${haystack}" = ${expectedReturnValue}`.trim();
 
-const testStartsWithOptionallySuffixedTokenMethodData = () => {
+const testStartsWithOptionallySuffixedTokenData = () => {
   let testDataMatrix = Array();
   const timeLogParser = new TimeLogParser();
   const tokens = timeLogParser.tokens();
@@ -156,10 +156,10 @@ const testStartsWithOptionallySuffixedTokenMethodData = () => {
   return testDataMatrix;
 };
 
-testStartsWithOptionallySuffixedTokenMethodData().forEach((testData, index) => {
+testStartsWithOptionallySuffixedTokenData().forEach((testData, index) => {
   test(
-    "testStartsWithOptionallySuffixedTokenMethod - " + index,
-    testStartsWithOptionallySuffixedTokenMethod,
+    "testStartsWithOptionallySuffixedToken - " + index,
+    testStartsWithOptionallySuffixedToken,
     testData[0],
     testData[1],
     testData[2],
