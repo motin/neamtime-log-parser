@@ -32,7 +32,7 @@ export interface TimeLogSession {
 export interface RowMetadata {
   date: any;
   dateRaw: any;
-  formattedDate: any;
+  formattedUtcDate: string;
   lastInterpretTsAndDateErrorMessage: any;
   lastKnownTimeZone: any;
   lastSetTsAndDateErrorMessage: any;
@@ -585,7 +585,7 @@ export class TimeLogProcessor {
           */
 
           if (metadata.dateRaw && metadata.dateRaw.trim() !== "") {
-            // $formattedDate = gmdate("Y-m-d H:i", $ts); //:s
+            // const formattedUtcDate = utcDateTime.format("Y-m-d H:i"); // :s
             const implicitMessage =
               trimmedLineForDateCheck + `, <just before ${token}>`;
             processed.push(implicitMessage);
@@ -832,11 +832,10 @@ export class TimeLogProcessor {
       // $line = utf8_encode($line);
 
       // Use UTC dates
-      const timezone = new DateTimeZone("UTC");
-      const datetime = DateTime.createFromUnixTimestamp(
+      const utcDateTime = DateTime.createFromUnixTimestamp(
         ts,
-      ).cloneWithAnotherTimezone(timezone);
-      const formattedDate = datetime.format("Y-m-d H:i"); // :s
+      ).cloneWithAnotherTimezone(new DateTimeZone("UTC"));
+      const formattedUtcDate = utcDateTime.format("Y-m-d H:i"); // :s
 
       const log = [];
       const lastKnownTimeZone = this.timeLogParser.lastKnownTimeZone;
@@ -848,7 +847,7 @@ export class TimeLogProcessor {
       const metadata: RowMetadata = {
         date,
         dateRaw,
-        formattedDate,
+        formattedUtcDate,
         lastInterpretTsAndDateErrorMessage,
         lastKnownTimeZone,
         lastSetTsAndDateErrorMessage,
@@ -894,7 +893,7 @@ export class TimeLogProcessor {
       const previousRowWithTimeMarkerHasTheSameDate =
         hasAPreviousRowWithTimeMarker &&
         this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex]
-          .formattedDate === formattedDate;
+          .formattedUtcDate === formattedUtcDate;
 
       // Catch lines that has a timestamp but not in the beginning
       if (notTheFirstRowOfALogCommentAndProbableStartStopLine) {
@@ -984,11 +983,10 @@ export class TimeLogProcessor {
       // If not successful, use last rows ts
       metadata.ts = this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex].ts;
       metadata.tsIsFaked = true;
-      const timezone = new DateTimeZone("UTC");
-      const datetime = DateTime.createFromUnixTimestamp(
+      const utcDateTime = DateTime.createFromUnixTimestamp(
         metadata.ts,
-      ).cloneWithAnotherTimezone(timezone);
-      metadata.formattedDate = datetime.format("Y-m-d H:i:s");
+      ).cloneWithAnotherTimezone(new DateTimeZone("UTC"));
+      metadata.formattedUtcDate = utcDateTime.format("Y-m-d H:i:s");
       metadata.highlightWithNewlines = true;
       // metadata.line = metadata.line;
     } else {
@@ -1016,13 +1014,12 @@ export class TimeLogProcessor {
     metadata.log.push("found a pause with written duration");
     metadata.ts = this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex].ts;
     metadata.tsIsFaked = true;
-    const timezone = new DateTimeZone("UTC");
 
-    const _datetime = DateTime.createFromUnixTimestamp(
+    const _utcDateTime = DateTime.createFromUnixTimestamp(
       metadata.ts,
-    ).cloneWithAnotherTimezone(timezone);
+    ).cloneWithAnotherTimezone(new DateTimeZone("UTC"));
 
-    metadata.formattedDate = _datetime.format("Y-m-d H:i:s");
+    metadata.formattedUtcDate = _utcDateTime.format("Y-m-d H:i:s");
     metadata.highlightWithNewlines = true;
     const parts = metadata.line.split("->");
     const lineForDurationCheck = parts[0];
@@ -1177,11 +1174,10 @@ export class TimeLogProcessor {
       );
       metadata.ts = ts;
       metadata.date = date;
-      const timezone = new DateTimeZone("UTC");
-      datetime = DateTime.createFromUnixTimestamp(ts).cloneWithAnotherTimezone(
-        timezone,
-      );
-      metadata.formattedDate = datetime.format("Y-m-d H:i:s");
+      const utcDateTime = DateTime.createFromUnixTimestamp(
+        ts,
+      ).cloneWithAnotherTimezone(new DateTimeZone("UTC"));
+      metadata.formattedUtcDate = utcDateTime.format("Y-m-d H:i:s");
       metadata.tsIsFaked = false;
       metadata.highlightWithNewlines = true;
       // metadata.line = metadata.line;
@@ -1343,7 +1339,7 @@ export class TimeLogProcessor {
 
         const parts = metadata.line.split(",");
         parts.shift();
-        contentsWithTimeMarkers += metadata.formattedDate;
+        contentsWithTimeMarkers += metadata.formattedUtcDate;
         contentsWithTimeMarkers +=
           ", " +
           this.timeLogParser.secondsToDuration(metadata.durationSinceLast);
@@ -1368,7 +1364,7 @@ export class TimeLogProcessor {
         contentsWithTimeMarkers += parts.join(",");
       } else {
         contentsWithTimeMarkers +=
-          metadata.line + " {" + metadata.formattedDate + "}";
+          metadata.line + " {" + metadata.formattedUtcDate + "}";
       }
 
       contentsWithTimeMarkers += LogParser.NL_NIX;
