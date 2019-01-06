@@ -10,6 +10,7 @@ export interface DetectTimeStampMetadata {
   dateRawFormat?: string | false;
   dateRawWasNonemptyBeforeDetectTimestamp?: string;
   dateRawWithApproxTokenInsteadOfMinutes?: string | false;
+  debugRegexMatches?: any[];
   log?: string[];
   timeZoneRaw?: string | false;
 }
@@ -26,7 +27,7 @@ export interface ParsedLogComment {
 export class TimeLogParser extends LogParser {
   public lastParseLogCommentErrorMessage;
   public lastInterpretTsAndDateErrorMessage;
-  private collectDebugInfo;
+  // private collectDebugInfo = true; // Enable temporarily during development only
 
   constructor() {
     super();
@@ -127,6 +128,12 @@ export class TimeLogParser extends LogParser {
       metadata.dateRawWasNonemptyBeforeDetectTimestamp = metadata.dateRaw;
     }
 
+    /*
+    if (this.collectDebugInfo) {
+      metadata.debugRegexMatches = [];
+    }
+    */
+
     for (const supportedTimestampFormat of Object.values(
       this.supportedTimestampFormats(),
     )) {
@@ -154,17 +161,19 @@ export class TimeLogParser extends LogParser {
       }
       */
 
-      // console.debug("{detectRegex, lineForDateCheck, m, regexp}", {detectRegex, lineForDateCheck, m, regexp});
+      // console.debug("{detectRegex, format, lineForDateCheck, m, regexp}", {detectRegex, format, lineForDateCheck, m, regexp,});
+
+      /*
+      if (this.collectDebugInfo) {
+        metadata.debugRegexMatches.push({
+          format,
+          lineForDateCheck,
+          m,
+        });
+      }
+      */
 
       if (m) {
-        // console.debug("MATCHED: {lineForDateCheck, m}", {lineForDateCheck, m});
-        if (this.collectDebugInfo) {
-          metadata["date_search_preg_debug:" + format] = {
-            lineForDateCheck,
-            m,
-          };
-        }
-
         metadata.dateRawFormat = format;
         metadata.log.push(`Found a supported timestamp ('${format}')`);
 
@@ -204,13 +213,6 @@ export class TimeLogParser extends LogParser {
         }
 
         return { metadata };
-      } else {
-        if (this.collectDebugInfo) {
-          metadata["date_search_preg_debug:" + format] = {
-            lineForDateCheck,
-            m,
-          };
-        }
       }
     }
 

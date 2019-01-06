@@ -218,7 +218,7 @@ const testDetectTimeStampAndInterpretTsAndDate: Macro = (
   const setTsAndDateError = timeLogParser.lastSetTsAndDateErrorMessage;
   const interpretTsAndDateError =
     timeLogParser.lastInterpretTsAndDateErrorMessage;
-  // t.log({ ts, date, datetime, setTsAndDateError, interpretTsAndDateError });
+  // t.log({ date, datetime, setTsAndDateError, interpretTsAndDateError });
   const valid = !!date;
   t.is(
     valid,
@@ -817,20 +817,18 @@ const testDetectTimeStampAndInterpretTsAndDateData = () => {
       "Europe/Helsinki",
       "2017-03-01 07:15:00",
     ],
-    /*
     [
       "start 2019-01-05 (+0200) 08:00",
-      DateTime.YMD_TZWITHIN,
+      DateTime.YMDHI_TZWITHIN,
       "2019-01-05 (+0200) 08:00",
       "08:00",
       "+0200",
-      "Europe/Stockholm",
-      "2019-01-05",
+      "Antarctica/Macquarie",
+      "2019-01-02",
       true,
-      "Europe/FOPOOOOOFOFOFO",
+      "+02:00",
       "2019-01-05 06:00:00",
     ],
-    */
   ];
 };
 
@@ -1143,6 +1141,24 @@ const testParseLogCommentData = () => {
       "2016-05-01",
       true,
       "Europe/Stockholm",
+      "2016-05-01 12:35:00",
+    ],
+    [
+      "2016-05-01 (+0200) 14:35, bar",
+      " bar",
+      "Europe/Stockholm",
+      "2016-05-01",
+      true,
+      "+02:00",
+      "2016-05-01 12:35:00",
+    ],
+    [
+      "2016-05-01 (+0200) 14:35ca, bar",
+      " bar",
+      "Europe/Stockholm",
+      "2016-05-01",
+      true,
+      "+02:00",
       "2016-05-01 12:35:00",
     ],
     [

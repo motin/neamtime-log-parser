@@ -238,7 +238,7 @@ const testCreateDateTimeFromZonedFormatData = () => {
     ],
     // [DateTime.ISO8601Z, "2016-05-25T14:50:00Z", "n/a", "2016-05-25 14:50", "2016-05-25 14:50"], // Throws error on unzoned date formats
     [
-      DateTime.YMD_TZWITHIN,
+      DateTime.YMDHI_TZWITHIN,
       "2016-05-25 (+0100) 14:50",
       "+01:00",
       "2016-05-25 14:50",
