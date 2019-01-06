@@ -211,20 +211,23 @@ const testDetectTimeStampAndInterpretTsAndDate: Macro = (
     // ts,
     date,
     datetime,
-  } = timeLogParser.interpretTsAndDate(metadata.dateRaw);
+  } = timeLogParser.interpretTsAndDate(
+    metadata.dateRaw,
+    metadata.dateRawFormat,
+  );
   const setTsAndDateError = timeLogParser.lastSetTsAndDateErrorMessage;
   const interpretTsAndDateError =
     timeLogParser.lastInterpretTsAndDateErrorMessage;
   // t.log({ ts, date, datetime, setTsAndDateError, interpretTsAndDateError });
   const valid = !!date;
   t.is(
-    expectedToBeValid,
     valid,
+    expectedToBeValid,
     "TimeLogParser->interpretTsAndDate() detects valid datetimes as expected",
   );
   t.is(
-    expectedLastKnownTimeZone,
     timeLogParser.lastKnownTimeZone,
+    expectedLastKnownTimeZone,
     "TimeLogParser->interpretTsAndDate() sometimes changes the last known timezone by parsing a timestamp string",
   );
 
@@ -854,7 +857,7 @@ testDetectTimeStampAndInterpretTsAndDateData().forEach((testData, index) => {
  *
  * @param t
  * @param line
- * @param expectedLinewithoutdate
+ * @param expectedLineWithoutDate
  * @param lastKnownTimeZone
  * @param lastKnownDate
  * @param expectedToBeValidTimestampedLogComment
@@ -864,7 +867,7 @@ testDetectTimeStampAndInterpretTsAndDateData().forEach((testData, index) => {
 const testParseLogComment: Macro = (
   t: ExecutionContext,
   line,
-  expectedLinewithoutdate,
+  expectedLineWithoutDate,
   lastKnownTimeZone,
   lastKnownDate,
   expectedToBeValidTimestampedLogComment,
@@ -881,33 +884,62 @@ const testParseLogComment: Macro = (
     notTheFirstRowOfALogComment,
     datetime,
   } = timeLogParser.parseLogComment(line);
+  // t.log({ line, /*ts, date,*/ datetime });
+  const parseLogCommentError = timeLogParser.lastParseLogCommentErrorMessage;
+  const setTsAndDateError = timeLogParser.lastSetTsAndDateErrorMessage;
+  const interpretTsAndDateError =
+    timeLogParser.lastInterpretTsAndDateErrorMessage;
+  // t.log({ setTsAndDateError, interpretTsAndDateError, parseLogCommentError });
   const invalid = notTheFirstRowOfALogComment;
-  // t.log({ line, ts, date, datetime });
   const valid = !invalid;
-  t.is(
-    expectedLinewithoutdate,
-    lineWithoutDate,
-    "TimeLogParser->parseLogComment() detects lines without datetime as expected",
-  );
   // t.log({ expectedToBeValidTimestampedLogComment, valid });
   t.is(
-    expectedToBeValidTimestampedLogComment,
     valid,
+    expectedToBeValidTimestampedLogComment,
     "TimeLogParser->parseLogComment() detects valid timestamped log content as expected",
   );
-  t.is(
-    expectedLastKnownTimeZone,
-    timeLogParser.lastKnownTimeZone,
-    "TimeLogParser->parseLogComment() sometimes changes the last known timezone by parsing a timestamp string",
-  );
-
   if (expectedToBeValidTimestampedLogComment) {
+    t.true(
+      parseLogCommentError === "" &&
+        interpretTsAndDateError === "" &&
+        setTsAndDateError === "",
+      "TimeLogParser->parseLogComment() does not set an error message where valid datetimes are expected",
+    );
+  } else {
+    const parseError =
+      typeof parseLogCommentError !== "undefined" &&
+      parseLogCommentError !== null &&
+      parseLogCommentError !== "";
+    const interpretError =
+      typeof interpretTsAndDateError !== "undefined" &&
+      interpretTsAndDateError !== null &&
+      interpretTsAndDateError !== "";
+    const setError =
+      typeof setTsAndDateError !== "undefined" &&
+      setTsAndDateError !== null &&
+      setTsAndDateError !== "";
+    t.true(
+      parseError || interpretError || setError,
+      "TimeLogParser->parseLogComment() sets an error message where invalid datetimes are expected",
+    );
+  }
+  if (expectedToBeValidTimestampedLogComment) {
+    t.is(
+      lineWithoutDate,
+      expectedLineWithoutDate,
+      "TimeLogParser->parseLogComment() detects lines without datetime as expected",
+    );
+    t.is(
+      timeLogParser.lastKnownTimeZone,
+      expectedLastKnownTimeZone,
+      "TimeLogParser->parseLogComment() sometimes changes the last known timezone by parsing a timestamp string",
+    );
     const utcDatetime = datetime.cloneWithAnotherTimezone(
       new DateTimeZone("UTC"),
     );
     t.is(
-      expectedUtcDateString,
       utcDatetime.format("Y-m-d H:i:s"),
+      expectedUtcDateString,
       "TimeLogParser->parseLogComment() behaves as expected",
     );
   }

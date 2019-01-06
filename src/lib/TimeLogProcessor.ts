@@ -95,13 +95,13 @@ export class TimeLogProcessor {
     firstDateFound: any;
     lastDateFound: any;
   };
-  public debugOriginalUnsortedRows?: any[];
 
   // Metadata arrays
   public notParsedAddTimeMarkers: RowMetadata[] = [];
   public notParsedTimeReport: RowMetadata[] = [];
   public rowsWithTimeMarkers: RowMetadata[] = [];
   public readonly preProcessedContentsSourceLineContentsSourceLineMap: any = {};
+  public debugOriginalUnsortedRows?: RowMetadata[] = [];
 
   // State / tmp
   private rowsWithTimeMarkersHandled;
@@ -237,8 +237,10 @@ export class TimeLogProcessor {
       const lineWithoutDate = parts.join(",");
       const _ = this.timeLogParser.lastKnownTimeZone;
       this.timeLogParser.lastKnownTimeZone = "UTC";
+      const { metadata } = this.timeLogParser.detectTimeStamp(dateRaw);
       const { ts, date /*, datetime*/ } = this.timeLogParser.interpretTsAndDate(
         dateRaw,
+        metadata.dateRawFormat,
       );
       this.timeLogParser.lastKnownTimeZone = _;
       parts = line.split(" | ");
@@ -573,8 +575,10 @@ export class TimeLogProcessor {
           );
 
           /*
+          const { metadata } = this.timeLogParser.detectTimeStamp(dateRaw);
           const { ts, date, datetime } = this.timeLogParser.interpretTsAndDate(
             metadata.dateRaw,
+            metadata.dateRawFormat,
           );
           // var_dump($metadata["dateRaw"], $trimmedLineForDateCheck, $ts, $date);
           // $invalid = empty($date);
@@ -768,7 +772,6 @@ export class TimeLogProcessor {
    * @param preProcessedContents
    */
   public parsePreProcessedContents(preProcessedContents: string) {
-    const debugOriginalUnsortedRows: RowMetadata[] = [];
     this.rowsWithTimeMarkersHandled = 0;
     const lines = textIntoLinesArray(preProcessedContents);
 
@@ -902,10 +905,10 @@ export class TimeLogProcessor {
         );
         isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
       } else if (notTheFirstRowOfALogComment) {
-        this.processAdditionalLogCommentRowUntilNextLogComment(line);
+        this.processAdditionalLogCommentRowUntilNextLogComment(line, metadata);
         isNewRowWithTimeMarker = false;
       } else if (previousRowWithTimeMarkerHasTheSameDate) {
-        this.processAdditionalLogCommentRowUntilNextLogComment(line);
+        this.processAdditionalLogCommentRowUntilNextLogComment(line, metadata);
         isNewRowWithTimeMarker = false;
       } else {
         // const theFirstRowOfALogComment = true;
@@ -919,7 +922,9 @@ export class TimeLogProcessor {
         this.rowsWithTimeMarkersHandled++;
       }
 
-      debugOriginalUnsortedRows.push(metadata);
+      if (this.collectDebugInfo) {
+        this.debugOriginalUnsortedRows.push(metadata);
+      }
 
       // Limit the maximum amount of rows
       // TODO: Make configurable
@@ -929,10 +934,6 @@ export class TimeLogProcessor {
         );
       }
       // if (this.rowsWithTimeMarkersHandled >= 10) break; // While devving
-    }
-
-    if (this.collectDebugInfo) {
-      this.debugOriginalUnsortedRows = debugOriginalUnsortedRows;
     }
   }
 
@@ -1098,6 +1099,7 @@ export class TimeLogProcessor {
     const result = this.timeLogParser.detectTimeStamp(lineForDateCheck);
     const interpretedTsAndDate = this.timeLogParser.interpretTsAndDate(
       result.metadata.dateRaw,
+      result.metadata.dateRawFormat,
     );
     const { ts, date } = interpretedTsAndDate;
     datetime = interpretedTsAndDate.datetime;
@@ -1135,7 +1137,7 @@ export class TimeLogProcessor {
           "Sent to processAdditionalLogCommentRowUntilNextLogComment in " +
             methodName,
         );
-        this.processAdditionalLogCommentRowUntilNextLogComment(line);
+        this.processAdditionalLogCommentRowUntilNextLogComment(line, metadata);
         isNewRowWithTimeMarker = false;
       } else {
         // To easily see patterns amongst these lines
@@ -1194,12 +1196,21 @@ export class TimeLogProcessor {
     };
   }
 
-  private processAdditionalLogCommentRowUntilNextLogComment(line: string) {
+  /**
+   * @param line
+   * @param metadata Only sent to be able to supply as debug information in case of an exception
+   */
+  private processAdditionalLogCommentRowUntilNextLogComment(
+    line: string,
+    metadata: RowMetadata,
+  ) {
     const previousRowWithTimeMarkerIndex = this.rowsWithTimeMarkersHandled - 1;
     if (!this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex]) {
       throw new TimeLogParsingException(
         "Incorrect parsing state: For some reason we are attempting to collect additional log comment rows until new log comment but we have no previous log comments",
         {
+          // debugOriginalUnsortedRows: this.debugOriginalUnsortedRows,
+          metadata,
           previousRowWithTimeMarkerIndex,
           rowsWithTimeMarkers: this.rowsWithTimeMarkers,
         },

@@ -293,6 +293,7 @@ export class LogParser {
 
   public setTsAndDate(
     dateRaw: string,
+    formatToUse: string,
   ): { ts: number; date?: string; datetime?: DateTime } {
     // console.debug("LogParser.setTsAndDate - { dateRaw }", { dateRaw });
     this.lastSetTsAndDateErrorMessage = "";
@@ -312,6 +313,7 @@ export class LogParser {
       } = this.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
         dateRaw,
         timezoneStringToUseInCaseDateStringHasNoTimezoneInfo,
+        formatToUse,
       );
       ts = gmtTimestamp;
       datetimeParseResult = datetimeReturned;
@@ -326,6 +328,7 @@ export class LogParser {
         } = this.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
           dateRaw,
           "UTC",
+          formatToUse,
         );
         ts = gmtTimestamp;
         datetimeParseResult = datetimeReturned;
@@ -371,13 +374,14 @@ export class LogParser {
   }
 
   /**
-   * TODO: Support forcing a specific supporting timestamp format, so that the same format as was detected can be ensured to have been used + avoiding unnecessary checks
    * @param str
    * @param timezoneStringToUseInCaseDateStringHasNoTimezoneInfo
+   * @param formatToUse
    */
   public parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
     str: string,
     timezoneStringToUseInCaseDateStringHasNoTimezoneInfo: string,
+    formatToUse: string = null,
   ): { gmtTimestamp: number; datetime: DateTime } {
     let gmtTimestamp: number;
     let datetimeParseResult: DateTime | false;
@@ -390,6 +394,14 @@ export class LogParser {
       this.supportedTimestampFormats(),
     )) {
       const format = supportedTimestampFormat.format;
+
+      // Force a specific supporting timestamp format, so that the same format
+      // as was detected can be ensured to have been used. This ensures parity
+      // between detection and parsing + avoids running unnecessary checks
+      // which affects performance and stability
+      if (formatToUse && format !== formatToUse) {
+        continue;
+      }
 
       if (supportedTimestampFormat.preDatetimeParsingCallback) {
         str = supportedTimestampFormat.preDatetimeParsingCallback(str);

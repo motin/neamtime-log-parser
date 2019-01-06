@@ -24,11 +24,13 @@ export interface ParsedLogComment {
 }
 
 export class TimeLogParser extends LogParser {
+  public lastParseLogCommentErrorMessage;
   public lastInterpretTsAndDateErrorMessage;
   private collectDebugInfo;
 
   constructor() {
     super();
+    this.lastParseLogCommentErrorMessage = "";
     this.lastInterpretTsAndDateErrorMessage = "";
   }
 
@@ -242,6 +244,7 @@ export class TimeLogParser extends LogParser {
 
   public interpretTsAndDate(
     dateRaw,
+    formatToUse,
   ): { ts: number; date?: string; datetime?: DateTime } {
     // console.debug("TimeLogParser.interpretTsAndDate - { dateRaw }", {dateRaw});
     this.lastInterpretTsAndDateErrorMessage = "";
@@ -272,11 +275,14 @@ export class TimeLogParser extends LogParser {
 
     if (dateRaw.length < 8) {
       dateRaw = this.lastKnownDate + ` ${dateRaw}`;
+      if (formatToUse) {
+        formatToUse = "Y-m-d " + formatToUse;
+      }
     }
 
     const tokens = this.tokens();
     dateRaw = str_replace(tokens.approx, "", dateRaw).trim();
-    const { date, datetime, ts } = this.setTsAndDate(dateRaw);
+    const { date, datetime, ts } = this.setTsAndDate(dateRaw, formatToUse);
 
     return {
       date,
@@ -338,9 +344,11 @@ export class TimeLogParser extends LogParser {
 
     const m = dateRaw.match(/[0-9\.\,]+/);
 
-    // invalidate lines without any number or comma or period at all
+    // Invalidate lines without any number or comma or period at all
     if (!m) {
       notTheFirstRowOfALogComment = true;
+      this.lastParseLogCommentErrorMessage =
+        "Invalidate lines without any number or comma or period at all";
       return {
         date: null,
         dateRaw,
@@ -351,7 +359,7 @@ export class TimeLogParser extends LogParser {
       };
     }
 
-    // invalidate pure numbers (including those with fractional parts) if there is no comment on the other side - probably not a real log comment
+    // Invalidate pure numbers (including those with fractional parts) if there is no comment on the other side - probably not a real log comment
     if (m[0]) {
       const firstMatch = m[0];
       const trimmedDateRaw = dateRaw.trim();
@@ -363,6 +371,8 @@ export class TimeLogParser extends LogParser {
       ) {
         // Due to some odd logic in some other file, we also can't set ts and date for this row
         notTheFirstRowOfALogComment = true;
+        this.lastParseLogCommentErrorMessage =
+          "Invalidate pure numbers (including those with fractional parts) if there is no comment on the other side - probably not a real log comment";
         return {
           date: null,
           dateRaw,
@@ -374,8 +384,14 @@ export class TimeLogParser extends LogParser {
       }
     }
 
+    // Detect and set any timestamp found in this dateRaw candidate
+    const { metadata } = this.detectTimeStamp(dateRaw);
+    const { date, datetime, ts } = this.interpretTsAndDate(
+      dateRaw,
+      metadata.dateRawFormat,
+    );
+
     // invalidate lines without a valid date
-    const { date, datetime, ts } = this.interpretTsAndDate(dateRaw);
     notTheFirstRowOfALogComment = !date;
 
     return {
