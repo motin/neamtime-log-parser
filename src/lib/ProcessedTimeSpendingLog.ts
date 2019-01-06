@@ -1,4 +1,3 @@
-import { array_slice } from "locutus/php/array";
 import { strpos } from "locutus/php/strings";
 import { TimeLogParsingException } from "./exceptions/TimeLogParsingException";
 import { TimeSpendingLogProcessingErrorsEncounteredException } from "./exceptions/TimeSpendingLogProcessingErrorsEncounteredException";
@@ -235,49 +234,100 @@ export class ProcessedTimeSpendingLog {
     timeLogProcessor.sessions = [];
     const starts: any[] = timeLogProcessor.sessionStarts;
 
-    // If only one session was detected, we will not parse the session, but instead simply use the current timeLogProcessor in order to avoid stack overflow
-
-    for (const k of Object.keys(starts)) {
+    for (let k: number = 0; k < starts.length; k++) {
       const start = starts[k];
 
       let sessionSpecificProcessedTimeSpendingLogTimeLogProcessor;
 
-      try {
-        // var_dump($metadata);
-        // Store the session metadata
-        if (starts.length === 1) {
-          sessionSpecificProcessedTimeSpendingLogTimeLogProcessor = timeLogProcessor;
+      // If only one session was detected, we will not parse the session, but instead simply use the current timeLogProcessor in order to avoid stack overflow
+      if (starts.length === 1) {
+        sessionSpecificProcessedTimeSpendingLogTimeLogProcessor = timeLogProcessor;
+      } else {
+        // Get the section of the pre-processed log that corresponds to this session
+        const preProcessedLines = timeLogProcessor.preProcessedContents.split(
+          "\n",
+        );
+        const startLine = start.preprocessedContentsSourceLineIndex;
+        const nextStart = starts[k + 1];
+
+        let length;
+        if (!nextStart) {
+          // do nothing
         } else {
-          // Get the section of the pre-processed log that corresponds to this session
-          const preProcessedLines = timeLogProcessor.preProcessedContents.split(
-            "\n",
-          );
-          const startLine = start.preprocessedContentsSourceLineIndex;
+          length =
+            nextStart.preprocessedContentsSourceLineIndex - 1 - startLine;
+        }
 
-          let length;
-          if (!starts[k + 1]) {
-            // do nothing
-          } else {
-            length =
-              starts[k + 1].preprocessedContentsSourceLineIndex - 1 - startLine;
-          }
+        const lines = preProcessedLines.slice(startLine, length);
+        const sessionSpecificTimeSpendingLog = new TimeSpendingLog();
+        // console.debug("parseDetectSessionsOneByOne - {length, lines, nextStart, preProcessedLines, startLine, start, starts}", {length, lines, nextStart, preProcessedLines, start, startLine, starts,},);
+        sessionSpecificTimeSpendingLog.rawLogContents = lines.join("\n");
+        sessionSpecificTimeSpendingLog.tzFirst = start.lastKnownTimeZone;
 
-          const lines = array_slice(preProcessedLines, startLine, length, true);
-          const sessionSpecificTimeSpendingLog = new TimeSpendingLog();
-          sessionSpecificTimeSpendingLog.rawLogContents = lines.join("\n");
-          sessionSpecificTimeSpendingLog.tzFirst = start.lastKnownTimeZone;
+        try {
           const sessionSpecificProcessedTimeSpendingLog = new ProcessedTimeSpendingLog(
             sessionSpecificTimeSpendingLog,
           );
+
           sessionSpecificProcessedTimeSpendingLogTimeLogProcessor =
             sessionSpecificProcessedTimeSpendingLog.timeLogProcessor;
+        } catch (e) {
+          if (
+            e instanceof TimeSpendingLogProcessingErrorsEncounteredException
+          ) {
+            // $te = new TimeSpendingLogSessionSpecificProcessingException(
+            //                    'Encountered an exception while detecting/parsing sessions', null, $e
+            //                );
+            //                $te->sessionStartMetadata = $start;
+            //                $te->processedTimeSpendingLog = $e->processedTimeSpendingLog;
+            //                throw $te;
+            if (e.processedTimeSpendingLog) {
+              if (this.getProcessingErrors().length === 0) {
+                this.addError(
+                  "session-parsing",
+                  "Encountered a processing error which was only evident when detecting/parsing sessions individually: " +
+                    e.message,
+                  {
+                    processingErrors: e.processedTimeSpendingLog.getProcessingErrors(),
+                    sessionStartMetadata: start,
+                  },
+                );
+              } else {
+                this.addError(
+                  "session-parsing",
+                  "Encountered a processing error when detecting/parsing sessions individually: " +
+                    e.message,
+                  {
+                    processingErrors: e.processedTimeSpendingLog.getProcessingErrors(),
+                    sessionStartMetadata: start,
+                  },
+                );
+              }
+            } else {
+              this.addError(
+                "session-parsing",
+                "Encountered a processing error when detecting/parsing sessions individually, and no e.processedTimeSpendingLog was supplied: " +
+                  e.message,
+                {
+                  sessionStartMetadata: start,
+                },
+              );
+            }
+          } else {
+            // console.error(e);
+            throw e;
+          }
         }
+      }
 
+      if (sessionSpecificProcessedTimeSpendingLogTimeLogProcessor) {
         const timeReportSourceComments =
           sessionSpecificProcessedTimeSpendingLogTimeLogProcessor.timeReportSourceComments;
         const tzFirst =
           sessionSpecificProcessedTimeSpendingLogTimeLogProcessor.tzFirst;
         const metadata = sessionSpecificProcessedTimeSpendingLogTimeLogProcessor.getTimeLogMetadata();
+        // var_dump($metadata);
+        // Store the session metadata
         const timeLogSession: TimeLogSession = {
           k,
           metadata,
@@ -286,49 +336,6 @@ export class ProcessedTimeSpendingLog {
           tzFirst,
         };
         timeLogProcessor.sessions.push(timeLogSession);
-      } catch (e) {
-        if (e instanceof TimeSpendingLogProcessingErrorsEncounteredException) {
-          // $te = new TimeSpendingLogSessionSpecificProcessingException(
-          //                    'Encountered an exception while detecting/parsing sessions', null, $e
-          //                );
-          //                $te->sessionStartMetadata = $start;
-          //                $te->processedTimeSpendingLog = $e->processedTimeSpendingLog;
-          //                throw $te;
-          if (e.processedTimeSpendingLog) {
-            if (this.getProcessingErrors().length === 0) {
-              this.addError(
-                "session-parsing",
-                "Encountered a processing error which was only evident when detecting/parsing sessions individually: " +
-                  e.message,
-                {
-                  processingErrors: e.processedTimeSpendingLog.getProcessingErrors(),
-                  sessionStartMetadata: start,
-                },
-              );
-            } else {
-              this.addError(
-                "session-parsing",
-                "Encountered a processing error when detecting/parsing sessions individually: " +
-                  e.message,
-                {
-                  // TODO: Fix the circular reference with e.processedTimeSpendingLog.getProcessingErrors() here
-                  processingErrorsLength: e.processedTimeSpendingLog.getProcessingErrors()
-                    .length,
-                  sessionStartMetadata: start,
-                },
-              );
-            }
-          } else {
-            this.addError(
-              "session-parsing",
-              "Encountered a processing error when detecting/parsing sessions individually, and no e.processedTimeSpendingLog was supplied: " +
-                e.message,
-              {
-                sessionStartMetadata: start,
-              },
-            );
-          }
-        }
       }
     }
   }

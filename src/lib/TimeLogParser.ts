@@ -295,6 +295,7 @@ export class TimeLogParser extends LogParser {
 
   public parseLogComment(line): ParsedLogComment {
     let parsedLogComment: ParsedLogComment;
+    this.lastParseLogCommentErrorMessage = "";
 
     // "," is the main separator between date and any written comment...
     parsedLogComment = this.parseLogCommentWithSeparator(",", line);

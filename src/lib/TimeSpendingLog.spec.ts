@@ -210,12 +210,77 @@ correctTimeSpendingLogContents().forEach((testData, index) => {
 const testCorrectlyReportedProcessingErrors: Macro = (
   t: ExecutionContext,
   timeSpendingLogPath,
-  processingErrorsJsonFilePath,
+  expectedProcessingErrorsJsonFilePath,
 ) => {
   t.log("timeSpendingLogPath", timeSpendingLogPath);
   let thrownException;
-  let processedTimeSpendingLog;
-  let errorsJson;
+  let processedTimeSpendingLog: ProcessedTimeSpendingLog;
+  let encounteredProcessingErrors;
+
+  const expectedProcessingErrorsJsonFileContents = file_get_contents(
+    expectedProcessingErrorsJsonFilePath,
+  );
+
+  const expectedProcessingErrorsOriginal = JSON.parse(
+    expectedProcessingErrorsJsonFileContents,
+  );
+
+  // Temporarily normalize existing for better comparisons across versions
+  const keyRenames = {
+    date_raw: "dateRaw",
+    date_raw_format: "dateRawFormat",
+    date_raw_was_nonempty_before_detectTimeStamp:
+      "dateRawWasNonEmptyBeforeDetectTimeStamp",
+    formatted_date: "formattedUtcDate",
+    highlight_with_newlines: "highlightWithNewlines",
+    line_with_comment: "lineWithComment",
+    preprocessed_contents_source_line_index:
+      "preprocessedContentsSourceLineIndex",
+    rows_with_timemarkers_handled: "rowsWithTimeMarkersHandled",
+    source_line: "sourceLine",
+    time_raw: "timeRaw",
+    ts_is_faked: "tsIsFaked",
+  };
+  const migrateValue = (v, key = null) => {
+    if (v instanceof Array) {
+      return v.map((el) => migrateValue(el));
+    } else {
+      if (typeof v === "object") {
+        return migrateProcessingErrorsObject(v);
+      } else {
+        if (typeof v === "string") {
+          if (key === "ts") {
+            return parseInt(v, 10);
+          } else {
+            return v
+              .replace("timeReportCsv-", "timeReportData-")
+              .replace("ent to not_parsed", "ent to notParsed");
+          }
+        } else {
+          return v;
+        }
+      }
+    }
+  };
+  const migrateProcessingErrorsObject = v => {
+    if (v === undefined || v === null) {
+      return v;
+    }
+    if (typeof v === "object") {
+      const migratedObj = {};
+      const keys = Object.keys(v);
+      for (const key of keys) {
+        const migratedNameOfKey = keyRenames[key] ? keyRenames[key] : key;
+        migratedObj[migratedNameOfKey] = migrateValue(v[key], key);
+      }
+      return migratedObj;
+    } else {
+      return v;
+    }
+  };
+  const expectedProcessingErrors = migrateProcessingErrorsObject(
+    expectedProcessingErrorsOriginal,
+  );
 
   try {
     processedTimeSpendingLog = getProcessedTimeSpendingLog(timeSpendingLogPath);
@@ -230,20 +295,23 @@ const testCorrectlyReportedProcessingErrors: Macro = (
       );
       // t.log(e.processedTimeSpendingLog.getTimeLogParser().preProcessedContentsSourceLineContentsSourceLineMap);
 
-      errorsJson = prettyJson(e.processedTimeSpendingLog.getProcessingErrors());
+      const encounteredProcessingErrorsOriginal = e.processedTimeSpendingLog.getProcessingErrors();
+      encounteredProcessingErrors = migrateProcessingErrorsObject(
+        encounteredProcessingErrorsOriginal,
+      );
 
       // To update all existing (when having changed the error log format for instance)
       /*
       file_put_contents(
-        processingErrorsJsonFilePath,
-        errorsJson,
+        expectedProcessingErrorsJsonFilePath,
+        prettyJson(encounteredProcessingErrors),
       );
       */
 
       // To make it easier to update with correct contents for the first time
       file_put_contents(
         timeSpendingLogPath + ".latest-run.processing-errors.json",
-        errorsJson,
+        prettyJson(encounteredProcessingErrors),
       );
     } else {
       throw e;
@@ -252,28 +320,24 @@ const testCorrectlyReportedProcessingErrors: Macro = (
 
   file_put_contents(
     timeSpendingLogPath + ".latest-run.timeReportCsv.csv",
-    processedTimeSpendingLog.timeReportCsv,
+    processedTimeSpendingLog.getTimeLogProcessor().timeReportCsv,
   );
   // Save preProcessedContents in order to make debugging easier
   file_put_contents(
     timeSpendingLogPath + ".latest-run.preProcessedContents",
-    processedTimeSpendingLog.preProcessedContents,
+    processedTimeSpendingLog.getTimeLogProcessor().preProcessedContents,
   );
   // Save processedLogContentsWithTimeMarkers in order to make debugging easier
   file_put_contents(
     timeSpendingLogPath + ".latest-run.processedLogContentsWithTimeMarkers",
-    processedTimeSpendingLog.processedLogContentsWithTimeMarkers,
+    processedTimeSpendingLog.getTimeLogProcessor().contentsWithTimeMarkers,
   );
 
   if (thrownException) {
-    const processingErrorsJsonFileContents = file_get_contents(
-      processingErrorsJsonFilePath,
-    );
     t.deepEqual(
-      errorsJson,
-      processingErrorsJsonFileContents,
-      "Expected error json matches actual error json for " +
-        timeSpendingLogPath,
+      encounteredProcessingErrors,
+      expectedProcessingErrors,
+      "Expected errors matches actual errors for " + timeSpendingLogPath,
     );
   }
 
