@@ -90,7 +90,7 @@ export class TimeLogProcessor {
   public timeReportData: any = {};
   public sessionStarts: any[] = [];
   public sessions: TimeLogSession[] = [];
-  public categories: any[] = [];
+  public categories: string[] = [];
   public timeReportSourceComments: TimeReportSourceComment[] = [];
   public metadataGenerateTimeReport: {
     firstDateFound: any;
@@ -100,7 +100,7 @@ export class TimeLogProcessor {
   // Metadata arrays
   public notParsedAddTimeMarkersParsePreProcessedContents: RowMetadata[] = [];
   public notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput: RowMetadata[] = [];
-  public notParsedTimeReport: RowMetadata[] = [];
+  public notParsedTimeReport: string[] = [];
   public rowsWithTimeMarkers: RowMetadata[] = [];
   public readonly preProcessedContentsSourceLineContentsSourceLineMap: any = {};
   public debugOriginalUnsortedRows?: RowMetadata[] = [];
@@ -198,18 +198,16 @@ export class TimeLogProcessor {
 
   public generateTimeReport(contentsWithTimeMarkers: string) {
     this.timeLogParser.lastKnownTimeZone = this.tzFirst;
-    let timeReportCsv = "";
     const times = [];
 
-    if (!this.categories) {
+    if (this.categories.length === 0) {
       this.detectCategories(contentsWithTimeMarkers);
     }
 
-    const lines = textIntoLinesArray(contentsWithTimeMarkers);
+    const lines: string[] = textIntoLinesArray(contentsWithTimeMarkers);
     let category = "Unspecified";
 
-    for (const lineno of Object.keys(lines)) {
-      const line = lines[lineno];
+    for (const line of lines) {
       const trimmedLine = line.trim();
 
       // skip empty rows
@@ -247,8 +245,11 @@ export class TimeLogProcessor {
       const dateRaw = parts.shift();
       const lineWithoutDate = parts.join(",");
 
-      // Special care is necessary here - ts is already in UTC, so we parse it as such, but we keep lastKnownTimeZone since we want to know the source row's timezone
-      const _ = this.timeLogParser.lastKnownTimeZone;
+      // Special care is necessary here - ts is already in UTC, so we parse it as such, but we keep
+      // lastKnownTimeZone since we want to know the source row's timezone
+      const _ = this.timeLogParser.lastKnownTimeZone
+        ? cloneVariable(this.timeLogParser.lastKnownTimeZone)
+        : undefined;
       this.timeLogParser.lastKnownTimeZone = "UTC";
       const { metadata } = this.timeLogParser.detectTimeStamp(dateRaw);
       const { ts, date /*, datetime*/ } = this.timeLogParser.interpretTsAndDate(
@@ -300,14 +301,16 @@ export class TimeLogProcessor {
       let text = parts.join("min");
       invalid = !text;
 
+      // console.debug("generateTimeReport - ", {date, invalid, line, metadata, text, time, ts});
+
       if (invalid) {
         text = "<empty log item>";
         // var_dump($first, $parts, $line); die();
-        // $this.notParsedTimeReport[] = $line; continue;
+        // this.notParsedTimeReport.push(line);continue;
       }
 
       if (!times[date]) {
-        times[date] = [];
+        times[date] = {};
       }
 
       if (!times[date].text) {
@@ -338,11 +341,117 @@ export class TimeLogProcessor {
       this.timeReportSourceComments.push(sourceComment);
     }
 
+    // console.debug("generateTimeReport - times array result", { times });
+
     // Fill out and sort the times-array
 
-    this.timeReportData = this.addZeroFilledDates(times);
+    this.timeReportData = this.addNullFilledDates(times);
 
-    // print in a csv-format:
+    // console.debug("generateTimeReport - this.timeReportData", this.timeReportData,);
+
+    // print this.timeReportData in a csv-format:
+
+    this.timeReportCsv = this.generateTimeReportCsv();
+  }
+
+  public addNullFilledDates(times) {
+    // console.debug("addNullFilledDates - { times }", { times });
+
+    this.metadataGenerateTimeReport = this.findFirstAndLastDates(times);
+
+    const { firstDateFound, lastDateFound } = this.metadataGenerateTimeReport;
+
+    // console.debug("addNullFilledDates - { firstDateFound, lastDateFound }", { firstDateFound, lastDateFound });
+
+    // Check if no times were found...
+    if (!firstDateFound) {
+      return [];
+    }
+
+    const timesWithNullFilledDates = this.addNullFilledDatesBetweenSpecificDates(
+      times,
+      firstDateFound,
+      lastDateFound,
+    );
+
+    // console.debug("addNullFilledDates - { timesWithNullFilledDates }", { timesWithNullFilledDates });
+
+    return timesWithNullFilledDates;
+  }
+
+  public findFirstAndLastDates(times) {
+    // Find time span:
+    let firstDateFound;
+    let lastDateFound;
+    const timezone = new DateTimeZone("UTC");
+
+    for (const date of Object.keys(times)) {
+      const dateWithoutTime = DateTime.createFromFormat(
+        "Y-m-d H:i:s",
+        date + " 00:00:00",
+        timezone,
+      );
+
+      if (dateWithoutTime) {
+        if (!firstDateFound) {
+          firstDateFound = dateWithoutTime;
+        }
+
+        if (!lastDateFound) {
+          lastDateFound = dateWithoutTime;
+        }
+
+        if (dateWithoutTime.getTimestamp() < firstDateFound.getTimestamp()) {
+          firstDateFound = dateWithoutTime;
+        }
+
+        if (dateWithoutTime.getTimestamp() > lastDateFound.getTimestamp()) {
+          lastDateFound = dateWithoutTime;
+        }
+      }
+    }
+
+    return {
+      firstDateFound,
+      lastDateFound,
+    };
+  }
+
+  public addNullFilledDatesBetweenSpecificDates(
+    timesArrayBeforePadding,
+    fromDate: DateTime,
+    toDate: DateTime,
+  ) {
+    const timezone = new DateTimeZone("UTC");
+
+    const interval = {
+      /* tslint:disable:object-literal-sort-keys */
+      start: fromDate.getDate(),
+      end: toDate.getDate(),
+      /* tslint:enable:object-literal-sort-keys */
+    };
+    // console.debug("addNullFilledDatesBetweenSpecificDates - { timesArrayBeforePadding, interval, fromDate, toDate }", { timesArrayBeforePadding, interval, fromDate, toDate });
+
+    const dates = eachDayOfIntervalUTC(interval);
+    // console.debug({ dates });
+
+    const timesWithNullFilledDates = {};
+
+    for (const date of dates) {
+      const dt = new DateTime(date, timezone);
+      // console.debug({ dt });
+      const xday = dt.format("Y-m-d");
+      timesWithNullFilledDates[xday] =
+        timesArrayBeforePadding[xday] !== undefined
+          ? timesArrayBeforePadding[xday]
+          : null;
+    }
+
+    return timesWithNullFilledDates;
+  }
+
+  public generateTimeReportCsv() {
+    let timeReportCsv = "";
 
     timeReportCsv +=
       "Date;" +
@@ -398,83 +507,7 @@ export class TimeLogProcessor {
     }
     */
 
-    this.timeReportCsv = timeReportCsv;
-  }
-
-  public addZeroFilledDates(times) {
-    // Find time span:
-    let firstDateFound;
-    let lastDateFound;
-    const originalTimesArray = cloneVariable(times);
-    times = {};
-    const timezone = new DateTimeZone("UTC");
-
-    for (const date of Object.keys(originalTimesArray)) {
-      const hours = originalTimesArray[date];
-      const dateWithoutTime = DateTime.createFromFormat(
-        "Y-m-d H:i:s",
-        date + " 00:00:00",
-        timezone,
-      );
-
-      if (dateWithoutTime) {
-        if (!firstDateFound) {
-          firstDateFound = dateWithoutTime;
-        }
-
-        if (!lastDateFound) {
-          lastDateFound = dateWithoutTime;
-        }
-
-        if (dateWithoutTime.getTimestamp() < firstDateFound.getTimestamp()) {
-          firstDateFound = dateWithoutTime;
-        }
-
-        if (dateWithoutTime.getTimestamp() > lastDateFound.getTimestamp()) {
-          lastDateFound = dateWithoutTime;
-        }
-
-        times[dateWithoutTime.format("Y-m-d")] = hours;
-      }
-    }
-
-    this.metadataGenerateTimeReport = {
-      firstDateFound,
-      lastDateFound,
-    };
-
-    // Check if no times were found...
-    if (!firstDateFound) {
-      return [];
-    }
-
-    const interval = {
-      /* tslint:disable:object-literal-sort-keys */
-      start: firstDateFound.date,
-      end: lastDateFound.date,
-      /* tslint:enable:object-literal-sort-keys */
-    };
-    // console.debug({ times, interval, firstDateFound, lastDateFound });
-
-    const dates = eachDayOfIntervalUTC(interval);
-    // console.debug({ dates });
-
-    const timesArrayBeforePadding = cloneVariable(times);
-    times = {};
-
-    for (const date of dates) {
-      const dt = new DateTime(date, timezone);
-      // console.debug({ dt });
-      const xday = dt.format("Y-m-d");
-      times[xday] =
-        timesArrayBeforePadding[xday] !== undefined
-          ? timesArrayBeforePadding[xday]
-          : 0;
-    }
-
-    // console.debug({ times });
-
-    return times;
+    return timeReportCsv;
   }
 
   public getTimeLogMetadata() {
@@ -1484,7 +1517,7 @@ export class TimeLogProcessor {
     this.categories = [];
     const lines = textIntoLinesArray(contentsWithTimeMarkers);
 
-    for (const line of Object.values(lines)) {
+    for (const line of lines) {
       const trimmedLine = line.trim();
 
       // Skip empty rows
@@ -1497,6 +1530,10 @@ export class TimeLogProcessor {
         const categoryNeedle = str_replace(".::", "", trimmedLine).trim();
         this.categories.push(categoryNeedle);
       }
+    }
+
+    if (this.categories.length === 0) {
+      this.categories.push("Uncategorized");
     }
   }
 

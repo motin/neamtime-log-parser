@@ -33,43 +33,43 @@ const testDetectStartStopLinesCorrectlyData = () => {
 };
 */
 
-const testAddZeroFilledDates: Macro = (
+const testAddNullFilledDates: Macro = (
   t: ExecutionContext,
   times,
   expectedReturnValue,
 ) => {
   const timeLogProcessor = new TimeLogProcessor();
-  const result = timeLogProcessor.addZeroFilledDates(times);
+  const result = timeLogProcessor.addNullFilledDates(times);
   t.deepEqual(
     expectedReturnValue,
     result,
-    "TimeLogProcessor->addZeroFilledDates() behaves as expected",
+    "TimeLogProcessor->addNullFilledDates() behaves as expected",
   );
 };
 
-const testAddZeroFilledDatesData = () => {
+const testAddNullFilledDatesData = () => {
   return [
     [
       {
         "2013-03-28": "foo",
-        "2013-04-02": "foo",
+        "2013-04-02": ["foo", "bar"],
       },
       {
         "2013-03-28": "foo",
-        "2013-03-29": 0,
-        "2013-03-30": 0,
-        "2013-03-31": 0,
-        "2013-04-01": 0,
-        "2013-04-02": "foo",
+        "2013-03-29": null,
+        "2013-03-30": null,
+        "2013-03-31": null,
+        "2013-04-01": null,
+        "2013-04-02": ["foo", "bar"],
       },
     ],
   ];
 };
 
-testAddZeroFilledDatesData().forEach((testData, index) => {
+testAddNullFilledDatesData().forEach((testData, index) => {
   test(
-    "testAddZeroFilledDates - " + index,
-    testAddZeroFilledDates,
+    "testAddNullFilledDates - " + index,
+    testAddNullFilledDates,
     testData[0],
     testData[1],
   );
@@ -307,5 +307,74 @@ testAddTimeMarkersData().forEach((testData, index) => {
     testAddTimeMarkers,
     testData[0],
     testData[1],
+  );
+});
+
+const testGenerateTimeReport: Macro = (
+  t: ExecutionContext,
+  contentsWithTimeMarkers,
+  expectedCategories,
+  expectedTimeReportData,
+) => {
+  const timeLogProcessor = new TimeLogProcessor();
+  timeLogProcessor.generateTimeReport(contentsWithTimeMarkers);
+  /*
+  t.log("timeLogProcessor.categories", timeLogProcessor.categories);
+  t.log("timeLogProcessor.timeReportData", timeLogProcessor.timeReportData);
+  t.log(
+    "timeLogProcessor.metadataGenerateTimeReport",
+    timeLogProcessor.metadataGenerateTimeReport,
+  );
+  t.log("timeLogProcessor.timeReportCsv", timeLogProcessor.timeReportCsv);
+  t.log(
+    "timeLogProcessor.timeReportSourceComments",
+    timeLogProcessor.timeReportSourceComments,
+  );
+  */
+  t.deepEqual(
+    timeLogProcessor.categories,
+    expectedCategories,
+    "TimeLogProcessor->generateTimeReport() behaves as expected",
+  );
+  t.deepEqual(
+    timeLogProcessor.timeReportData,
+    expectedTimeReportData,
+    "TimeLogProcessor->generateTimeReport() behaves as expected",
+  );
+};
+
+const testGenerateTimeReportData = () => {
+  return [
+    [
+      ".:: Uncategorized" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "\tstart 2019-01-05 (+0200) 08:00 {2019-01-05 06:00:00}" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "\t2019-01-05 06:50, 50min foo" +
+        LogParser.NL_NIX +
+        "\t2019-01-05 10:15, 3h25min bar" +
+        LogParser.NL_NIX,
+      ["Uncategorized"],
+      {
+        "2019-01-05": {
+          Uncategorized: 4.25,
+          text: ["foo", "bar"],
+        },
+      },
+    ],
+  ];
+};
+
+testGenerateTimeReportData().forEach((testData, index) => {
+  test(
+    "testGenerateTimeReport - " + index,
+    testGenerateTimeReport,
+    testData[0],
+    testData[1],
+    testData[2],
   );
 });
