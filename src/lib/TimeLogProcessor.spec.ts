@@ -126,15 +126,36 @@ testPreProcessContentsData().forEach((testData, index) => {
 const testParsePreProcessedContents: Macro = (
   t: ExecutionContext,
   preProcessedContents,
+  expectedNotParsedAddTimeMarkersParsePreProcessedContents,
   expectedRowsWithTimeMarkers,
 ) => {
   const timeLogProcessor = new TimeLogProcessor();
   timeLogProcessor.parsePreProcessedContents(preProcessedContents);
-  // t.log("timeLogProcessor.preProcessedContentsSourceLineContentsSourceLineMap", timeLogProcessor.preProcessedContentsSourceLineContentsSourceLineMap)
+  t.log(
+    "timeLogProcessor.preProcessedContentsSourceLineContentsSourceLineMap",
+    timeLogProcessor.preProcessedContentsSourceLineContentsSourceLineMap,
+  );
+  t.log(
+    "timeLogProcessor.debugOriginalUnsortedRows",
+    timeLogProcessor.debugOriginalUnsortedRows,
+  );
+  t.log(
+    "timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents",
+    timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents,
+  );
+  t.log(
+    "timeLogProcessor.rowsWithTimeMarkers",
+    timeLogProcessor.rowsWithTimeMarkers,
+  );
+  t.deepEqual(
+    timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents,
+    expectedNotParsedAddTimeMarkersParsePreProcessedContents,
+    "TimeLogProcessor->parsePreProcessedContents() behaves as expected in regards to non-parsed contents",
+  );
   t.deepEqual(
     timeLogProcessor.rowsWithTimeMarkers,
     expectedRowsWithTimeMarkers,
-    "TimeLogProcessor->parsePreProcessedContents() behaves as expected",
+    "TimeLogProcessor->parsePreProcessedContents() behaves as expected in regards to parsed contents",
   );
 };
 
@@ -147,15 +168,80 @@ const testParsePreProcessedContentsData = () => {
         LogParser.NL_NIX +
         "2019-01-05 (+0200) 08:50, foo" +
         LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
+        "2019-01-05 (+0200) 12:15, bar" +
+        LogParser.NL_NIX +
+        "" +
+        LogParser.NL_NIX +
         "paus->" +
         LogParser.NL_NIX,
-      ["foo"],
+      [],
+      [
+        {
+          date: "2019-01-05",
+          dateRaw: "start 2019-01-05 (+0200) 08:00",
+          formattedUtcDate: "2019-01-05 06:00:00",
+          highlightWithNewlines: true,
+          lastInterpretTsAndDateErrorMessage: "",
+          lastKnownTimeZone: "",
+          lastParseLogCommentErrorMessage: "",
+          lastSetTsAndDateErrorMessage: "Timestamp not found",
+          lastUsedTimeZone: "",
+          line: "start 2019-01-05 (+0200) 08:00",
+          lineWithComment: "start 2019-01-05 (+0200) 08:00",
+          log: [
+            "Found a valid timestamp in probable start/pause-row... interpreted as start/pause-row...",
+          ],
+          preprocessedContentsSourceLineIndex: 0,
+          rowsWithTimeMarkersHandled: 0,
+          sourceLine: undefined,
+          ts: 1546668000,
+          tsIsFaked: false,
+        },
+        {
+          date: "2019-01-05",
+          dateRaw: "2019-01-05 (+0200) 08:50",
+          durationSinceLast: 0,
+          formattedUtcDate: "2019-01-05 06:50",
+          lastInterpretTsAndDateErrorMessage: "",
+          lastKnownTimeZone: "+02:00",
+          lastParseLogCommentErrorMessage: "",
+          lastSetTsAndDateErrorMessage: "",
+          lastUsedTimeZone: "+02:00",
+          line: "2019-01-05 (+0200) 08:50, foo",
+          lineWithComment: "2019-01-05 (+0200) 08:50, foo",
+          log: [],
+          preprocessedContentsSourceLineIndex: 2,
+          rowsWithTimeMarkersHandled: 0,
+          sourceLine: undefined,
+          ts: 1546671000,
+        },
+        {
+          date: "2019-01-05",
+          dateRaw: "2019-01-05 (+0200) 12:15",
+          durationSinceLast: 12300,
+          formattedUtcDate: "2019-01-05 10:15",
+          lastInterpretTsAndDateErrorMessage: "",
+          lastKnownTimeZone: "+02:00",
+          lastParseLogCommentErrorMessage: "",
+          lastSetTsAndDateErrorMessage: "",
+          lastUsedTimeZone: "+02:00",
+          line: "2019-01-05 (+0200) 12:15, bar",
+          lineWithComment: "2019-01-05 (+0200) 12:15, bar",
+          log: [],
+          preprocessedContentsSourceLineIndex: 4,
+          rowsWithTimeMarkersHandled: 1,
+          sourceLine: undefined,
+          ts: 1546683300,
+        },
+      ],
     ],
   ];
 };
 
 testParsePreProcessedContentsData().forEach((testData, index) => {
-  test(
+  test.only(
     "testParsePreProcessedContents - " + index,
     testParsePreProcessedContents,
     testData[0],

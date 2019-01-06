@@ -35,6 +35,7 @@ export interface RowMetadata {
   formattedUtcDate: string;
   lastInterpretTsAndDateErrorMessage: any;
   lastKnownTimeZone: any;
+  lastParseLogCommentErrorMessage: any;
   lastSetTsAndDateErrorMessage: any;
   lastUsedTimeZone: any;
   line: any;
@@ -97,7 +98,8 @@ export class TimeLogProcessor {
   };
 
   // Metadata arrays
-  public notParsedAddTimeMarkers: RowMetadata[] = [];
+  public notParsedAddTimeMarkersParsePreProcessedContents: RowMetadata[] = [];
+  public notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput: RowMetadata[] = [];
   public notParsedTimeReport: RowMetadata[] = [];
   public rowsWithTimeMarkers: RowMetadata[] = [];
   public readonly preProcessedContentsSourceLineContentsSourceLineMap: any = {};
@@ -110,7 +112,7 @@ export class TimeLogProcessor {
   private timeLogParser: TimeLogParser;
 
   // Misc
-  private readonly collectDebugInfo: boolean = false;
+  private readonly collectDebugInfo: boolean = true; // Enable temporarily during development only
 
   // Probably unused / abandoned already in PHP era:
   // private reservedWords;
@@ -128,13 +130,20 @@ export class TimeLogProcessor {
     // Sets this.rowsWithTimeMarkers
     this.parsePreProcessedContents(this.preProcessedContents);
 
+    // Uses this.rowsWithTimeMarkers to generate a textual representation of the parsed rows
     this.contentsWithTimeMarkers = this.generateStructuredTimeMarkedOutputBasedOnParsedRowsWithTimeMarkers(
       this.rowsWithTimeMarkers,
     );
   }
 
+  /**
+   * TODO: Support multiple errors per source line
+   */
   public notParsedAddTimeMarkersErrorSummary() {
-    if (!this.notParsedAddTimeMarkers) {
+    if (
+      !this.notParsedAddTimeMarkersParsePreProcessedContents &&
+      !this.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput
+    ) {
       throw new TimeLogParsingException(
         "Can not summarize not-parsed errors without any unparsed contents",
       );
@@ -142,7 +151,22 @@ export class TimeLogProcessor {
 
     const summary = {};
 
-    for (const v of Object.values(this.notParsedAddTimeMarkers)) {
+    for (const v of Object.values(
+      this.notParsedAddTimeMarkersParsePreProcessedContents,
+    )) {
+      if (v && v.sourceLine) {
+        summary[v.sourceLine] = v;
+      } else {
+        throw new TimeLogParsingException(
+          "The unparsed contents did not contain information about the source line",
+          v,
+        );
+      }
+    }
+
+    for (const v of Object.values(
+      this.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput,
+    )) {
       if (v && v.sourceLine) {
         summary[v.sourceLine] = v;
       } else {
@@ -171,15 +195,6 @@ export class TimeLogProcessor {
 
     return summary;
   }
-
-  /*
-    // Metadata arrays
-  private notParsedAddTimeMarkers: RowMetadata[] = [];
-  private notParsedTimeReport: RowMetadata[] = [];
-  private rowsWithTimeMarkers: RowMetadata[] = [];
-
-
-   */
 
   public generateTimeReport(
     contentsWithTimeMarkers: string, // Fill out and sort the times-array // print in a csv-format: // var_dump($times);
@@ -647,6 +662,7 @@ export class TimeLogProcessor {
         continue;
       }
 
+      // TODO: Use the timeLogParser.tokens().start array
       if (strpos(trimmedLine, "start") === 0) {
         nextNeedToBeStart = false;
       }
@@ -844,12 +860,15 @@ export class TimeLogProcessor {
         .lastSetTsAndDateErrorMessage;
       const lastInterpretTsAndDateErrorMessage = this.timeLogParser
         .lastInterpretTsAndDateErrorMessage;
+      const lastParseLogCommentErrorMessage = this.timeLogParser
+        .lastParseLogCommentErrorMessage;
       const metadata: RowMetadata = {
         date,
         dateRaw,
         formattedUtcDate,
         lastInterpretTsAndDateErrorMessage,
         lastKnownTimeZone,
+        lastParseLogCommentErrorMessage,
         lastSetTsAndDateErrorMessage,
         lastUsedTimeZone,
         line,
@@ -861,7 +880,7 @@ export class TimeLogProcessor {
         ts,
       };
 
-      // If lastKnownTimeZone and lastUsedTimeZone are different: Send to this.notParsedAddTimeMarkers but parse anyway (so that general parsing goes through but that the log is not considered correct)
+      // If lastKnownTimeZone and lastUsedTimeZone are different: Send to this.notParsedAddTimeMarkersParsePreProcessedContents but parse anyway (so that general parsing goes through but that the log is not considered correct)
       if (
         this.timeLogParser.interpretLastKnownTimeZone() !==
         this.timeLogParser.lastUsedTimeZone
@@ -873,7 +892,7 @@ export class TimeLogProcessor {
           }') encountered when parsing a row (source line: ${sourceLine}). Not treating this row as valid time-marked row`,
         );
         metadata.log.push("Sent to notParsed in " + methodName);
-        this.notParsedAddTimeMarkers.push(metadata);
+        this.notParsedAddTimeMarkersParsePreProcessedContents.push(metadata);
       }
 
       // Default
@@ -1050,7 +1069,7 @@ export class TimeLogProcessor {
       probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = false;
       // To easily see patterns amongst these lines
       metadata.log.push("sent to notParsed in " + methodName);
-      this.notParsedAddTimeMarkers.push(metadata);
+      this.notParsedAddTimeMarkersParsePreProcessedContents.push(metadata);
     }
 
     return { probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp };
@@ -1139,7 +1158,7 @@ export class TimeLogProcessor {
       } else {
         // To easily see patterns amongst these lines
         metadata.log.push("Sent to notParsed in " + methodName);
-        this.notParsedAddTimeMarkers.push(metadata);
+        this.notParsedAddTimeMarkersParsePreProcessedContents.push(metadata);
       }
     }
 
@@ -1162,7 +1181,7 @@ export class TimeLogProcessor {
 
       // To easily see patterns amongst these lines
       metadata.log.push("Sent to notParsed in " + methodName);
-      this.notParsedAddTimeMarkers.push(metadata);
+      this.notParsedAddTimeMarkersParsePreProcessedContents.push(metadata);
     }
 
     if (
@@ -1259,7 +1278,7 @@ export class TimeLogProcessor {
         `$previousRowWithTimeMarker line: ${previousRowWithTimeMarker.line}`,
       );
       metadata.log.push("sent to notParsed in processTheFirstRowOfALogComment");
-      this.notParsedAddTimeMarkers.push(metadata);
+      this.notParsedAddTimeMarkersParsePreProcessedContents.push(metadata);
     } else if (durationSinceLast > 24 * 60 * 60) {
       // Warn on unlikely large entries (> 24h) - likely typos
       // TODO: Make limit configurable
@@ -1268,7 +1287,7 @@ export class TimeLogProcessor {
         "excessive duration since last: " +
           this.timeLogParser.secondsToDuration(durationSinceLast),
       );
-      this.notParsedAddTimeMarkers.push(metadata);
+      this.notParsedAddTimeMarkersParsePreProcessedContents.push(metadata);
       isNewRowWithTimeMarker = true;
     } else {
       metadata.durationSinceLast = durationSinceLast;
@@ -1334,7 +1353,9 @@ export class TimeLogProcessor {
           metadata.log.push(
             "sent to notParsed in generateStructuredTimeMarkedOutput",
           );
-          this.notParsedAddTimeMarkers.push(metadata);
+          this.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput.push(
+            metadata,
+          );
         }
 
         const parts = metadata.line.split(",");
@@ -1358,7 +1379,9 @@ export class TimeLogProcessor {
           metadata.log.push(
             "sent to notParsed in generateStructuredTimeMarkedOutput",
           );
-          this.notParsedAddTimeMarkers.push(metadata);
+          this.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput.push(
+            metadata,
+          );
         }
 
         contentsWithTimeMarkers += parts.join(",");
@@ -1378,9 +1401,12 @@ export class TimeLogProcessor {
     }
 
     // Remove "pause->" from notParsed array
-    if (!!this.notParsedAddTimeMarkers) {
-      for (const k of Object.keys(this.notParsedAddTimeMarkers)) {
-        const metadata = this.notParsedAddTimeMarkers[k];
+    if (!!this.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput) {
+      for (const k of Object.keys(
+        this.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput,
+      )) {
+        const metadata = this
+          .notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput[k];
         const token = this.timeLogParser.startsWithOptionallySuffixedToken(
           metadata.line + "|$",
           "pause",
@@ -1388,7 +1414,9 @@ export class TimeLogProcessor {
         );
 
         if (token) {
-          delete this.notParsedAddTimeMarkers[k];
+          delete this.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput[
+            k
+          ];
         }
       }
     }

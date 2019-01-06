@@ -98,7 +98,12 @@ export class ProcessedTimeSpendingLog {
       }
     }
 
-    if (timeLogProcessor.notParsedAddTimeMarkers.length > 0) {
+    if (
+      timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents.length >
+        0 ||
+      timeLogProcessor.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput
+        .length > 0
+    ) {
       this.addError(
         "issues-during-initial-parsing",
         "The following content was not understood by the parser",
@@ -121,7 +126,12 @@ export class ProcessedTimeSpendingLog {
       timeLogProcessor.contentsWithTimeMarkers,
     );
 
-    if (!!timeLogProcessor.notParsedAddTimeMarkers) {
+    if (
+      timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents.length >
+        0 ||
+      timeLogProcessor.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput
+        .length > 0
+    ) {
       this.addError(
         "timeReportCsv-notParsedAddTimeMarkers",
         "Time Report was generated upon log contents which had non-understood parts",
@@ -137,7 +147,10 @@ export class ProcessedTimeSpendingLog {
     }
 
     this.processingDebugInfo = {
-      notParsedAddTimeMarkers: timeLogProcessor.notParsedAddTimeMarkers,
+      notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput:
+        timeLogProcessor.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput,
+      notParsedAddTimeMarkersParsePreProcessedContents:
+        timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents,
       notParsedTimeReport: timeLogProcessor.notParsedTimeReport,
       rowsWithTimeMarkers: timeLogProcessor.rowsWithTimeMarkers,
     };
