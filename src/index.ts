@@ -1,10 +1,5 @@
 import fs from "fs";
-import {
-  file_get_contents,
-  pathinfo,
-  PATHINFO_DIRNAME,
-  PATHINFO_FILENAME,
-} from "locutus/php/filesystem";
+import { file_get_contents, pathinfo } from "locutus/php/filesystem";
 import { str_replace } from "locutus/php/strings";
 import { glob, is_file } from "./lib/php-wrappers";
 import { ProcessedTimeSpendingLog } from "./lib/ProcessedTimeSpendingLog";
@@ -19,14 +14,20 @@ export const timeSpendingLogPathsInFolder = (
   pathToFolderWhereTsLogsReside, // handle bear-exported txt-files // pick up properly named files for parsing
 ) => {
   const timeSpendingLogTextPaths = glob(
-    pathToFolderWhereTsLogsReside + "/*.txt",
+    pathToFolderWhereTsLogsReside + "/**/*.txt",
   );
+  console.debug("timeSpendingLogTextPaths", timeSpendingLogTextPaths);
   for (const rawTimeSpendingLogPath of Object.values(
     timeSpendingLogTextPaths,
   )) {
     // first rename the file to make it shorter, and end with .tslog
-    const dirname = pathinfo(rawTimeSpendingLogPath, PATHINFO_DIRNAME);
-    const filename = pathinfo(rawTimeSpendingLogPath, PATHINFO_FILENAME);
+    const { dirname, filename } = pathinfo(rawTimeSpendingLogPath);
+    console.debug(
+      "rawTimeSpendingLogPath, dirname, filename",
+      rawTimeSpendingLogPath,
+      dirname,
+      filename,
+    );
 
     const _ = filename.split(" - ");
     const newFilename = _[0].trim();
@@ -35,7 +36,9 @@ export const timeSpendingLogPathsInFolder = (
     fs.renameSync(rawTimeSpendingLogPath, timeSpendingLogPath);
   }
 
-  const timeSpendingLogPaths = glob(pathToFolderWhereTsLogsReside + "/*.tslog");
+  const timeSpendingLogPaths = glob(
+    pathToFolderWhereTsLogsReside + "/**/*.tslog",
+  );
   return timeSpendingLogPaths;
 };
 
