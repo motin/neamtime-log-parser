@@ -1,4 +1,5 @@
 import test, { ExecutionContext, Macro } from "ava";
+import * as util from "util";
 import { LogParser } from "./LogParser";
 // import { DateTime, DateTimeZone } from "./php-wrappers";
 import { TimeLogProcessor } from "./TimeLogProcessor";
@@ -230,11 +231,11 @@ const testParsePreProcessedContents: Macro = (
     "timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents",
     timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents,
   );
+  */
   t.log(
     "timeLogProcessor.rowsWithTimeMarkers",
-    timeLogProcessor.rowsWithTimeMarkers,
+    util.inspect(timeLogProcessor.rowsWithTimeMarkers, { depth: 5 }),
   );
-  */
   t.deepEqual(
     timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents,
     expectedNotParsedAddTimeMarkersParsePreProcessedContents,
@@ -248,6 +249,7 @@ const testParsePreProcessedContents: Macro = (
 };
 
 const testParsePreProcessedContentsData = () => {
+  /* tslint:disable:object-literal-sort-keys */
   return [
     [
       "start 2019-01-05 (+0200) 08:00" +
@@ -270,7 +272,6 @@ const testParsePreProcessedContentsData = () => {
           date: "2019-01-05",
           dateRaw: "start 2019-01-05 (+0200) 08:00",
           formattedUtcDate: "2019-01-05 06:00:00",
-          highlightWithNewlines: true,
           lastInterpretTsAndDateErrorMessage: "",
           lastKnownTimeZone: "",
           lastParseLogCommentErrorMessage: "",
@@ -281,16 +282,28 @@ const testParsePreProcessedContentsData = () => {
           log: [
             "Found a valid timestamp in probable start/pause-row... interpreted as start/pause-row...",
           ],
+          parseLogCommentDetectTimeStampMetadata: {
+            log: ["Found a supported timestamp ('Y-m-d \\(O\\) H:i')"],
+            lastKnownsBeforeDetectTimeStamp: {
+              lastKnownDate: "",
+              lastKnownTimeZone: "",
+              lastUsedTimeZone: "",
+            },
+            dateRawFormat: "Y-m-d \\(O\\) H:i",
+            dateRaw: "2019-01-05 (+0200) 08:00",
+            timeZoneRaw: "+0200",
+            timeRaw: "08:00",
+          },
           preprocessedContentsSourceLineIndex: 0,
           rowsWithTimeMarkersHandled: 0,
           sourceLine: undefined,
           ts: 1546668000,
           tsIsFaked: false,
+          highlightWithNewlines: true,
         },
         {
           date: "2019-01-05",
           dateRaw: "2019-01-05 (+0200) 08:50",
-          durationSinceLast: 3000,
           formattedUtcDate: "2019-01-05 06:50",
           lastInterpretTsAndDateErrorMessage: "",
           lastKnownTimeZone: "+02:00",
@@ -300,15 +313,27 @@ const testParsePreProcessedContentsData = () => {
           line: "2019-01-05 (+0200) 08:50, foo",
           lineWithComment: "2019-01-05 (+0200) 08:50, foo",
           log: [],
+          parseLogCommentDetectTimeStampMetadata: {
+            log: ["Found a supported timestamp ('Y-m-d \\(O\\) H:i')"],
+            lastKnownsBeforeDetectTimeStamp: {
+              lastKnownDate: "2019-01-05",
+              lastKnownTimeZone: "+02:00",
+              lastUsedTimeZone: "+02:00",
+            },
+            dateRawFormat: "Y-m-d \\(O\\) H:i",
+            dateRaw: "2019-01-05 (+0200) 08:50",
+            timeZoneRaw: "+0200",
+            timeRaw: "08:50",
+          },
           preprocessedContentsSourceLineIndex: 2,
           rowsWithTimeMarkersHandled: 1,
           sourceLine: undefined,
           ts: 1546671000,
+          durationSinceLast: 3000,
         },
         {
           date: "2019-01-05",
           dateRaw: "2019-01-05 (+0200) 12:15",
-          durationSinceLast: 12300,
           formattedUtcDate: "2019-01-05 10:15",
           lastInterpretTsAndDateErrorMessage: "",
           lastKnownTimeZone: "+02:00",
@@ -318,16 +343,28 @@ const testParsePreProcessedContentsData = () => {
           line: "2019-01-05 (+0200) 12:15, bar",
           lineWithComment: "2019-01-05 (+0200) 12:15, bar",
           log: [],
+          parseLogCommentDetectTimeStampMetadata: {
+            log: ["Found a supported timestamp ('Y-m-d \\(O\\) H:i')"],
+            lastKnownsBeforeDetectTimeStamp: {
+              lastKnownDate: "2019-01-05",
+              lastKnownTimeZone: "+02:00",
+              lastUsedTimeZone: "+02:00",
+            },
+            dateRawFormat: "Y-m-d \\(O\\) H:i",
+            dateRaw: "2019-01-05 (+0200) 12:15",
+            timeZoneRaw: "+0200",
+            timeRaw: "12:15",
+          },
           preprocessedContentsSourceLineIndex: 4,
           rowsWithTimeMarkersHandled: 2,
           sourceLine: undefined,
           ts: 1546683300,
+          durationSinceLast: 12300,
         },
         {
           date: null,
           dateRaw: "pause->",
           formattedUtcDate: "2019-01-05 10:15:00",
-          highlightWithNewlines: true,
           lastInterpretTsAndDateErrorMessage: "",
           lastKnownTimeZone: "+02:00",
           lastParseLogCommentErrorMessage:
@@ -341,15 +378,18 @@ const testParsePreProcessedContentsData = () => {
             "Line: pause->",
             "Sent to notParsed in processNotTheFirstRowOfALogCommentAndProbableStartStopLine_notPauseWithWrittenDuration",
           ],
+          parseLogCommentDetectTimeStampMetadata: null,
           preprocessedContentsSourceLineIndex: 6,
           rowsWithTimeMarkersHandled: 3,
           sourceLine: undefined,
           ts: 1546683300,
           tsIsFaked: true,
+          highlightWithNewlines: true,
         },
       ],
     ],
   ];
+  /* tslint:enable:object-literal-sort-keys */
 };
 
 testParsePreProcessedContentsData().forEach((testData, index) => {

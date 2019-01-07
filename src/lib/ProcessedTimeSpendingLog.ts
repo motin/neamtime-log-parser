@@ -3,6 +3,7 @@ import { TimeLogParsingException } from "./exceptions/TimeLogParsingException";
 import { TimeSpendingLogProcessingErrorsEncounteredException } from "./exceptions/TimeSpendingLogProcessingErrorsEncounteredException";
 import { cloneVariable } from "./php-wrappers";
 import {
+  RowMetadata,
   TimeLogEntryWithMetadata,
   TimeLogProcessor,
   TimeLogSession,
@@ -242,7 +243,7 @@ export class ProcessedTimeSpendingLog {
 
   public parseDetectSessionsOneByOne(timeLogProcessor: TimeLogProcessor) {
     timeLogProcessor.sessions = [];
-    const starts: any[] = timeLogProcessor.sessionStarts;
+    const starts: RowMetadata[] = timeLogProcessor.sessionStarts;
 
     for (let k: number = 0; k < starts.length; k++) {
       const start = starts[k];

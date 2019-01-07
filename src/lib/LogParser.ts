@@ -1,7 +1,11 @@
 import { subMinutes } from "date-fns";
 import { join, str_replace, strpos } from "locutus/php/strings";
 import { InvalidDateTimeZoneException } from "./exceptions/InvalidDateTimeZoneException";
-import { DateTime, DateTimeZone } from "./php-wrappers";
+import {
+  DateTime,
+  DateTimeZone,
+  phpFormatStringContainsTimeZoneInformation,
+} from "./php-wrappers";
 /*
 import { is_null } from "locutus/php/var";
 */
@@ -293,6 +297,11 @@ export class LogParser {
     return seconds / 60;
   }
 
+  /**
+   * Side effects: Uses this.lastKnownTimeZone and sets this.lastUsedTimeZone, this.lastKnownDate and possibly this.lastKnownTimeZone
+   * @param dateRaw
+   * @param formatToUse
+   */
   public setTsAndDate(
     dateRaw: string,
     formatToUse: string,
@@ -362,8 +371,12 @@ export class LogParser {
         datetime = datetimeParseResult;
         this.lastKnownDate = datetime.format("Y-m-d");
         // trust that the last used time zone is the one that should be used for upcoming unzoned timestamps (allows for a zoned timestamp to function as a |tz: marker)
-        // TODO: This should only be set if the last used timezone was set from a zoned timestamp
-        this.lastKnownTimeZone = datetime.getTimezone().getName();
+
+        // Only set last known timezone if the last used timezone was set from a zoned timestamp
+        if (phpFormatStringContainsTimeZoneInformation(formatToUse)) {
+          this.lastKnownTimeZone = datetime.getTimezone().getName();
+        }
+
         // new day starts at 06.00 in the morning - arbitrarily decided as such TODO: Make configurable
         const midnightOffset = 6 * 60;
         // TODO: Possibly restore this (the ability to specify log entries using only dates without times), but then based on dateRaw lacking time-information instead of the parsed date object having time at midnight

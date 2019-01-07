@@ -246,7 +246,7 @@ const testCorrectlyReportedProcessingErrors: Macro = (
     date_raw: "dateRaw",
     date_raw_format: "dateRawFormat",
     date_raw_was_nonempty_before_detectTimeStamp:
-      "dateRawWasNonEmptyBeforeDetectTimeStamp",
+      "dateRawWasNonEmptyBeforeDetectTimestamp",
     formatted_date: "formattedUtcDate",
     highlight_with_newlines: "highlightWithNewlines",
     line_with_comment: "lineWithComment",

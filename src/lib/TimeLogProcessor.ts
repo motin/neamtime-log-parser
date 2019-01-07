@@ -19,7 +19,7 @@ import {
   mb_substr,
 } from "./php-wrappers";
 // import { str_hex, str_word_count_utf8, utf8_decode } from "./string-utils";
-import { TimeLogParser } from "./TimeLogParser";
+import { DetectTimeStampMetadata, TimeLogParser } from "./TimeLogParser";
 
 export interface TimeLogSession {
   timeReportSourceComments: TimeLogEntryWithMetadata[];
@@ -41,6 +41,7 @@ export interface RowMetadata {
   line: string;
   lineWithComment: string;
   log: string[];
+  parseLogCommentDetectTimeStampMetadata: DetectTimeStampMetadata;
   preprocessedContentsSourceLineIndex: number;
   rowsWithTimeMarkersHandled: number;
   sourceLine: number;
@@ -88,7 +89,7 @@ export class TimeLogProcessor {
   public contentsWithTimeMarkers: string = "";
   public timeReportCsv: string = "";
   public timeReportData: any = {};
-  public sessionStarts: any[] = [];
+  public sessionStarts: RowMetadata[] = [];
   public sessions: TimeLogSession[] = [];
   public categories: string[] = [];
   public timeReportSourceComments: TimeReportSourceComment[] = [];
@@ -948,6 +949,7 @@ export class TimeLogProcessor {
         // datetime,
         // lineWithoutDate,
         notTheFirstRowOfALogComment,
+        parseLogCommentDetectTimeStampMetadata,
       } = this.timeLogParser.parseLogComment(line);
 
       // $line = utf8_encode($line);
@@ -979,6 +981,7 @@ export class TimeLogProcessor {
         line,
         lineWithComment,
         log,
+        parseLogCommentDetectTimeStampMetadata,
         preprocessedContentsSourceLineIndex,
         rowsWithTimeMarkersHandled: cloneVariable(
           this.rowsWithTimeMarkersHandled,

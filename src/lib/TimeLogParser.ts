@@ -1,14 +1,18 @@
 import { str_replace, strpos } from "locutus/php/strings";
 import { is_null } from "locutus/php/var";
 import { LogParser } from "./LogParser";
-import { DateTime } from "./php-wrappers";
+import { cloneVariable, DateTime } from "./php-wrappers";
 
 export interface DetectTimeStampMetadata {
   timeRaw?: string | false;
-  lastKnownDate?: string;
+  lastKnownsBeforeDetectTimeStamp?: {
+    lastKnownDate: string;
+    lastKnownTimeZone: string;
+    lastUsedTimeZone: string;
+  };
   dateRaw?: string | false;
   dateRawFormat?: string | false;
-  dateRawWasNonemptyBeforeDetectTimestamp?: string;
+  dateRawWasNonEmptyBeforeDetectTimestamp?: string;
   dateRawWithApproxTokenInsteadOfMinutes?: string | false;
   debugRegexMatches?: any[];
   log?: string[];
@@ -22,6 +26,7 @@ export interface ParsedLogComment {
   lineWithoutDate: string;
   notTheFirstRowOfALogComment: boolean;
   datetime: DateTime;
+  parseLogCommentDetectTimeStampMetadata: DetectTimeStampMetadata;
 }
 
 export class TimeLogParser extends LogParser {
@@ -122,10 +127,16 @@ export class TimeLogParser extends LogParser {
     const metadata: DetectTimeStampMetadata = {
       log: [],
     };
-    metadata.lastKnownDate = this.lastKnownDate;
+    metadata.lastKnownsBeforeDetectTimeStamp = {
+      lastKnownDate: this.lastKnownDate,
+      lastKnownTimeZone: this.lastKnownTimeZone,
+      lastUsedTimeZone: this.lastUsedTimeZone,
+    };
 
     if (metadata.dateRaw) {
-      metadata.dateRawWasNonemptyBeforeDetectTimestamp = metadata.dateRaw;
+      metadata.dateRawWasNonEmptyBeforeDetectTimestamp = cloneVariable(
+        metadata.dateRaw,
+      );
     }
 
     /*
@@ -244,6 +255,11 @@ export class TimeLogParser extends LogParser {
     return durationSinceLast;
   }
 
+  /**
+   * Side effects: May use this.lastKnownDate
+   * @param dateRaw
+   * @param formatToUse
+   */
   public interpretTsAndDate(
     dateRaw,
     formatToUse,
@@ -358,6 +374,7 @@ export class TimeLogParser extends LogParser {
         datetime: null,
         lineWithoutDate,
         notTheFirstRowOfALogComment,
+        parseLogCommentDetectTimeStampMetadata: null,
         ts: 0,
       };
     }
@@ -382,16 +399,19 @@ export class TimeLogParser extends LogParser {
           datetime: null,
           lineWithoutDate,
           notTheFirstRowOfALogComment,
+          parseLogCommentDetectTimeStampMetadata: null,
           ts: 0,
         };
       }
     }
 
     // Detect and set any timestamp found in this dateRaw candidate
-    const { metadata } = this.detectTimeStamp(dateRaw);
+    const {
+      metadata: parseLogCommentDetectTimeStampMetadata,
+    } = this.detectTimeStamp(dateRaw);
     const { date, datetime, ts } = this.interpretTsAndDate(
       dateRaw,
-      metadata.dateRawFormat,
+      parseLogCommentDetectTimeStampMetadata.dateRawFormat,
     );
 
     // invalidate lines without a valid date
@@ -403,6 +423,7 @@ export class TimeLogParser extends LogParser {
       datetime,
       lineWithoutDate,
       notTheFirstRowOfALogComment,
+      parseLogCommentDetectTimeStampMetadata,
       ts,
     };
   }

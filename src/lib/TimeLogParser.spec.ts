@@ -49,7 +49,7 @@ const testDurationFromLastData = () => {
           lastSetTsAndDateErrorMessage: "Timestamp not found",
           lastKnownDate: "2017-12-12",
           lastInterpretTsAndDateErrorMessage: "",
-          dateRawWasNonemptyBeforeDetectTimestamp: "start 2017-12-12, 18:24ca",
+          dateRawWasNonEmptyBeforeDetectTimestamp: "start 2017-12-12, 18:24ca",
           dateRawFormat: "Y-m-d, H:i",
           timeRaw: "18:24ca",
           ts_is_faked: false,
