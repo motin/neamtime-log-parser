@@ -1,0 +1,87 @@
+{
+  "0": {
+    "ref": "issues-during-initial-parsing",
+    "message": "The following content was not understood by the parser",
+    "data": {
+      "15": {
+        "date": "2018-03-24",
+        "dateRaw": "2018-03-25, 02:00",
+        "formattedUtcDate": "2018-03-25 00:00",
+        "lastInterpretTsAndDateErrorMessage": "",
+        "lastKnownTimeZone": "Europe/Stockholm",
+        "lastParseLogCommentErrorMessage": "",
+        "lastSetTsAndDateErrorClass": "",
+        "lastSetTsAndDateErrorMessage": "",
+        "lastUsedTimeZone": "Europe/Stockholm",
+        "line": "2018-03-25, 02:00, at the time the clock goes back one hour",
+        "lineWithComment": "2018-03-25, 02:00, at the time the clock goes back one hour",
+        "log": [
+          "negative duration since last",
+          "Timestamp found: 2018-03-25 00:00:00 vs last found (based on duration since last which is -3480): 2018-03-25 00:58:00",
+          "$previousRowWithTimeMarker line: 2018-03-25, 02:58, still after dst has switched on",
+          "sent to notParsed in processTheFirstRowOfALogComment"
+        ],
+        "parseLogCommentDetectTimeStampMetadata": {
+          "log": [
+            "Found a supported timestamp ('Y-m-d, H:i')"
+          ],
+          "lastKnownsBeforeDetectTimeStamp": {
+            "lastKnownDate": "2018-03-25",
+            "lastKnownTimeZone": "Europe/Stockholm",
+            "lastUsedTimeZone": "Europe/Stockholm"
+          },
+          "dateRawFormat": "Y-m-d, H:i",
+          "dateRaw": "2018-03-25, 02:00",
+          "timeZoneRaw": false,
+          "timeRaw": "02:00"
+        },
+        "preprocessedContentsSourceLineIndex": 13,
+        "rowsWithTimeMarkersHandled": 5,
+        "sourceLine": 15,
+        "ts": 1521939600
+      },
+      "17": {
+        "date": "2018-03-24",
+        "dateRaw": "2018-03-25, 02:02",
+        "formattedUtcDate": "2018-03-25 00:02",
+        "lastInterpretTsAndDateErrorMessage": "",
+        "lastKnownTimeZone": "Europe/Stockholm",
+        "lastParseLogCommentErrorMessage": "",
+        "lastSetTsAndDateErrorClass": "",
+        "lastSetTsAndDateErrorMessage": "",
+        "lastUsedTimeZone": "Europe/Stockholm",
+        "line": "2018-03-25, 02:02, after the clock has gone back one hour",
+        "lineWithComment": "2018-03-25, 02:02, after the clock has gone back one hour",
+        "log": [
+          "negative duration since last",
+          "Timestamp found: 2018-03-25 00:02:00 vs last found (based on duration since last which is -3360): 2018-03-25 00:58:00",
+          "$previousRowWithTimeMarker line: 2018-03-25, 02:58, still after dst has switched on",
+          "sent to notParsed in processTheFirstRowOfALogComment"
+        ],
+        "parseLogCommentDetectTimeStampMetadata": {
+          "log": [
+            "Found a supported timestamp ('Y-m-d, H:i')"
+          ],
+          "lastKnownsBeforeDetectTimeStamp": {
+            "lastKnownDate": "2018-03-25",
+            "lastKnownTimeZone": "Europe/Stockholm",
+            "lastUsedTimeZone": "Europe/Stockholm"
+          },
+          "dateRawFormat": "Y-m-d, H:i",
+          "dateRaw": "2018-03-25, 02:02",
+          "timeZoneRaw": false,
+          "timeRaw": "02:02"
+        },
+        "preprocessedContentsSourceLineIndex": 15,
+        "rowsWithTimeMarkersHandled": 5,
+        "sourceLine": 17,
+        "ts": 1521939720
+      }
+    }
+  },
+  "1": {
+    "ref": "timeReportData-notParsedAddTimeMarkers",
+    "message": "Time Report was generated upon log contents which had non-understood parts",
+    "data": null
+  }
+}

@@ -1,0 +1,10 @@
+|tz:Europe/Stockholm
+
+start 2018-10-29, 02:58
+
+2018-10-29, 02:58, before dst switches on
+
+2018-10-29, 03:00, at the time dst switches on
+
+2018-10-29, 03:02, after dst has switched on
+paus->

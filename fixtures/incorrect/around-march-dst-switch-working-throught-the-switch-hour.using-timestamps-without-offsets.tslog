@@ -1,0 +1,18 @@
+|tz:Europe/Stockholm
+
+# this is not invalid per se, but given timestamps without offset-information we can't parse this
+
+start 2018-03-25, 01:58
+
+2018-03-25, 01:58, before dst switches on
+
+2018-03-25, 02:00, at the time dst switches on
+
+2018-03-25, 02:02, after dst has switched on
+
+2018-03-25, 02:58, still after dst has switched on
+
+2018-03-25, 02:00, at the time the clock goes back one hour
+
+2018-03-25, 02:02, after the clock has gone back one hour
+paus->
