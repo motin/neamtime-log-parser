@@ -134,6 +134,9 @@ export class DateTimeZone {
 
   public getTimeZoneInfo() {
     if (!this.timezoneInfo) {
+      if (!this.timezone) {
+        throw new InvalidDateTimeZoneException("Time zone not set");
+      }
       // Support ISO-style "timezones", representing known offsets
       const m = this.timezone.match(/^(\+|\-)?(\d\d):?(\d\d)?$/);
       if (m) {

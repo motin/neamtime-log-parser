@@ -496,7 +496,8 @@ export class TimeLogProcessor {
       for (const c of this.categories) {
         const hoursExact =
           hours !== null && undefined !== hours[c] ? hours[c] : 0;
-        // Mimic the same precision that PHP used to generate the fixture-csv:s
+        // TMP - Mimic the same precision that PHP used to generate the fixture-csv:s
+        // so that CSV comparisons pass until new CSV files are generated without this restriction
         const existingPrecision =
           hoursExact < 1
             ? hoursExact < 0.1

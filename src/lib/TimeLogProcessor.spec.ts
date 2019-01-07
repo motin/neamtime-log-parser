@@ -227,7 +227,6 @@ const testParsePreProcessedContents: Macro = (
     "timeLogProcessor.debugOriginalUnsortedRows",
     timeLogProcessor.debugOriginalUnsortedRows,
   );
-  */
   t.log(
     "timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents",
     util.inspect(
@@ -239,6 +238,7 @@ const testParsePreProcessedContents: Macro = (
     "timeLogProcessor.rowsWithTimeMarkers",
     util.inspect(timeLogProcessor.rowsWithTimeMarkers, { depth: 5 }),
   );
+  */
   t.deepEqual(
     timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents,
     expectedNotParsedAddTimeMarkersParsePreProcessedContents,
@@ -659,6 +659,7 @@ testParsePreProcessedContentsData().forEach((testData, index) => {
 const testAddTimeMarkers: Macro = (
   t: ExecutionContext,
   contents,
+  expectedNotParsedAddTimeMarkersParsePreProcessedContents,
   expectedContentsWithTimeMarkers,
 ) => {
   const timeLogProcessor = new TimeLogProcessor();
@@ -673,15 +674,27 @@ const testAddTimeMarkers: Macro = (
     "timeLogProcessor.debugOriginalUnsortedRows",
     timeLogProcessor.debugOriginalUnsortedRows,
   );
+  */
   t.log(
     "timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents",
-    timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents,
+    util.inspect(
+      timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents,
+      { depth: 5 },
+    ),
   );
   t.log(
     "timeLogProcessor.rowsWithTimeMarkers",
-    timeLogProcessor.rowsWithTimeMarkers,
+    util.inspect(timeLogProcessor.rowsWithTimeMarkers, { depth: 5 }),
   );
-  */
+  t.log(
+    "timeLogProcessor.contentsWithTimeMarkers",
+    timeLogProcessor.contentsWithTimeMarkers,
+  );
+  t.deepEqual(
+    timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents,
+    expectedNotParsedAddTimeMarkersParsePreProcessedContents,
+    "TimeLogProcessor->parsePreProcessedContents() behaves as expected in regards to non-parsed contents",
+  );
   t.deepEqual(
     timeLogProcessor.contentsWithTimeMarkers,
     expectedContentsWithTimeMarkers,
@@ -690,6 +703,7 @@ const testAddTimeMarkers: Macro = (
 };
 
 const testAddTimeMarkersData = () => {
+  /* tslint:disable:object-literal-sort-keys */
   return [
     [
       "start 2019-01-05 (+0200) 08:00" +
@@ -706,6 +720,7 @@ const testAddTimeMarkersData = () => {
         LogParser.NL_NIX +
         "pause->" +
         LogParser.NL_NIX,
+      [],
       ".:: Uncategorized" +
         LogParser.NL_NIX +
         "" +
@@ -744,6 +759,7 @@ const testAddTimeMarkersData = () => {
         LogParser.NL_NIX +
         "pause->" +
         LogParser.NL_NIX,
+      [],
       ".:: Uncategorized" +
         LogParser.NL_NIX +
         "" +
@@ -769,7 +785,93 @@ const testAddTimeMarkersData = () => {
         "" +
         LogParser.NL_NIX,
     ],
+    [
+      "start 2018-04-14 14:00ca\n" + "\n" + "15:00ca, foo\n" + "paus->",
+      [
+        {
+          date: "2018-04-14",
+          dateRaw: "start 2018-04-14 14:00ca",
+          formattedUtcDate: "2018-04-14 14:00:00",
+          lastInterpretTsAndDateErrorMessage: "",
+          lastKnownTimeZone: undefined,
+          lastParseLogCommentErrorMessage: "",
+          lastSetTsAndDateErrorClass: "InvalidDateTimeZoneException",
+          lastSetTsAndDateErrorMessage: "Time zone not set",
+          lastUsedTimeZone: "UTC",
+          line: "start 2018-04-14 14:00ca",
+          lineWithComment: "start 2018-04-14 14:00ca",
+          log: [
+            "Found a valid timestamp in probable start/pause-row... interpreted as start/pause-row...",
+            "Invalid timezone ('undefined') encountered when parsing a row (source line: 1). Not treating this row as valid time-marked row",
+            "lastSetTsAndDateErrorMessage: Time zone not set",
+            "Sent to notParsed in parsePreProcessedContents",
+          ],
+          parseLogCommentDetectTimeStampMetadata: {
+            log: ["Found a supported timestamp ('Y-m-d H:i')"],
+            lastKnownsBeforeDetectTimeStamp: {
+              lastKnownDate: "",
+              lastKnownTimeZone: undefined,
+              lastUsedTimeZone: "",
+            },
+            dateRawFormat: "Y-m-d H:i",
+            dateRaw: "2018-04-14 14:00ca",
+            timeZoneRaw: false,
+            timeRaw: "14:00ca",
+          },
+          preprocessedContentsSourceLineIndex: 0,
+          rowsWithTimeMarkersHandled: 0,
+          sourceLine: 1,
+          ts: 1523714400,
+          tsIsFaked: false,
+          highlightWithNewlines: true,
+        },
+        {
+          date: "2018-04-14",
+          dateRaw: "15:00ca",
+          formattedUtcDate: "2018-04-14 15:00",
+          lastInterpretTsAndDateErrorMessage: "",
+          lastKnownTimeZone: undefined,
+          lastParseLogCommentErrorMessage: "",
+          lastSetTsAndDateErrorClass: "InvalidDateTimeZoneException",
+          lastSetTsAndDateErrorMessage: "Time zone not set",
+          lastUsedTimeZone: "UTC",
+          line: "15:00ca, foo",
+          lineWithComment: "15:00ca, foo",
+          log: [
+            "Invalid timezone ('undefined') encountered when parsing a row (source line: 3). Not treating this row as valid time-marked row",
+            "lastSetTsAndDateErrorMessage: Time zone not set",
+            "Sent to notParsed in parsePreProcessedContents",
+          ],
+          parseLogCommentDetectTimeStampMetadata: {
+            log: ["Found a supported timestamp ('H:i')"],
+            lastKnownsBeforeDetectTimeStamp: {
+              lastKnownDate: "2018-04-14",
+              lastKnownTimeZone: undefined,
+              lastUsedTimeZone: "UTC",
+            },
+            dateRawFormat: "H:i",
+            timeZoneRaw: false,
+            timeRaw: "15:00ca",
+            dateRaw: "15:00ca",
+          },
+          preprocessedContentsSourceLineIndex: 2,
+          rowsWithTimeMarkersHandled: 1,
+          sourceLine: 3,
+          ts: 1523718000,
+          durationSinceLast: 3600,
+        },
+      ],
+      ".:: Uncategorized\n" +
+        "\n" +
+        "\tstart 2018-04-14 14:00ca {2018-04-14 14:00:00}\n" +
+        "\n" +
+        "\t2018-04-14 15:00, 0min foo\n" +
+        "\n" +
+        "\tpaus-> {2018-04-14 15:00:00}\n" +
+        "\n",
+    ],
   ];
+  /* tslint:enable:object-literal-sort-keys */
 };
 
 testAddTimeMarkersData().forEach((testData, index) => {
@@ -778,6 +880,7 @@ testAddTimeMarkersData().forEach((testData, index) => {
     testAddTimeMarkers,
     testData[0],
     testData[1],
+    testData[2],
   );
 });
 
