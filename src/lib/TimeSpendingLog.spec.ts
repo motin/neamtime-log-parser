@@ -60,6 +60,15 @@ test("there exists at least one incorrect time spending log fixture paths", (t: 
   t.true(paths.length > 0);
 });
 
+/**
+ * This test produces the .latest-run. artifacts in the fixtures folder
+ * and verifies that no processing errors were encountered, but it does
+ * not check the correctness of the generated time report against the
+ * existing csv file.
+ *
+ * @param t
+ * @param timeSpendingLogPath
+ */
 const testProcessAndAssertCorrectTimeSpendingLog: Macro = (
   t: ExecutionContext,
   timeSpendingLogPath: string,
@@ -173,6 +182,13 @@ correctTimeSpendingLogContents().forEach((testData, index) => {
   );
 });
 
+/**
+ * This test checks the correctness of the generated time report against the
+ * existing csv file without producing any artifacts in the fixtures folder.
+ *
+ * @param t
+ * @param timeSpendingLogPath
+ */
 const testCorrectTimeSpendingLogsCorrectness: Macro = (
   t: ExecutionContext,
   timeSpendingLogPath,
@@ -225,7 +241,7 @@ const testCorrectlyReportedProcessingErrors: Macro = (
     expectedProcessingErrorsJsonFileContents,
   );
 
-  // Temporarily normalize existing for better comparisons across versions
+  // Temporarily normalize existing error objects for better comparisons after recent refactoring
   const keyRenames = {
     date_raw: "dateRaw",
     date_raw_format: "dateRawFormat",

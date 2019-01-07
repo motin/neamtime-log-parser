@@ -83,7 +83,10 @@ const testPreProcessContents: Macro = (
   const timeLogProcessor = new TimeLogProcessor();
   timeLogProcessor.contents = contents;
   timeLogProcessor.preProcessContents();
-  // t.log("timeLogProcessor.preProcessedContentsSourceLineContentsSourceLineMap", timeLogProcessor.preProcessedContentsSourceLineContentsSourceLineMap)
+  /*
+  t.log("timeLogProcessor.preProcessedContentsSourceLineContentsSourceLineMap", timeLogProcessor.preProcessedContentsSourceLineContentsSourceLineMap)
+  t.log("timeLogProcessor.preProcessedContents", timeLogProcessor.preProcessedContents)
+  */
   t.deepEqual(
     timeLogProcessor.preProcessedContents,
     expectedPreProcessedContents,
@@ -124,6 +127,75 @@ const testPreProcessContentsData = () => {
         LogParser.NL_NIX +
         "pause->" +
         LogParser.NL_NIX,
+    ],
+    [
+      "start 2018-01-23, 12:10ca\n" +
+        "\n" +
+        "paus 2018-01-23, 16:58->18:37\n" +
+        "\n" +
+        "paus 2018-01-23, 19:36->2018-01-23, 19:45\n" +
+        "\n" +
+        "2018-01-23, 19:52, foo\n" +
+        "paus->2018-01-23, 19:53\n" +
+        "\n" +
+        "paus 2018-01-23, 19:55ca->2018-01-23, 19:59\n" +
+        "\n" +
+        "paus 1minca->2018-01-23, 20:03\n" +
+        "\n" +
+        "2018-01-23, 20:38, commit:\n" +
+        "foo\n" +
+        "\n" +
+        "paus->\n" +
+        "\n" +
+        "\n" +
+        "start 2018-01-26, 22:36\n" +
+        "\n" +
+        "paus 2minca\n" +
+        "\n" +
+        "2018-01-26, 22:49, foo\n" +
+        "\n" +
+        "paus->\n" +
+        "\n" +
+        "\n" +
+        "start 2018-01-27, 01:18ca\n" +
+        "\n" +
+        "2018-01-27, 01:20, foo\n" +
+        "paus->\n",
+      "start 2018-01-23, 12:10ca\n" +
+        "\n" +
+        "2018-01-23, 16:58, <just before paus>\n" +
+        "paus->18:37\n" +
+        "\n" +
+        "2018-01-23, 19:36, <just before paus>\n" +
+        "paus->2018-01-23, 19:45\n" +
+        "\n" +
+        "2018-01-23, 19:52, foo\n" +
+        "paus->2018-01-23, 19:53\n" +
+        "\n" +
+        "2018-01-23, 19:55, <just before paus>\n" +
+        "paus->2018-01-23, 19:59\n" +
+        "\n" +
+        "paus 1minca->2018-01-23, 20:03\n" +
+        "\n" +
+        "2018-01-23, 20:38, commit:\n" +
+        "foo\n" +
+        "\n" +
+        "paus->\n" +
+        "\n" +
+        "\n" +
+        "start 2018-01-26, 22:36\n" +
+        "\n" +
+        "paus 2minca\n" +
+        "\n" +
+        "2018-01-26, 22:49, foo\n" +
+        "\n" +
+        "paus->\n" +
+        "\n" +
+        "\n" +
+        "start 2018-01-27, 01:18ca\n" +
+        "\n" +
+        "2018-01-27, 01:20, foo\n" +
+        "paus->\n",
     ],
   ];
 };

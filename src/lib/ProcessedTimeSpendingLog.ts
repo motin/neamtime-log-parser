@@ -172,6 +172,8 @@ export class ProcessedTimeSpendingLog {
         timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents,
       notParsedTimeReport: timeLogProcessor.notParsedTimeReport,
       rowsWithTimeMarkers: timeLogProcessor.rowsWithTimeMarkers,
+      sessionStarts: timeLogProcessor.sessionStarts,
+      sessions: timeLogProcessor.sessions,
     };
 
     if (strpos(timeLogProcessor.contentsWithTimeMarkers, "{!}") !== false) {
@@ -260,7 +262,7 @@ export class ProcessedTimeSpendingLog {
 
         let stopLine;
         if (!nextStart) {
-          // do nothing, resulting in stopLine being undefined and thus all remaining lines are returned
+          stopLine = preProcessedLines.length;
         } else {
           stopLine = nextStart.preprocessedContentsSourceLineIndex - 1;
         }
@@ -362,6 +364,10 @@ export class ProcessedTimeSpendingLog {
 
       for (const date of Object.keys(timeReportData)) {
         const hoursOrHoursArrayByCategory = timeReportData[date];
+
+        if (hoursOrHoursArrayByCategory === null) {
+          continue;
+        }
 
         if (typeof hoursOrHoursArrayByCategory === "number") {
           total += hoursOrHoursArrayByCategory;

@@ -546,6 +546,15 @@ export class TimeLogProcessor {
     const startTs = start.ts;
     const name = start.dateRaw;
     const last = rowsWithTimeMarkers.pop();
+    if (!last) {
+      console.debug(
+        "getTimeLogMetadata no last - rowsWithTimeMarkers, start",
+        rowsWithTimeMarkers,
+        start,
+        this.sessionStarts,
+      );
+      return { error: "Not enough time markers in log" };
+    }
     const lastTs = last.ts;
     const leadTime = lastTs - startTs;
     let hoursTotal = 0;
@@ -583,23 +592,25 @@ export class TimeLogProcessor {
     let nextNeedToBeStart = true;
 
     // Phase 0 - skip lines after "#endts"
-    const lines = [];
+    const phase0ProcessedLines = [];
     for (const line of rawLines) {
       if (line.trim() === "#endts") {
         break;
       }
 
-      lines.push(line);
+      phase0ProcessedLines.push(line);
     }
+
+    // console.debug("{phase0ProcessedLines}", {phase0ProcessedLines});
 
     // Phase 1 - pause-fixes
     const phase1SourceLineContentsSourceLineMap = {};
     for (
       let sourceLineIndex = 0;
-      sourceLineIndex < lines.length;
+      sourceLineIndex < phase0ProcessedLines.length;
       sourceLineIndex++
     ) {
-      const line = lines[sourceLineIndex];
+      const line = phase0ProcessedLines[sourceLineIndex];
 
       // Always use trimmed line for comparisons
       let trimmedLine = line.trim();
@@ -610,7 +621,11 @@ export class TimeLogProcessor {
       if (!sourceLine || typeof sourceLine !== "number") {
         throw new TimeLogParsingException(
           "Encountered an invalid sourceLine variable in Phase 1",
-          { sourceLine, lines, phase1SourceLineContentsSourceLineMap },
+          {
+            sourceLine,
+            phase0ProcessedLines,
+            phase1SourceLineContentsSourceLineMap,
+          },
         );
       }
 
@@ -691,12 +706,15 @@ export class TimeLogProcessor {
     }
 
     const phase1ProcessedLines: string[] = processed;
+
+    // console.debug("{phase1ProcessedLines}", {phase1ProcessedLines});
+
     processed = [];
 
     // Phase 2 - missing start-lines
     for (
       let phase1ProcessedLineIndex = 0;
-      phase1ProcessedLineIndex < lines.length;
+      phase1ProcessedLineIndex < phase1ProcessedLines.length;
       phase1ProcessedLineIndex++
     ) {
       const line = phase1ProcessedLines[phase1ProcessedLineIndex];
@@ -715,7 +733,7 @@ export class TimeLogProcessor {
         throw new TimeLogParsingException(
           "Encountered an invalid sourceLine variable in Phase 2",
           {
-            lines,
+            phase1ProcessedLines,
             phase1ProcessedLine,
             phase1SourceLineContentsSourceLineMap,
             sourceLine,
@@ -865,7 +883,11 @@ export class TimeLogProcessor {
       ] = sourceLine;
     }
 
-    return linesArrayIntoText(processed);
+    const phase2ProcessedLines: string[] = processed;
+
+    // console.debug("{phase2ProcessedLines}", {phase2ProcessedLines});
+
+    return linesArrayIntoText(phase2ProcessedLines);
   }
 
   /**
@@ -1050,7 +1072,7 @@ export class TimeLogProcessor {
       // if (this.rowsWithTimeMarkersHandled >= 10) break; // While devving
     }
 
-    // Remove "pause->" from notParsed array since it (probably accidentally)
+    // Remove "pause->" from notParsed array since/if it (probably accidentally)
     // lands there in processing, but in essence the "pause->" lines should already
     // have played out their role as session markers and are no longer necessary when
     // parsing the preProcessedContents of a single session like we are doing here
