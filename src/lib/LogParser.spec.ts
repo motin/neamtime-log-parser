@@ -292,6 +292,16 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezoneData = () => {
       "UTC",
       "2019-01-05 06:00",
     ],
+    [
+      "2019-01-05 (-0500) 08:00",
+      "Europe/Stockholm",
+      1546693200,
+      "2019-01-05 13:00",
+      "-05:00",
+      1546693200,
+      "UTC",
+      "2019-01-05 13:00",
+    ],
   ];
 };
 

@@ -110,7 +110,7 @@ export class LogParser {
     const regexDetectHcoloni = "(\\d+:[^\\s\\-,:]+)";
     const regexDetectHdoti = "(\\d+\\.[^\\s\\-,:]+)";
     const regexDetectLiteralZAsTimezone = "(Z)";
-    const regexDetectIsoTimezone = "(\\+\\d\\d:?\\d\\d)";
+    const regexDetectIsoTimezone = "((\\+|\\-)?\\d\\d:?\\d\\d)";
     const regexDetectUtcTimezone = "(\\+UTC)";
     return [
       {
@@ -153,7 +153,7 @@ export class LogParser {
           "\\) " +
           regexDetectHcoloniAcceptingApproxToken,
         detectRegexDateRawMatchIndex: 0,
-        detectRegexTimeRawMatchIndex: 3,
+        detectRegexTimeRawMatchIndex: 4,
         detectRegexTimeZoneRawMatchIndex: 2,
         format: DateTime.YMDHI_TZWITHIN,
       },

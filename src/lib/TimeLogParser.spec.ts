@@ -837,6 +837,19 @@ const testDetectTimeStampAndInterpretTsAndDateData = () => {
       "+02:00",
       "2019-01-05 06:00:00",
     ],
+    [
+      "start 2019-01-05 (-0500) 08:00",
+      DateTime.YMDHI_TZWITHIN,
+      "2019-01-05 (-0500) 08:00",
+      "08:00",
+      "-0500",
+      "Antarctica/Macquarie",
+      "2019-01-02",
+      true,
+      "-05:00",
+      "2019-01-05 13:00:00",
+    ],
+
     /*
     // TODO
     // Add ability to test this case: The result is neither valid nor invalid but semi-valid since
@@ -1187,6 +1200,24 @@ const testParseLogCommentData = () => {
       true,
       "+02:00",
       "2016-05-01 12:35:00",
+    ],
+    [
+      "2016-05-01 (-0500) 14:35, bar",
+      " bar",
+      "Europe/Stockholm",
+      "2016-05-01",
+      true,
+      "-05:00",
+      "2016-05-01 19:35:00",
+    ],
+    [
+      "2016-05-01 (-0500) 14:35ca, bar",
+      " bar",
+      "Europe/Stockholm",
+      "2016-05-01",
+      true,
+      "-05:00",
+      "2016-05-01 19:35:00",
     ],
     [
       "2016-05-01, bar",
