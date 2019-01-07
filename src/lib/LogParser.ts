@@ -308,6 +308,7 @@ export class LogParser {
   ): { ts: number; date?: string; datetime?: DateTime } {
     // console.debug("LogParser.setTsAndDate - { dateRaw }", { dateRaw });
     this.lastSetTsAndDateErrorMessage = "";
+    this.lastSetTsAndDateErrorClass = "";
     dateRaw = str_replace(["maj", "okt"], ["may", "oct"], dateRaw).trim();
 
     let ts: number;
@@ -328,12 +329,14 @@ export class LogParser {
       );
       ts = gmtTimestamp;
       datetimeParseResult = datetimeReturned;
-      // TODO: Should probably use timezoneRaw instead...
-      this.lastUsedTimeZone = datetimeParseResult.getTimezone().getName();
-      if (this.lastUsedTimeZone === "") {
-        throw new InvalidDateTimeZoneException(
-          "Empty last used time zone encountered",
-        );
+      if (datetimeParseResult) {
+        // TODO: Should probably use timezoneRaw instead in some cases...
+        this.lastUsedTimeZone = datetimeParseResult.getTimezone().getName();
+        if (this.lastUsedTimeZone === "") {
+          throw new InvalidDateTimeZoneException(
+            "Empty last used time zone encountered",
+          );
+        }
       }
     } catch (e) {
       if (e instanceof InvalidDateTimeZoneException) {
@@ -351,14 +354,18 @@ export class LogParser {
         this.lastSetTsAndDateErrorMessage = e.message;
         this.lastSetTsAndDateErrorClass = "InvalidDateTimeZoneException";
         this.lastUsedTimeZone = "UTC";
+      } else {
+        throw e;
       }
     }
 
-    // console.debug("setTsAndDate - midway - {datetimeParseResult, timezoneStringToUseInCaseDateStringHasNoTimezoneInfo, ts}, this.lastKnownDate, this.lastKnownTimeZone, this.lastSetTsAndDateErrorMessage, this.lastUsedTimeZone",{datetimeParseResult, timezoneStringToUseInCaseDateStringHasNoTimezoneInfo, ts}, this.lastKnownDate, this.lastKnownTimeZone, this.lastSetTsAndDateErrorMessage, this.lastUsedTimeZone);
+    // console.debug("setTsAndDate - midway - {dateRaw, datetimeParseResult, timezoneStringToUseInCaseDateStringHasNoTimezoneInfo, ts}, this.lastKnownDate, this.lastKnownTimeZone, this.lastSetTsAndDateErrorMessage, this.lastUsedTimeZone",{dateRaw, datetimeParseResult, timezoneStringToUseInCaseDateStringHasNoTimezoneInfo, ts}, this.lastKnownDate, this.lastKnownTimeZone, this.lastSetTsAndDateErrorMessage, this.lastUsedTimeZone);
 
+    // Not that at this stage, neither ts nor datetimeParseResult is guaranteed
     if (!ts) {
       ts = 0;
-      this.lastSetTsAndDateErrorMessage = "Timestamp not found"; // TODO: Figure out why start rows gets this error message
+      // console.debug("setTsAndDate - !ts - {dateRaw, datetimeParseResult, timezoneStringToUseInCaseDateStringHasNoTimezoneInfo, ts}, this.lastKnownDate, this.lastKnownTimeZone, this.lastSetTsAndDateErrorMessage, this.lastUsedTimeZone",{dateRaw, datetimeParseResult, timezoneStringToUseInCaseDateStringHasNoTimezoneInfo, ts}, this.lastKnownDate, this.lastKnownTimeZone, this.lastSetTsAndDateErrorMessage, this.lastUsedTimeZone);
+      this.lastSetTsAndDateErrorMessage = `No successful date parsing for '${dateRaw}'. Maybe the dateRaw string did not exactly match formatToUse ('${formatToUse}')?`;
     } else if (
       ts > 0 &&
       ts < new Date().getTime() / 1000 - 24 * 3600 * 365 * 10
@@ -399,7 +406,7 @@ export class LogParser {
   }
 
   /**
-   * @param str
+   * @param str A date string without any suffices or prefices, just a date/time indication
    * @param timezoneStringToUseInCaseDateStringHasNoTimezoneInfo
    * @param formatToUse
    */

@@ -311,7 +311,6 @@ export class TimeLogParser extends LogParser {
 
   public parseLogComment(line): ParsedLogComment {
     let parsedLogComment: ParsedLogComment;
-    this.lastParseLogCommentErrorMessage = "";
 
     // "," is the main separator between date and any written comment...
     parsedLogComment = this.parseLogCommentWithSeparator(",", line);
@@ -360,6 +359,14 @@ export class TimeLogParser extends LogParser {
     lineWithoutDate,
   ): ParsedLogComment {
     let notTheFirstRowOfALogComment;
+
+    // Reset error message to prevent anything from previous attempts
+    this.lastParseLogCommentErrorMessage = "";
+
+    // Also reset the other error message to be sure that the ones that get set are from this run
+    this.lastInterpretTsAndDateErrorMessage = "";
+    this.lastSetTsAndDateErrorClass = "";
+    this.lastSetTsAndDateErrorMessage = "";
 
     const m = dateRaw.match(/[0-9\.\,]+/);
 

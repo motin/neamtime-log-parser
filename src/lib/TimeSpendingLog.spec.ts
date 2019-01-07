@@ -233,14 +233,6 @@ const testCorrectlyReportedProcessingErrors: Macro = (
   let processedTimeSpendingLog: ProcessedTimeSpendingLog;
   let encounteredProcessingErrors;
 
-  const expectedProcessingErrorsJsonFileContents = file_get_contents(
-    expectedProcessingErrorsJsonFilePath,
-  );
-
-  const expectedProcessingErrorsOriginal = JSON.parse(
-    expectedProcessingErrorsJsonFileContents,
-  );
-
   // Temporarily normalize existing error objects for better comparisons after recent refactoring
   const keyRenames = {
     date_raw: "dateRaw",
@@ -294,9 +286,6 @@ const testCorrectlyReportedProcessingErrors: Macro = (
       return v;
     }
   };
-  const expectedProcessingErrors = migrateProcessingErrorsObject(
-    expectedProcessingErrorsOriginal,
-  );
 
   try {
     processedTimeSpendingLog = getProcessedTimeSpendingLog(timeSpendingLogPath);
@@ -333,6 +322,18 @@ const testCorrectlyReportedProcessingErrors: Macro = (
       throw e;
     }
   }
+
+  const expectedProcessingErrorsJsonFileContents = file_get_contents(
+    expectedProcessingErrorsJsonFilePath,
+  );
+
+  const expectedProcessingErrorsOriginal = JSON.parse(
+    expectedProcessingErrorsJsonFileContents,
+  );
+
+  const expectedProcessingErrors = migrateProcessingErrorsObject(
+    expectedProcessingErrorsOriginal,
+  );
 
   file_put_contents(
     timeSpendingLogPath + ".latest-run.timeReportCsv.csv",

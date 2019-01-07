@@ -21,6 +21,9 @@ export function mb_substr(str, start, len) {
 }
 
 export function cloneVariable(variable) {
+  if (variable === undefined) {
+    return undefined;
+  }
   return JSON.parse(JSON.stringify(variable));
 }
 

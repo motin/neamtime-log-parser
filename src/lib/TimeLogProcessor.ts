@@ -930,7 +930,7 @@ export class TimeLogProcessor {
       }
 
       // Remove any comments at the end before datecheck
-      const lineWithComment = trimmedLine;
+      const lineWithComment = cloneVariable(trimmedLine);
       const trimmedLineWithoutComment = trimmedLine.replace(/#.*/g, "").trim();
 
       // Remove whitespace noise
@@ -939,10 +939,7 @@ export class TimeLogProcessor {
         "",
       );
 
-      // Save the trimmed line as $line since the legacy code expects it to be called that
-      const line = trimmedLineWithoutCommentAndWhiteSpaceNoise;
-
-      // Parse the log comment
+      // Parse the log comment. Will successfullt set ts and date etc if it is an ordinary log comment (not a start/stop/pause line)
       const {
         ts,
         date,
@@ -951,9 +948,11 @@ export class TimeLogProcessor {
         // lineWithoutDate,
         notTheFirstRowOfALogComment,
         parseLogCommentDetectTimeStampMetadata,
-      } = this.timeLogParser.parseLogComment(line);
+      } = this.timeLogParser.parseLogComment(
+        trimmedLineWithoutCommentAndWhiteSpaceNoise,
+      );
 
-      // $line = utf8_encode($line);
+      // trimmedLineWithoutCommentAndWhiteSpaceNoise = utf8_encode(trimmedLineWithoutCommentAndWhiteSpaceNoise);
 
       // Use UTC dates
       const utcDateTime = DateTime.createFromUnixTimestamp(
@@ -962,8 +961,13 @@ export class TimeLogProcessor {
       const formattedUtcDate = utcDateTime.format("Y-m-d H:i"); // :s
 
       const log = [];
-      const lastKnownTimeZone = this.timeLogParser.lastKnownTimeZone;
-      const lastUsedTimeZone = this.timeLogParser.lastUsedTimeZone;
+
+      const lastKnownTimeZone = cloneVariable(
+        this.timeLogParser.lastKnownTimeZone,
+      );
+      const lastUsedTimeZone = cloneVariable(
+        this.timeLogParser.lastUsedTimeZone,
+      );
       const lastSetTsAndDateErrorClass = cloneVariable(
         this.timeLogParser.lastSetTsAndDateErrorClass,
       );
@@ -976,6 +980,7 @@ export class TimeLogProcessor {
       const lastParseLogCommentErrorMessage = cloneVariable(
         this.timeLogParser.lastParseLogCommentErrorMessage,
       );
+
       const metadata: RowMetadata = {
         date,
         dateRaw,
@@ -986,7 +991,7 @@ export class TimeLogProcessor {
         lastSetTsAndDateErrorClass,
         lastSetTsAndDateErrorMessage,
         lastUsedTimeZone,
-        line,
+        line: trimmedLineWithoutCommentAndWhiteSpaceNoise,
         lineWithComment,
         log,
         parseLogCommentDetectTimeStampMetadata,
@@ -998,22 +1003,6 @@ export class TimeLogProcessor {
         ts,
       };
 
-      // If an invalid timezone was encountered, send to this.notParsedAddTimeMarkersParsePreProcessedContents but parse anyway (so that general parsing goes through but that the log is not considered correct)
-      if (lastSetTsAndDateErrorClass === "InvalidDateTimeZoneException") {
-        const methodName = "parsePreProcessedContents";
-        metadata.log.push(
-          `Invalid timezone ('${
-            this.timeLogParser.lastKnownTimeZone
-          }') encountered when parsing a row (source line: ${sourceLine}). Not treating this row as valid time-marked row`,
-        );
-        metadata.log.push(
-          "lastSetTsAndDateErrorMessage: " +
-            this.timeLogParser.lastSetTsAndDateErrorMessage,
-        );
-        metadata.log.push("Sent to notParsed in " + methodName);
-        this.notParsedAddTimeMarkersParsePreProcessedContents.push(metadata);
-      }
-
       // Default
       let isNewRowWithTimeMarker = false;
 
@@ -1021,7 +1010,9 @@ export class TimeLogProcessor {
 
       const notTheFirstRowOfALogCommentAndProbableStartStopLine =
         notTheFirstRowOfALogComment &&
-        this.timeLogParser.isProbableStartStopLine(line);
+        this.timeLogParser.isProbableStartStopLine(
+          trimmedLineWithoutCommentAndWhiteSpaceNoise,
+        );
       const previousRowWithTimeMarkerIndex =
         this.rowsWithTimeMarkersHandled - 1;
       const isTheFirstRowWithTimeMarker = !this.rowsWithTimeMarkers[
@@ -1037,17 +1028,23 @@ export class TimeLogProcessor {
       if (notTheFirstRowOfALogCommentAndProbableStartStopLine) {
         isNewRowWithTimeMarker = true;
         const updates = this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine(
-          line,
+          trimmedLineWithoutCommentAndWhiteSpaceNoise,
           metadata,
         );
         if (updates.isNewRowWithTimeMarker !== undefined) {
           isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
         }
       } else if (notTheFirstRowOfALogComment) {
-        this.processAdditionalLogCommentRowUntilNextLogComment(line, metadata);
+        this.processAdditionalLogCommentRowUntilNextLogComment(
+          trimmedLineWithoutCommentAndWhiteSpaceNoise,
+          metadata,
+        );
         isNewRowWithTimeMarker = false;
       } else if (previousRowWithTimeMarkerHasTheSameDate) {
-        this.processAdditionalLogCommentRowUntilNextLogComment(line, metadata);
+        this.processAdditionalLogCommentRowUntilNextLogComment(
+          trimmedLineWithoutCommentAndWhiteSpaceNoise,
+          metadata,
+        );
         isNewRowWithTimeMarker = false;
       } else {
         // const theFirstRowOfALogComment = true;
@@ -1055,14 +1052,55 @@ export class TimeLogProcessor {
         isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
       }
 
+      // If an invalid timezone was encountered, send to this.notParsedAddTimeMarkersParsePreProcessedContents but parse anyway (so that general parsing goes through but that the log is not considered correct)
+      if (
+        this.timeLogParser.lastSetTsAndDateErrorClass ===
+        "InvalidDateTimeZoneException"
+      ) {
+        const methodName = "parsePreProcessedContents";
+        metadata.log.push(
+          `Invalid timezone ('${
+            this.timeLogParser.lastKnownTimeZone
+          }') encountered when parsing a row (source line: ${sourceLine}). Not treating this row as valid time-marked row`,
+        );
+        metadata.log.push(
+          "lastSetTsAndDateErrorMessage: " +
+            this.timeLogParser.lastSetTsAndDateErrorMessage,
+        );
+        metadata.log.push("Sent to notParsed in " + methodName);
+        this.notParsedAddTimeMarkersParsePreProcessedContents.push(metadata);
+      }
+
+      // Update metadata with the last error messages encountered
+      metadata.lastKnownTimeZone = cloneVariable(
+        this.timeLogParser.lastKnownTimeZone,
+      );
+      metadata.lastUsedTimeZone = cloneVariable(
+        this.timeLogParser.lastUsedTimeZone,
+      );
+      metadata.lastSetTsAndDateErrorClass = cloneVariable(
+        this.timeLogParser.lastSetTsAndDateErrorClass,
+      );
+      metadata.lastSetTsAndDateErrorMessage = cloneVariable(
+        this.timeLogParser.lastSetTsAndDateErrorMessage,
+      );
+      metadata.lastInterpretTsAndDateErrorMessage = cloneVariable(
+        this.timeLogParser.lastInterpretTsAndDateErrorMessage,
+      );
+      metadata.lastParseLogCommentErrorMessage = cloneVariable(
+        this.timeLogParser.lastParseLogCommentErrorMessage,
+      );
+
       // Handle new-found rows with time marker
       if (isNewRowWithTimeMarker) {
-        this.rowsWithTimeMarkers[this.rowsWithTimeMarkersHandled] = metadata;
+        this.rowsWithTimeMarkers[
+          this.rowsWithTimeMarkersHandled
+        ] = cloneVariable(metadata);
         this.rowsWithTimeMarkersHandled++;
       }
 
       if (this.collectDebugInfo) {
-        this.debugOriginalUnsortedRows.push(metadata);
+        this.debugOriginalUnsortedRows.push(cloneVariable(metadata));
       }
 
       // Limit the maximum amount of rows
@@ -1371,6 +1409,7 @@ export class TimeLogProcessor {
       metadata.formattedUtcDate = utcDateTime.format("Y-m-d H:i:s");
       metadata.tsIsFaked = false;
       metadata.highlightWithNewlines = true;
+      metadata.lastSetTsAndDateErrorMessage = ""; //
       // metadata.line = metadata.line;
       isNewRowWithTimeMarker = true;
       probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = true;
