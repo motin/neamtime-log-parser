@@ -366,8 +366,8 @@ export class LogParser {
         this.lastKnownTimeZone = datetime.getTimezone().getName();
         // new day starts at 06.00 in the morning - arbitrarily decided as such TODO: Make configurable
         const midnightOffset = 6 * 60;
-        // TODO: Possibly restore this, but then based on dateRaw lacking time-information instead of the parsed date object having time at midnight
-        // if (date("H:i:s", $ts) === "00:00:00") $midnightoffset = 0; // do not offset when we didn't specify a specific time (yes this takes 00:00-reported times as well - but I can live with that!)
+        // TODO: Possibly restore this (the ability to specify log entries using only dates without times), but then based on dateRaw lacking time-information instead of the parsed date object having time at midnight
+        // if (date("H:i:s", $ts) === "00:00:00") $midnightoffset = 0; // do not offset when we didn't specify a specific time - note: this takes 00:00-reported times as well, which is wrong
         const semanticDate = subMinutes(datetime.getDate(), midnightOffset);
         const semanticDateTime = new DateTime(semanticDate);
         date = semanticDateTime.format("Y-m-d");

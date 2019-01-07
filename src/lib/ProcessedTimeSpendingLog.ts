@@ -260,12 +260,9 @@ export class ProcessedTimeSpendingLog {
         const startLine = start.preprocessedContentsSourceLineIndex;
         const nextStart = starts[k + 1];
 
-        let stopLine;
-        if (!nextStart) {
-          stopLine = preProcessedLines.length;
-        } else {
-          stopLine = nextStart.preprocessedContentsSourceLineIndex - 1;
-        }
+        const stopLine = !nextStart
+          ? preProcessedLines.length
+          : nextStart.preprocessedContentsSourceLineIndex - 1;
         const lines = preProcessedLines.slice(startLine, stopLine);
 
         if (lines.length === 0) {

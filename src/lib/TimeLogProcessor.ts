@@ -547,12 +547,7 @@ export class TimeLogProcessor {
     const name = start.dateRaw;
     const last = rowsWithTimeMarkers.pop();
     if (!last) {
-      console.debug(
-        "getTimeLogMetadata no last - rowsWithTimeMarkers, start",
-        rowsWithTimeMarkers,
-        start,
-        this.sessionStarts,
-      );
+      // console.debug("getTimeLogMetadata no last - rowsWithTimeMarkers, start", rowsWithTimeMarkers, start, this.sessionStarts,);
       return { error: "Not enough time markers in log" };
     }
     const lastTs = last.ts;
@@ -622,9 +617,9 @@ export class TimeLogProcessor {
         throw new TimeLogParsingException(
           "Encountered an invalid sourceLine variable in Phase 1",
           {
-            sourceLine,
             phase0ProcessedLines,
             phase1SourceLineContentsSourceLineMap,
+            sourceLine,
           },
         );
       }
@@ -733,8 +728,8 @@ export class TimeLogProcessor {
         throw new TimeLogParsingException(
           "Encountered an invalid sourceLine variable in Phase 2",
           {
-            phase1ProcessedLines,
             phase1ProcessedLine,
+            phase1ProcessedLines,
             phase1SourceLineContentsSourceLineMap,
             sourceLine,
           },
