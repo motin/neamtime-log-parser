@@ -1,5 +1,5 @@
 import test, { ExecutionContext, Macro } from "ava";
-import * as util from "util";
+// import * as util from "util";
 import { LogParser } from "./LogParser";
 // import { DateTime, DateTimeZone } from "./php-wrappers";
 import { TimeLogProcessor } from "./TimeLogProcessor";
@@ -674,7 +674,6 @@ const testAddTimeMarkers: Macro = (
     "timeLogProcessor.debugOriginalUnsortedRows",
     timeLogProcessor.debugOriginalUnsortedRows,
   );
-  */
   t.log(
     "timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents",
     util.inspect(
@@ -690,6 +689,7 @@ const testAddTimeMarkers: Macro = (
     "timeLogProcessor.contentsWithTimeMarkers",
     timeLogProcessor.contentsWithTimeMarkers,
   );
+  */
   t.deepEqual(
     timeLogProcessor.notParsedAddTimeMarkersParsePreProcessedContents,
     expectedNotParsedAddTimeMarkersParsePreProcessedContents,

@@ -110,24 +110,37 @@ const processTimeSpendingLog = (t: ExecutionContext, timeSpendingLogPath) => {
 
   try // t.log($processedTimeSpendingLog->timeReportCsv);
   {
+    t.log(667 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
+
+    processedTimeSpendingLog = getProcessedTimeSpendingLog(timeSpendingLogPath);
+
+    t.log(671 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
+
+    const timeReportCsv = processedTimeSpendingLog.getTimeLogProcessor()
+      .timeReportCsv;
+
     // To update the expected contents based on the current output (use only when certain that everything
     // is correct and only the format of the output file has been changed)
-    // file_put_contents(
-    //                $correspondingCsvDataFilePath,
-    //                $processedTimeSpendingLog->timeReportCsv
-    //            );
+    // Note: Updates all existing CSV files that does not have any processing errors
+    /*
+    file_put_contents(
+      correspondingCsvDataFilePath,
+      timeReportCsv,
+    );
+    */
+
     // To make it easier to update with correct contents for the first time
-    // t.log($timeLogEntriesWithMetadata);
-    // All tested time logs should include at least 1 time log entry
-    t.log(667 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
-    processedTimeSpendingLog = getProcessedTimeSpendingLog(timeSpendingLogPath);
-    t.log(671 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
     file_put_contents(
       correspondingCsvDataFilePath + ".latest-run.csv",
-      processedTimeSpendingLog.getTimeLogProcessor().timeReportCsv,
+      timeReportCsv,
     );
+
     const timeLogEntriesWithMetadata = processedTimeSpendingLog.getTimeLogEntriesWithMetadata();
+    // t.log({timeLogEntriesWithMetadata});
+
     t.log(692 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
+
+    // All tested time logs should include at least 1 time log entry
     t.log(timeLogEntriesWithMetadata.length + " time log entries");
     t.true(timeLogEntriesWithMetadata.length > 0);
     file_put_contents(
@@ -193,17 +206,19 @@ const testCorrectTimeSpendingLogsCorrectness: Macro = (
   t: ExecutionContext,
   timeSpendingLogPath,
 ) => {
+  const processedTimeSpendingLog = getProcessedTimeSpendingLog(
+    timeSpendingLogPath,
+  );
+  const timeReportCsv = processedTimeSpendingLog.getTimeLogProcessor()
+    .timeReportCsv;
   const correspondingCsvDataFilePath = getCorrespondingCsvDataFilePath(
     timeSpendingLogPath,
   );
   const correspondingCsvDataFileContents = file_get_contents(
     correspondingCsvDataFilePath,
   );
-  const processedTimeSpendingLog = getProcessedTimeSpendingLog(
-    timeSpendingLogPath,
-  );
   t.is(
-    processedTimeSpendingLog.getTimeLogProcessor().timeReportCsv,
+    timeReportCsv,
     correspondingCsvDataFileContents,
     `CSV contents for '${timeSpendingLogPath}' matches expected`,
   );
