@@ -60,6 +60,7 @@ const testSecondsToDurationData = () => {
     [4397 * 60, "3d1h17min"],
     [4397 * 60 + 3600 * 24 * 7 * 5, "5w3d1h17min"],
     [13, "0min"],
+    [60 * 60, "1h0min"],
   ];
 };
 

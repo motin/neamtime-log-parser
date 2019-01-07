@@ -230,13 +230,14 @@ export class LogParser {
       min: (seconds / 60) % 60,
     };
     /* tslint:enable:object-literal-sort-keys */
-    const ret = Array();
+    // console.debug("secondsToDuration - {seconds, vals}", {seconds, vals});
+    const ret = [];
     let added = false;
 
     for (const k of Object.keys(vals)) {
       const v = vals[k];
 
-      if (v > 1 || added || k === "min") {
+      if (v >= 1 || added || k === "min") {
         added = true;
         ret.push(Math.floor(v) + k);
       }
