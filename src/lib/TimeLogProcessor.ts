@@ -496,8 +496,12 @@ export class TimeLogProcessor {
       for (const c of this.categories) {
         const hoursExact =
           hours !== null && undefined !== hours[c] ? hours[c] : 0;
+        const hoursExactFixed = hoursExact === 0 ? 0 : hoursExact.toFixed(15);
+        hoursByCategory += hoursExactFixed + ";";
+
         // TMP - Mimic the same precision that PHP used to generate the fixture-csv:s
         // so that CSV comparisons pass until new CSV files are generated without this restriction
+        /*
         const existingPrecision =
           hoursExact < 1
             ? hoursExact < 0.1
@@ -505,8 +509,9 @@ export class TimeLogProcessor {
               : 0
             : parseInt(hoursExact, 10).toString.length;
         const precisionFactor = Math.pow(10, 14 - existingPrecision);
-        hoursByCategory +=
-          Math.round(hoursExact * precisionFactor) / precisionFactor + ";";
+        const hoursLessExact = Math.round(hoursExact * precisionFactor) / precisionFactor;
+        hoursByCategory += hoursLessExact+ ";";
+        */
       }
 
       // replace point by comma

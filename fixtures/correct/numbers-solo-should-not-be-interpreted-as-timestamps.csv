@@ -1,2 +1,2 @@
 Date;Uncategorized (rounded);Uncategorized;Log_Items
-2016-05-13;0.1;0.1;starting | three minutes in | some results | neamtime | 36.3833333333 | csv med fel rounding | 36.53 | csv med rätt intern rounding | 36.37 | csv utan rounding | 36.3833333333 | something that looks like a timestamp | 12.30 | 2016-05-13 17:04, still four minutes in | some minutes later
+2016-05-13;0.1;0.100000000000000;starting | three minutes in | some results | neamtime | 36.3833333333 | csv med fel rounding | 36.53 | csv med rätt intern rounding | 36.37 | csv utan rounding | 36.3833333333 | something that looks like a timestamp | 12.30 | 2016-05-13 17:04, still four minutes in | some minutes later
