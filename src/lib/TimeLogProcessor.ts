@@ -36,6 +36,7 @@ export interface RowMetadata {
   lastInterpretTsAndDateErrorMessage: string;
   lastKnownTimeZone: string;
   lastParseLogCommentErrorMessage: string;
+  lastSetTsAndDateErrorClass: string;
   lastSetTsAndDateErrorMessage: string;
   lastUsedTimeZone: string;
   line: string;
@@ -941,7 +942,7 @@ export class TimeLogProcessor {
       // Save the trimmed line as $line since the legacy code expects it to be called that
       const line = trimmedLineWithoutCommentAndWhiteSpaceNoise;
 
-      // DATETIME
+      // Parse the log comment
       const {
         ts,
         date,
@@ -963,12 +964,18 @@ export class TimeLogProcessor {
       const log = [];
       const lastKnownTimeZone = this.timeLogParser.lastKnownTimeZone;
       const lastUsedTimeZone = this.timeLogParser.lastUsedTimeZone;
-      const lastSetTsAndDateErrorMessage = this.timeLogParser
-        .lastSetTsAndDateErrorMessage;
-      const lastInterpretTsAndDateErrorMessage = this.timeLogParser
-        .lastInterpretTsAndDateErrorMessage;
-      const lastParseLogCommentErrorMessage = this.timeLogParser
-        .lastParseLogCommentErrorMessage;
+      const lastSetTsAndDateErrorClass = cloneVariable(
+        this.timeLogParser.lastSetTsAndDateErrorClass,
+      );
+      const lastSetTsAndDateErrorMessage = cloneVariable(
+        this.timeLogParser.lastSetTsAndDateErrorMessage,
+      );
+      const lastInterpretTsAndDateErrorMessage = cloneVariable(
+        this.timeLogParser.lastInterpretTsAndDateErrorMessage,
+      );
+      const lastParseLogCommentErrorMessage = cloneVariable(
+        this.timeLogParser.lastParseLogCommentErrorMessage,
+      );
       const metadata: RowMetadata = {
         date,
         dateRaw,
@@ -976,6 +983,7 @@ export class TimeLogProcessor {
         lastInterpretTsAndDateErrorMessage,
         lastKnownTimeZone,
         lastParseLogCommentErrorMessage,
+        lastSetTsAndDateErrorClass,
         lastSetTsAndDateErrorMessage,
         lastUsedTimeZone,
         line,
@@ -991,10 +999,7 @@ export class TimeLogProcessor {
       };
 
       // If an invalid timezone was encountered, send to this.notParsedAddTimeMarkersParsePreProcessedContents but parse anyway (so that general parsing goes through but that the log is not considered correct)
-      if (
-        this.timeLogParser.lastSetTsAndDateErrorClass ===
-        "InvalidDateTimeZoneException"
-      ) {
+      if (lastSetTsAndDateErrorClass === "InvalidDateTimeZoneException") {
         const methodName = "parsePreProcessedContents";
         metadata.log.push(
           `Invalid timezone ('${
@@ -1074,7 +1079,7 @@ export class TimeLogProcessor {
     // lands there in processing, but in essence the "pause->" lines should already
     // have played out their role as session markers and are no longer necessary when
     // parsing the preProcessedContents of a single session like we are doing here
-    if (!!this.notParsedAddTimeMarkersParsePreProcessedContents) {
+    if (this.notParsedAddTimeMarkersParsePreProcessedContents.length > 0) {
       for (
         let k = 0;
         k < this.notParsedAddTimeMarkersParsePreProcessedContents.length;

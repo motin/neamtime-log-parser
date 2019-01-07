@@ -23,6 +23,7 @@ export class DateTime {
    * @param phpFormatString
    * @param dateString
    * @param timezoneToUseInCaseDateStringHasNoTimezoneInfo
+   * @throws InvalidDateTimeZoneException
    */
   public static createFromFormat(
     phpFormatString: string,
@@ -76,6 +77,7 @@ export class DateTime {
       throw new Error("DateTime parse error");
     }
 
+    // Note: Executing timezone.getTimeZoneInfo() throws InvalidDateTimeZoneException if necessary
     const zonedParsedDate = getZonedTime(
       initiallyParsedDate,
       timezone.getTimeZoneInfo(),

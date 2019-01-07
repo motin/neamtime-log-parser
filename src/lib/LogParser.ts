@@ -373,7 +373,11 @@ export class LogParser {
         // trust that the last used time zone is the one that should be used for upcoming unzoned timestamps (allows for a zoned timestamp to function as a |tz: marker)
 
         // Only set last known timezone if the last used timezone was set from a zoned timestamp
-        if (phpFormatStringContainsTimeZoneInformation(formatToUse)) {
+        // and was not valid in itself
+        if (
+          phpFormatStringContainsTimeZoneInformation(formatToUse) &&
+          this.lastSetTsAndDateErrorClass !== "InvalidDateTimeZoneException"
+        ) {
           this.lastKnownTimeZone = datetime.getTimezone().getName();
         }
 

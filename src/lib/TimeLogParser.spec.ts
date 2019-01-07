@@ -215,10 +215,12 @@ const testDetectTimeStampAndInterpretTsAndDate: Macro = (
     metadata.dateRaw,
     metadata.dateRawFormat,
   );
-  const setTsAndDateError = timeLogParser.lastSetTsAndDateErrorMessage;
-  const interpretTsAndDateError =
+  const setTsAndDateErrorMessage = timeLogParser.lastSetTsAndDateErrorMessage;
+  const setTsAndDateErrorClass = timeLogParser.lastSetTsAndDateErrorClass;
+
+  const interpretTsAndDateErrorMessage =
     timeLogParser.lastInterpretTsAndDateErrorMessage;
-  // t.log({ date, datetime, setTsAndDateError, interpretTsAndDateError });
+  // t.log({date, datetime, interpretTsAndDateErrorMessage, setTsAndDateErrorClass, setTsAndDateErrorMessage,});
   const valid = !!date;
   t.is(
     valid,
@@ -233,20 +235,26 @@ const testDetectTimeStampAndInterpretTsAndDate: Macro = (
 
   if (expectedToBeValid) {
     t.true(
-      interpretTsAndDateError === "" && setTsAndDateError === "",
+      interpretTsAndDateErrorMessage === "" &&
+        setTsAndDateErrorMessage === "" &&
+        setTsAndDateErrorClass === "",
       "TimeLogParser->interpretTsAndDate() does not set an error message where valid datetimes are expected",
     );
   } else {
-    const interpretError =
-      typeof interpretTsAndDateError !== "undefined" &&
-      interpretTsAndDateError !== null &&
-      interpretTsAndDateError !== "";
-    const setError =
-      typeof setTsAndDateError !== "undefined" &&
-      setTsAndDateError !== null &&
-      setTsAndDateError !== "";
+    const interpretErrorMessage =
+      typeof interpretTsAndDateErrorMessage !== "undefined" &&
+      interpretTsAndDateErrorMessage !== null &&
+      interpretTsAndDateErrorMessage !== "";
+    const setErrorMessage =
+      typeof setTsAndDateErrorMessage !== "undefined" &&
+      setTsAndDateErrorMessage !== null &&
+      setTsAndDateErrorMessage !== "";
+    const setErrorClass =
+      typeof setTsAndDateErrorClass !== "undefined" &&
+      setTsAndDateErrorClass !== null &&
+      setTsAndDateErrorClass !== "";
     t.true(
-      interpretError || setError,
+      interpretErrorMessage || setErrorMessage || setErrorClass,
       "TimeLogParser->interpretTsAndDate() sets an error message where invalid datetimes are expected",
     );
   }
@@ -829,6 +837,24 @@ const testDetectTimeStampAndInterpretTsAndDateData = () => {
       "+02:00",
       "2019-01-05 06:00:00",
     ],
+    /*
+    // TODO
+    // Add ability to test this case: The result is neither valid nor invalid but semi-valid since
+    // fallback timezone UTC was used instead of the invalid timezone. Thus, it is invalid log contents
+    // but a semi-valid date parsing and should be treated and tested/validated as such
+    [
+      "start 2018-02-11, 09:05",
+      "Y-m-d, H:i",
+      "2018-02-11, 09:05",
+      "09:05",
+      false,
+      "Unknown/Timezone",
+      "2018-02-11",
+      semiValid...,
+      false,
+      false,
+    ],
+    */
   ];
 };
 
@@ -883,11 +909,12 @@ const testParseLogComment: Macro = (
     datetime,
   } = timeLogParser.parseLogComment(line);
   // t.log({ line, /*ts, date,*/ datetime });
-  const parseLogCommentError = timeLogParser.lastParseLogCommentErrorMessage;
-  const setTsAndDateError = timeLogParser.lastSetTsAndDateErrorMessage;
-  const interpretTsAndDateError =
+  const parseLogCommentErrorMessage =
+    timeLogParser.lastParseLogCommentErrorMessage;
+  const setTsAndDateErrorMessage = timeLogParser.lastSetTsAndDateErrorMessage;
+  const interpretTsAndDateErrorMessage =
     timeLogParser.lastInterpretTsAndDateErrorMessage;
-  // t.log({ setTsAndDateError, interpretTsAndDateError, parseLogCommentError });
+  // t.log({ setTsAndDateErrorMessage, interpretTsAndDateErrorMessage, parseLogCommentError });
   const invalid = notTheFirstRowOfALogComment;
   const valid = !invalid;
   // t.log({ expectedToBeValidTimestampedLogComment, valid });
@@ -898,24 +925,24 @@ const testParseLogComment: Macro = (
   );
   if (expectedToBeValidTimestampedLogComment) {
     t.true(
-      parseLogCommentError === "" &&
-        interpretTsAndDateError === "" &&
-        setTsAndDateError === "",
+      parseLogCommentErrorMessage === "" &&
+        interpretTsAndDateErrorMessage === "" &&
+        setTsAndDateErrorMessage === "",
       "TimeLogParser->parseLogComment() does not set an error message where valid datetimes are expected",
     );
   } else {
     const parseError =
-      typeof parseLogCommentError !== "undefined" &&
-      parseLogCommentError !== null &&
-      parseLogCommentError !== "";
+      typeof parseLogCommentErrorMessage !== "undefined" &&
+      parseLogCommentErrorMessage !== null &&
+      parseLogCommentErrorMessage !== "";
     const interpretError =
-      typeof interpretTsAndDateError !== "undefined" &&
-      interpretTsAndDateError !== null &&
-      interpretTsAndDateError !== "";
+      typeof interpretTsAndDateErrorMessage !== "undefined" &&
+      interpretTsAndDateErrorMessage !== null &&
+      interpretTsAndDateErrorMessage !== "";
     const setError =
-      typeof setTsAndDateError !== "undefined" &&
-      setTsAndDateError !== null &&
-      setTsAndDateError !== "";
+      typeof setTsAndDateErrorMessage !== "undefined" &&
+      setTsAndDateErrorMessage !== null &&
+      setTsAndDateErrorMessage !== "";
     t.true(
       parseError || interpretError || setError,
       "TimeLogParser->parseLogComment() sets an error message where invalid datetimes are expected",
