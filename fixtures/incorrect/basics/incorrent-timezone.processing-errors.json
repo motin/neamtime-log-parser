@@ -2,8 +2,8 @@
   "0": {
     "ref": "issues-during-initial-parsing",
     "message": "The following content was not understood by the parser",
-    "data": {
-      "9": {
+    "data": [
+      {
         "date": "2018-02-11",
         "dateRaw": "start 2018-02-11, 09:05",
         "formattedUtcDate": "2018-02-11 09:05:00",
@@ -42,7 +42,7 @@
         "tsIsFaked": false,
         "highlightWithNewlines": true
       },
-      "11": {
+      {
         "date": "2018-02-11",
         "dateRaw": "2018-02-11, 09:55",
         "formattedUtcDate": "2018-02-11 09:55",
@@ -79,7 +79,7 @@
         "ts": 1518342900,
         "durationSinceLast": 3000
       }
-    }
+    ]
   },
   "1": {
     "ref": "timeReportData-notParsedAddTimeMarkers",
@@ -94,8 +94,8 @@
         {
           "ref": "issues-during-initial-parsing",
           "message": "The following content was not understood by the parser",
-          "data": {
-            "1": {
+          "data": [
+            {
               "date": "2018-02-11",
               "dateRaw": "start 2018-02-11, 09:05",
               "formattedUtcDate": "2018-02-11 09:05:00",
@@ -134,7 +134,7 @@
               "tsIsFaked": false,
               "highlightWithNewlines": true
             },
-            "3": {
+            {
               "date": "2018-02-11",
               "dateRaw": "2018-02-11, 09:55",
               "formattedUtcDate": "2018-02-11 09:55",
@@ -171,7 +171,7 @@
               "ts": 1518342900,
               "durationSinceLast": 3000
             }
-          }
+          ]
         },
         {
           "ref": "timeReportData-notParsedAddTimeMarkers",

@@ -2,8 +2,8 @@
   "0": {
     "ref": "issues-during-initial-parsing",
     "message": "The following content was not understood by the parser",
-    "data": {
-      "28": {
+    "data": [
+      {
         "date": "2010-04-05",
         "dateRaw": "2010-04-05 14:20",
         "formattedUtcDate": "2010-04-05 14:20",
@@ -40,7 +40,7 @@
         "sourceLine": 28,
         "ts": 1270477200
       }
-    }
+    ]
   },
   "1": {
     "ref": "timeReportData-notParsedAddTimeMarkers",
@@ -55,8 +55,8 @@
         {
           "ref": "issues-during-initial-parsing",
           "message": "The following content was not understood by the parser",
-          "data": {
-            "6": {
+          "data": [
+            {
               "date": "2010-04-05",
               "dateRaw": "2010-04-05 14:20",
               "formattedUtcDate": "2010-04-05 14:20",
@@ -93,7 +93,7 @@
               "sourceLine": 6,
               "ts": 1270477200
             }
-          }
+          ]
         },
         {
           "ref": "timeReportData-notParsedAddTimeMarkers",

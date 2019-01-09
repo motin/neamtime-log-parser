@@ -138,9 +138,6 @@ export class TimeLogProcessor {
     );
   }
 
-  /**
-   * TODO: Support multiple errors per source line
-   */
   public notParsedAddTimeMarkersErrorSummary() {
     if (
       !this.notParsedAddTimeMarkersParsePreProcessedContents &&
@@ -151,13 +148,13 @@ export class TimeLogProcessor {
       );
     }
 
-    const summary = {};
+    const summary = [];
 
     for (const v of Object.values(
       this.notParsedAddTimeMarkersParsePreProcessedContents,
     )) {
       if (v && v.sourceLine) {
-        summary[v.sourceLine] = v;
+        summary.push(v);
       } else {
         throw new TimeLogParsingException(
           "The unparsed contents did not contain information about the source line",
@@ -170,7 +167,7 @@ export class TimeLogProcessor {
       this.notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput,
     )) {
       if (v && v.sourceLine) {
-        summary[v.sourceLine] = v;
+        summary.push(v);
       } else {
         throw new TimeLogParsingException(
           "The unparsed contents did not contain information about the source line",

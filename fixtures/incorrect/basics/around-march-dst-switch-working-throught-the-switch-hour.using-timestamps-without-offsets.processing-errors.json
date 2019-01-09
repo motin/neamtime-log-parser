@@ -2,8 +2,8 @@
   "0": {
     "ref": "issues-during-initial-parsing",
     "message": "The following content was not understood by the parser",
-    "data": {
-      "15": {
+    "data": [
+      {
         "date": "2018-03-24",
         "dateRaw": "2018-03-25, 02:00",
         "formattedUtcDate": "2018-03-25 00:00",
@@ -40,7 +40,7 @@
         "sourceLine": 15,
         "ts": 1521939600
       },
-      "17": {
+      {
         "date": "2018-03-24",
         "dateRaw": "2018-03-25, 02:02",
         "formattedUtcDate": "2018-03-25 00:02",
@@ -77,7 +77,7 @@
         "sourceLine": 17,
         "ts": 1521939720
       }
-    }
+    ]
   },
   "1": {
     "ref": "timeReportData-notParsedAddTimeMarkers",
