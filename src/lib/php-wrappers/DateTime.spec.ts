@@ -77,6 +77,16 @@ const testDateFnsParseData = () => {
       "yyyy-MM-dd'T'HH:mm:ssX",
       "2016-05-25T14:50:00.000Z",
     ],
+    [
+      "2016-05-25T14:50:00+02:00",
+      "yyyy-MM-dd'T'HH:mm:ssXXX",
+      "2016-05-25T12:50:00.000Z",
+    ],
+    [
+      "2016-05-25T14:50:00+0200",
+      "yyyy-MM-dd'T'HH:mm:ssX",
+      "2016-05-25T12:50:00.000Z",
+    ],
     /*
     // Supersilly: Can't assert against UTC ISO dates since date-fns/parse assumes local times
     // thus the resulting UTC time is dependent on the timezone of the system that runs the tests
@@ -112,6 +122,7 @@ const testCreateFromFormatData = () => {
     [DateTime.YMDHI, "2016-05-25 14:50", "2016-05-25 14:50"],
     [DateTime.ISO8601Z, "2016-05-25T14:50:00Z", "2016-05-25 14:50"],
     [DateTime.ISO8601, "2016-05-25T14:50:00+01:00", "2016-05-25 14:50"],
+    [DateTime.ISO8601, "2016-05-25T14:50:00+0100", "2016-05-25 14:50"],
   ];
 };
 
@@ -167,6 +178,13 @@ const testCreateFromFormatWhenTimeZonesAreInvolvedData = () => {
     [
       DateTime.ISO8601,
       "2016-05-25T14:50:00+01:00",
+      "UTC",
+      "2016-05-25 14:50",
+      "+01:00",
+    ],
+    [
+      DateTime.ISO8601,
+      "2016-05-25T14:50:00+0100",
       "UTC",
       "2016-05-25 14:50",
       "+01:00",

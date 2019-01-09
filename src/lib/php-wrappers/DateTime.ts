@@ -3,7 +3,7 @@ import { getUnixTime, getZonedTime } from "timezone-support";
 import { DateTimeZone } from "./DateTimeZone";
 
 export class DateTime {
-  public static ISO8601 = "Y-m-d\\TH:i:sP"; // 0000-00-00T00:00:00+00:00
+  public static ISO8601 = "Y-m-d\\TH:i:sP"; // 0000-00-00T00:00:00+00:00 (but seems to cover 0000-00-00T00:00:00+0000 as well)
   public static ISO8601Z = "Y-m-d\\TH:i:s\\Z"; // Literal "Z" to strictly only accept 0000-00-00T00:00:00Z
   public static YMDHI = "Y-m-d H:i";
   public static YMDHI_TZWITHIN = "Y-m-d \\(O\\) H:i";
