@@ -195,6 +195,11 @@ export class TimeLogProcessor {
     return summary;
   }
 
+  public nonEmptyPreprocessedLines() {
+    const lines: string[] = textIntoLinesArray(this.preProcessedContents);
+    return lines.filter((line: string) => line.trim().length > 0);
+  }
+
   public generateTimeReport(contentsWithTimeMarkers: string) {
     this.timeLogParser.lastKnownTimeZone = this.tzFirst;
     const times = [];

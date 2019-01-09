@@ -142,9 +142,20 @@ const processTimeSpendingLog = (t: ExecutionContext, timeSpendingLogPath) => {
 
     // t.log(692 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
 
-    // All tested time logs should include at least 1 time log entry
     t.log(timeLogEntriesWithMetadata.length + " time log entries");
-    t.true(timeLogEntriesWithMetadata.length > 0);
+
+    // Most tested time logs should include at least 1 time log entry
+    if (timeLogEntriesWithMetadata.length === 0) {
+      // Only check on non-empty logs
+      if (
+        processedTimeSpendingLog
+          .getTimeLogProcessor()
+          .nonEmptyPreprocessedLines().length > 0
+      ) {
+        t.true(timeLogEntriesWithMetadata.length > 0);
+      }
+    }
+
     file_put_contents(
       timeSpendingLogPath + ".latest-run.timeLogEntriesWithMetadata.json",
       prettyJson(timeLogEntriesWithMetadata),
@@ -227,6 +238,13 @@ const testCorrectTimeSpendingLogsCorrectness: Macro = (
     );
   } catch (e) {
     if (e instanceof TimeSpendingLogProcessingErrorsEncounteredException) {
+      t.log(
+        "e.processedTimeSpendingLog.getTimeLogProcessor().notParsedAddTimeMarkersErrorSummary().slice(0,2)",
+        e.processedTimeSpendingLog
+          .getTimeLogProcessor()
+          .notParsedAddTimeMarkersErrorSummary()
+          .slice(0, 2),
+      );
       t.true(
         false,
         "Encountered an TimeSpendingLogProcessingErrorsEncounteredException while checking for time spending log correctness",
