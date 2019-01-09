@@ -2,7 +2,7 @@ import test, { ExecutionContext, Macro } from "ava";
 import { file_get_contents } from "locutus/php/filesystem";
 import { str_replace } from "locutus/php/strings";
 import path from "path";
-import { fixturesPath, memoryUsageInMiB } from "../inc/testUtils";
+import { fixturesPath /*, memoryUsageInMiB*/ } from "../inc/testUtils";
 import {
   getCorrespondingCsvDataFilePath,
   getProcessedTimeSpendingLog,
@@ -90,18 +90,20 @@ const processAndAssertCorrectTimeSpendingLog = (
     t,
     timeSpendingLogPath,
   );
-  t.false(
+  const processingErrorsWasEncountered =
     thrownException instanceof
-      TimeSpendingLogProcessingErrorsEncounteredException,
+    TimeSpendingLogProcessingErrorsEncounteredException;
+  t.false(
+    processingErrorsWasEncountered,
     "We should not have encountered any log processing error, but we did. Check .latest-run.processing-errors.json for more info.",
   );
-  t.log(650 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
+  // t.log(650 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
   return processedTimeSpendingLog.calculateTotalReportedTime();
 };
 
 const processTimeSpendingLog = (t: ExecutionContext, timeSpendingLogPath) => {
-  t.log(660 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
-  t.log(timeSpendingLogPath);
+  // t.log(660 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
+  // t.log(timeSpendingLogPath);
   const correspondingCsvDataFilePath = getCorrespondingCsvDataFilePath(
     timeSpendingLogPath,
   );
@@ -110,11 +112,11 @@ const processTimeSpendingLog = (t: ExecutionContext, timeSpendingLogPath) => {
 
   try // t.log($processedTimeSpendingLog->timeReportCsv);
   {
-    t.log(667 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
+    // t.log(667 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
 
     processedTimeSpendingLog = getProcessedTimeSpendingLog(timeSpendingLogPath);
 
-    t.log(671 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
+    // t.log(671 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
 
     const timeReportCsv = processedTimeSpendingLog.getTimeLogProcessor()
       .timeReportCsv;
@@ -138,7 +140,7 @@ const processTimeSpendingLog = (t: ExecutionContext, timeSpendingLogPath) => {
     const timeLogEntriesWithMetadata = processedTimeSpendingLog.getTimeLogEntriesWithMetadata();
     // t.log({timeLogEntriesWithMetadata});
 
-    t.log(692 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
+    // t.log(692 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
 
     // All tested time logs should include at least 1 time log entry
     t.log(timeLogEntriesWithMetadata.length + " time log entries");
@@ -206,22 +208,33 @@ const testCorrectTimeSpendingLogsCorrectness: Macro = (
   t: ExecutionContext,
   timeSpendingLogPath,
 ) => {
-  const processedTimeSpendingLog = getProcessedTimeSpendingLog(
-    timeSpendingLogPath,
-  );
-  const timeReportCsv = processedTimeSpendingLog.getTimeLogProcessor()
-    .timeReportCsv;
-  const correspondingCsvDataFilePath = getCorrespondingCsvDataFilePath(
-    timeSpendingLogPath,
-  );
-  const correspondingCsvDataFileContents = file_get_contents(
-    correspondingCsvDataFilePath,
-  );
-  t.is(
-    timeReportCsv,
-    correspondingCsvDataFileContents,
-    `CSV contents for '${timeSpendingLogPath}' matches expected`,
-  );
+  try {
+    const processedTimeSpendingLog = getProcessedTimeSpendingLog(
+      timeSpendingLogPath,
+    );
+    const timeReportCsv = processedTimeSpendingLog.getTimeLogProcessor()
+      .timeReportCsv;
+    const correspondingCsvDataFilePath = getCorrespondingCsvDataFilePath(
+      timeSpendingLogPath,
+    );
+    const correspondingCsvDataFileContents = file_get_contents(
+      correspondingCsvDataFilePath,
+    );
+    t.is(
+      timeReportCsv,
+      correspondingCsvDataFileContents,
+      `CSV contents for '${timeSpendingLogPath}' matches expected`,
+    );
+  } catch (e) {
+    if (e instanceof TimeSpendingLogProcessingErrorsEncounteredException) {
+      t.true(
+        false,
+        "Encountered an TimeSpendingLogProcessingErrorsEncounteredException while checking for time spending log correctness",
+      );
+    } else {
+      throw e;
+    }
+  }
 };
 
 testCorrectTimeSpendingLogsCorrectness.title = (
@@ -243,7 +256,7 @@ const testCorrectlyReportedProcessingErrors: Macro = (
   timeSpendingLogPath,
   expectedProcessingErrorsJsonFilePath,
 ) => {
-  t.log("timeSpendingLogPath", timeSpendingLogPath);
+  // t.log("timeSpendingLogPath", timeSpendingLogPath);
   let thrownException;
   let processedTimeSpendingLog: ProcessedTimeSpendingLog;
   let encounteredProcessingErrors;
@@ -309,10 +322,7 @@ const testCorrectlyReportedProcessingErrors: Macro = (
       thrownException = e;
       processedTimeSpendingLog = e.processedTimeSpendingLog;
 
-      t.log(
-        "e.processedTimeSpendingLog.getTroubleshootingInfo()",
-        e.processedTimeSpendingLog.getTroubleshootingInfo(),
-      );
+      // t.log("e.processedTimeSpendingLog.getTroubleshootingInfo()", e.processedTimeSpendingLog.getTroubleshootingInfo(),);
       // t.log(e.processedTimeSpendingLog.getTimeLogParser().preProcessedContentsSourceLineContentsSourceLineMap);
 
       const encounteredProcessingErrorsOriginal = e.processedTimeSpendingLog.getProcessingErrors();
@@ -379,9 +389,11 @@ const testCorrectlyReportedProcessingErrors: Macro = (
     );
   }
 
-  t.true(
+  const processingErrorsWasEncountered =
     thrownException instanceof
-      TimeSpendingLogProcessingErrorsEncounteredException,
+    TimeSpendingLogProcessingErrorsEncounteredException;
+  t.true(
+    processingErrorsWasEncountered,
     "We should have encountered log processing error(s), but we did not",
   );
 };

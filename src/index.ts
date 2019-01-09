@@ -16,18 +16,11 @@ export const timeSpendingLogPathsInFolder = (
   const timeSpendingLogTextPaths = glob(
     pathToFolderWhereTsLogsReside + "/**/*.txt",
   );
-  console.debug("timeSpendingLogTextPaths", timeSpendingLogTextPaths);
   for (const rawTimeSpendingLogPath of Object.values(
     timeSpendingLogTextPaths,
   )) {
     // first rename the file to make it shorter, and end with .tslog
     const { dirname, filename } = pathinfo(rawTimeSpendingLogPath);
-    console.debug(
-      "rawTimeSpendingLogPath, dirname, filename",
-      rawTimeSpendingLogPath,
-      dirname,
-      filename,
-    );
 
     const _ = filename.split(" - ");
     const newFilename = _[0].trim();
