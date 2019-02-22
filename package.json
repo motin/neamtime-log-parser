@@ -1,6 +1,6 @@
 {
   "name": "neamtime-log-parser",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Parses neamtime time tracking logs",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
