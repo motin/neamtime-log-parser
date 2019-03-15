@@ -99,7 +99,7 @@ export class TimeLogProcessor {
   public preProcessedContents: string = "";
   public contentsWithTimeMarkers: string = "";
   public timeReportCsv: string = "";
-  public timeReportData: {[k: string]: any} = {};
+  public timeReportData: { [k: string]: any } = {};
   public sessionStarts: RowMetadata[] = [];
   public sessions: TimeLogSession[] = [];
   public categories: string[] = [];
