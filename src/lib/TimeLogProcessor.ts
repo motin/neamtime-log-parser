@@ -72,6 +72,16 @@ export interface TimeLogEntryWithMetadata {
   sessionMeta: any;
 }
 
+export interface TimeLogMetadata {
+  error?: string;
+  hoursLeadTime?: number;
+  hoursTotal?: number;
+  lastTs?: number;
+  name?: string;
+  nonHours?: number;
+  startTs?: number;
+}
+
 // Since date-fns can not handle UTC dates
 function eachDayOfIntervalUTC(dirtyInterval, dirtyOptions = null) {
   const borkyDates = eachDayOfInterval(dirtyInterval, dirtyOptions);
@@ -89,7 +99,7 @@ export class TimeLogProcessor {
   public preProcessedContents: string = "";
   public contentsWithTimeMarkers: string = "";
   public timeReportCsv: string = "";
-  public timeReportData: any = {};
+  public timeReportData: {[k: string]: any} = {};
   public sessionStarts: RowMetadata[] = [];
   public sessions: TimeLogSession[] = [];
   public categories: string[] = [];
@@ -537,16 +547,16 @@ export class TimeLogProcessor {
     return timeReportCsv;
   }
 
-  public getTimeLogMetadata() {
+  public getTimeLogMetadata(): TimeLogMetadata {
     // do {
     // } while (!$last["tsIsFaked"]);
 
     if (!this.contentsWithTimeMarkers) {
-      return [];
+      return {};
     }
 
     if (!this.rowsWithTimeMarkers) {
-      return [];
+      return {};
     }
 
     const rowsWithTimeMarkers: RowMetadata[] = JSON.parse(

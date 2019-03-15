@@ -353,7 +353,7 @@ export class ProcessedTimeSpendingLog {
     }
   }
 
-  public calculateTotalReportedTime() {
+  public calculateTotalReportedTime(): number {
     let total = 0;
     {
       const timeReportData = cloneVariable(
