@@ -43,7 +43,7 @@ export class ProcessedTimeSpendingLog {
   }
 
   /*
-  TODO: Udpate and restore as dev documentation at least
+  TODO: Update and restore as dev documentation at least
   public attributeLabels() {
     return {
       preProcessedContents: "Pre-processed log contents",
