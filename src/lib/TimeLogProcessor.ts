@@ -22,9 +22,9 @@ import {
 import { DetectTimeStampMetadata, TimeLogParser } from "./TimeLogParser";
 
 export interface TimeLogSession {
-  timeReportSourceComments: TimeLogEntryWithMetadata[];
+  timeReportSourceComments: TimeReportSourceComment[];
   tzFirst: string;
-  metadata: RowMetadata;
+  metadata: TimeLogMetadata;
   k: any;
   start: any;
 }
@@ -66,10 +66,12 @@ export interface TimeReportSourceComment {
   tz: string;
 }
 
-export interface TimeLogEntryWithMetadata {
-  dateRaw: string;
+export interface TimeLogEntryWithMetadata extends TimeReportSourceComment {
   gmtTimestamp: string; // Not a unix timestamp, but a UTC-based datetime string timestamp
-  sessionMeta: any;
+  sessionMeta: {
+    session_ref: string;
+    tzFirst: string;
+  };
 }
 
 export interface TimeLogMetadata {

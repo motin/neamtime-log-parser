@@ -217,26 +217,34 @@ export class ProcessedTimeSpendingLog {
     const timeLogProcessor = this.getTimeLogProcessor();
 
     for (const session of Object.values(timeLogProcessor.sessions)) {
-      const timeLogEntriesWithMetadataArray = session.timeReportSourceComments;
-
       // TODO: Add a way to set the session_ref based on log contents in a way that doesn't result in duplicates after re-importing a session with changed start-line-date. Something like a convention to append "#previous-start-ref: start [dateRaw]" or similar to the source line
-      for (const timeLogEntryWithMetadata of Object.values(
-        timeLogEntriesWithMetadataArray,
+      for (const timeReportSourceComment of Object.values(
+        session.timeReportSourceComments,
       )) {
         // for now skip rows without duration
-        // if (empty($row_with_time_marker["durationSinceLast"]))
-        // Clues needs a gmtTimestamp - we use dateRaw since it is already in UTC
-        const gmtTimestamp = timeLogEntryWithMetadata.dateRaw.trim();
-        const sessionMeta: any = {};
-        sessionMeta.tzFirst = session.tzFirst;
-        sessionMeta.session_ref = session.start.dateRaw;
-        timeLogEntryWithMetadata.gmtTimestamp = gmtTimestamp;
-        timeLogEntryWithMetadata.sessionMeta = sessionMeta;
+        /*
+        if (timeReportSourceComment.hours === 0) {
+          continue;
+        }
+        */
+
+        // Entries needs a gmtTimestamp - we use dateRaw since it is already in UTC
+        const gmtTimestamp = timeReportSourceComment.dateRaw.trim();
+        const sessionMeta: any = {
+          session_ref: session.start.dateRaw,
+          tzFirst: session.tzFirst,
+        };
+
+        const timeLogEntryWithMetadata = {
+          gmtTimestamp,
+          sessionMeta,
+          ...timeReportSourceComment,
+        };
+
         timeLogEntriesWithMetadata.push(timeLogEntryWithMetadata);
       }
     }
 
-    delete timeLogProcessor.sessions;
     return timeLogEntriesWithMetadata;
   }
 
@@ -247,7 +255,7 @@ export class ProcessedTimeSpendingLog {
     for (let k: number = 0; k < starts.length; k++) {
       const start = starts[k];
 
-      let sessionSpecificProcessedTimeSpendingLogTimeLogProcessor;
+      let sessionSpecificProcessedTimeSpendingLogTimeLogProcessor: TimeLogProcessor;
 
       // If only one session was detected, we will not parse the session, but instead simply use the current timeLogProcessor in order to avoid stack overflow
       if (starts.length === 1) {
