@@ -215,7 +215,6 @@ export class ProcessedTimeSpendingLog {
   public getTimeLogEntriesWithMetadata() {
     const timeLogEntriesWithMetadata: TimeLogEntryWithMetadata[] = [];
     const timeLogProcessor = this.getTimeLogProcessor();
-    this.parseDetectSessionsOneByOne(timeLogProcessor);
 
     for (const session of Object.values(timeLogProcessor.sessions)) {
       const timeLogEntriesWithMetadataArray = session.timeReportSourceComments;
