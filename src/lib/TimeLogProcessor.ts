@@ -214,7 +214,7 @@ export class TimeLogProcessor {
 
   public generateTimeReport(contentsWithTimeMarkers: string) {
     this.timeLogParser.lastKnownTimeZone = this.tzFirst;
-    const times = [];
+    const times: { [k: string]: any } = {};
 
     if (this.categories.length === 0) {
       this.detectCategories(contentsWithTimeMarkers);
@@ -357,9 +357,9 @@ export class TimeLogProcessor {
       this.timeReportSourceComments.push(sourceComment);
     }
 
-    // console.debug("generateTimeReport - times array result", { times });
+    // console.debug("generateTimeReport - times object result", { times });
 
-    // Fill out and sort the times-array
+    // Fill out and sort the times-object
 
     this.timeReportData = this.addNullFilledDates(times);
 
@@ -370,7 +370,7 @@ export class TimeLogProcessor {
     this.timeReportCsv = this.generateTimeReportCsv();
   }
 
-  public addNullFilledDates(times) {
+  public addNullFilledDates(times): { [k: string]: any } {
     // console.debug("addNullFilledDates - { times }", { times });
 
     this.metadataGenerateTimeReport = this.findFirstAndLastDates(times);
@@ -381,7 +381,7 @@ export class TimeLogProcessor {
 
     // Check if no times were found...
     if (!firstDateFound) {
-      return [];
+      return {};
     }
 
     const timesWithNullFilledDates = this.addNullFilledDatesBetweenSpecificDates(
@@ -395,7 +395,7 @@ export class TimeLogProcessor {
     return timesWithNullFilledDates;
   }
 
-  public findFirstAndLastDates(times) {
+  public findFirstAndLastDates(times: { [k: string]: any }) {
     // Find time span:
     let firstDateFound;
     let lastDateFound;
