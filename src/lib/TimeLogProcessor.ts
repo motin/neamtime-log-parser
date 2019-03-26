@@ -102,6 +102,9 @@ export class TimeLogProcessor {
   public contentsWithTimeMarkers: string = "";
   public timeReportCsv: string = "";
   public timeReportData: { [k: string]: any } = {};
+  public timeReportDataWithNullFilledIntermediateDates: {
+    [k: string]: any;
+  } = {};
   public sessionStarts: RowMetadata[] = [];
   public sessions: TimeLogSession[] = [];
   public categories: string[] = [];
@@ -359,9 +362,14 @@ export class TimeLogProcessor {
 
     // console.debug("generateTimeReport - times object result", { times });
 
+    this.metadataGenerateTimeReport = this.findFirstAndLastDates(times);
+
     // Fill out and sort the times-object
 
-    this.timeReportData = this.addNullFilledDates(times);
+    this.timeReportData = times;
+    this.timeReportDataWithNullFilledIntermediateDates = this.addNullFilledDates(
+      times,
+    );
 
     // console.debug("generateTimeReport - this.timeReportData", this.timeReportData,);
 
@@ -373,9 +381,7 @@ export class TimeLogProcessor {
   public addNullFilledDates(times): { [k: string]: any } {
     // console.debug("addNullFilledDates - { times }", { times });
 
-    this.metadataGenerateTimeReport = this.findFirstAndLastDates(times);
-
-    const { firstDateFound, lastDateFound } = this.metadataGenerateTimeReport;
+    const { firstDateFound, lastDateFound } = this.findFirstAndLastDates(times);
 
     // console.debug("addNullFilledDates - { firstDateFound, lastDateFound }", { firstDateFound, lastDateFound });
 
