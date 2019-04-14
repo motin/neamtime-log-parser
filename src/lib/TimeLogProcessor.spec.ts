@@ -889,6 +889,7 @@ const testGenerateTimeReport: Macro = (
   contentsWithTimeMarkers,
   expectedCategories,
   expectedTimeReportData,
+  expectedTimeReportExportData,
 ) => {
   const timeLogProcessor = new TimeLogProcessor();
   timeLogProcessor.generateTimeReport(contentsWithTimeMarkers);
@@ -915,6 +916,11 @@ const testGenerateTimeReport: Macro = (
     expectedTimeReportData,
     "TimeLogProcessor->generateTimeReport() behaves as expected",
   );
+  t.deepEqual(
+    timeLogProcessor.timeReportExportData,
+    expectedTimeReportExportData,
+    "TimeLogProcessor->generateTimeReportExportData() behaves as expected",
+  );
 };
 
 const testGenerateTimeReportData = () => {
@@ -939,6 +945,18 @@ const testGenerateTimeReportData = () => {
           text: ["foo", "bar"],
         },
       },
+      [
+        {
+          activities: "foo | bar",
+          date: "2019-01-05",
+          hoursByCategory: {
+            Uncategorized: "4.250000000000000",
+          },
+          hoursByCategoryRounded: {
+            Uncategorized: 4.25,
+          },
+        },
+      ],
     ],
   ];
 };
@@ -950,5 +968,6 @@ testGenerateTimeReportData().forEach((testData, index) => {
     testData[0],
     testData[1],
     testData[2],
+    testData[3],
   );
 });

@@ -84,6 +84,13 @@ export interface TimeLogMetadata {
   startTs?: number;
 }
 
+export interface TimeReportExportEntry {
+  activities: string;
+  date: string;
+  hoursByCategory: { [k: string]: string };
+  hoursByCategoryRounded: { [k: string]: number };
+}
+
 // Since date-fns can not handle UTC dates
 function eachDayOfIntervalUTC(dirtyInterval, dirtyOptions = null) {
   const borkyDates = eachDayOfInterval(dirtyInterval, dirtyOptions);
@@ -100,6 +107,7 @@ export class TimeLogProcessor {
   public contents: string = "";
   public preProcessedContents: string = "";
   public contentsWithTimeMarkers: string = "";
+  public timeReportExportData: TimeReportExportEntry[];
   public timeReportCsv: string = "";
   public timeReportData: { [k: string]: any } = {};
   public timeReportDataWithNullFilledIntermediateDates: {
@@ -375,7 +383,8 @@ export class TimeLogProcessor {
 
     // print this.timeReportData in a csv-format:
 
-    this.timeReportCsv = this.generateTimeReportCsv();
+    this.timeReportExportData = this.generateTimeReportExportData();
+    this.timeReportCsv = this.generateTimeReportCsv(this.timeReportExportData);
   }
 
   public addNullFilledDates(times): { [k: string]: any } {
@@ -472,16 +481,8 @@ export class TimeLogProcessor {
     return timesWithNullFilledDates;
   }
 
-  public generateTimeReportCsv() {
-    let timeReportCsv = "";
-
-    timeReportCsv +=
-      "Date;" +
-      this.categories.join(" (rounded);") +
-      " (rounded);" +
-      this.categories.join(";") +
-      ";Log_Items\n";
-
+  public generateTimeReportExportData() {
+    const timeReportExportData = [];
     for (const date of Object.keys(this.timeReportData)) {
       const hours = this.timeReportData[date];
 
@@ -499,25 +500,25 @@ export class TimeLogProcessor {
       }
 
       //
-      let hoursByCategoryRounded = "";
+      const hoursByCategoryRounded: { [k: string]: number } = {};
 
       for (const c of this.categories) {
         const hoursExact =
           hours !== null && undefined !== hours[c] ? hours[c] : 0;
         const hoursRounded = Math.round(hoursExact * 100) / 100;
-        hoursByCategoryRounded += hoursRounded + ";";
+        hoursByCategoryRounded[c] = hoursRounded;
       }
 
       // replace point by comma
       // $hours_by_category_rounded = str_replace(".", ",", $hours_by_category_rounded);
 
-      let hoursByCategory = "";
+      const hoursByCategory: { [k: string]: string } = {};
 
       for (const c of this.categories) {
         const hoursExact =
           hours !== null && undefined !== hours[c] ? hours[c] : 0;
         const hoursExactFixed = hoursExact === 0 ? 0 : hoursExact.toFixed(15);
-        hoursByCategory += hoursExactFixed + ";";
+        hoursByCategory[c] = hoursExactFixed;
 
         // TMP - Mimic the same precision that PHP used to generate the fixture-csv:s
         // so that CSV comparisons pass until new CSV files are generated without this restriction
@@ -537,13 +538,14 @@ export class TimeLogProcessor {
       // replace point by comma
       // $hours_by_category = str_replace(".", ",", $hours_by_category);
 
-      timeReportCsv +=
-        date +
-        ";" +
-        hoursByCategoryRounded +
-        hoursByCategory +
-        activities +
-        LogParser.NL_NIX;
+      const timeReportExportEntry: TimeReportExportEntry = {
+        activities,
+        date,
+        hoursByCategory,
+        hoursByCategoryRounded,
+      };
+
+      timeReportExportData.push(timeReportExportEntry);
     }
 
     /*
@@ -551,6 +553,39 @@ export class TimeLogProcessor {
       // maybe attempt to add some debugging metadata here?
     }
     */
+
+    return timeReportExportData;
+  }
+
+  public generateTimeReportCsv(timeReportExportData = null) {
+    if (!timeReportExportData) {
+      timeReportExportData = this.generateTimeReportExportData();
+    }
+
+    let timeReportCsv = "";
+
+    timeReportCsv +=
+      "Date;" +
+      this.categories.join(" (rounded);") +
+      " (rounded);" +
+      this.categories.join(";") +
+      ";Log_Items" +
+      LogParser.NL_NIX;
+
+    timeReportExportData.map((timeReportExportEntry: TimeReportExportEntry) => {
+      timeReportCsv += timeReportExportEntry.date + ";";
+
+      timeReportCsv +=
+        this.categories
+          .map(c => timeReportExportEntry.hoursByCategoryRounded[c])
+          .join(";") + ";";
+      timeReportCsv +=
+        this.categories
+          .map(c => timeReportExportEntry.hoursByCategory[c])
+          .join(";") + ";";
+
+      timeReportCsv += timeReportExportEntry.activities + LogParser.NL_NIX;
+    });
 
     return timeReportCsv;
   }
