@@ -602,6 +602,10 @@ export class TimeLogProcessor {
       return {};
     }
 
+    if (this.rowsWithTimeMarkers.length === 0) {
+      return { error: "No time markers in log" };
+    }
+
     const rowsWithTimeMarkers: RowMetadata[] = JSON.parse(
       JSON.stringify(this.rowsWithTimeMarkers),
     );

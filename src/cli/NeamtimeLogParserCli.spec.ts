@@ -29,6 +29,7 @@ const expectedRelativeTtbwsdFileFixturePaths = [
   "@/correct/basics/multiple-entries-with-the-same-timestamp.tslog",
   "@/correct/basics/pause-handling.tslog",
   "@/correct/basics/sierra-osx-timestamp-format.tslog",
+  "@/correct/basics/newly-cycled.tslog",
   "@/incorrect/basics/empty.tslog",
   "@/incorrect/basics/correctly-reported-processing-error-sourceline-1.tslog",
   "@/incorrect/basics/incorrect-timezone.tslog",
