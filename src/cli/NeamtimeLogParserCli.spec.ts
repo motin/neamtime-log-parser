@@ -25,18 +25,16 @@ testNeamtimeLogParserCli.title = (
 
 const expectedRelativeTtbwsdFileFixturePaths = [
   "@/correct/basics/an-hour-of-something.tslog",
-  "@/correct/basics/an-hour-of-something.identical-copy.tslog",
   "@/correct/basics/example-1-from-neamtime-reporting-2010-docs.tslog",
   "@/correct/basics/multiple-entries-with-the-same-timestamp.tslog",
   "@/correct/basics/pause-handling.tslog",
   "@/correct/basics/sierra-osx-timestamp-format.tslog",
-  "@/correct/basics/empty.tslog",
+  "@/incorrect/basics/empty.tslog",
   "@/incorrect/basics/correctly-reported-processing-error-sourceline-1.tslog",
   "@/incorrect/basics/incorrect-timezone.tslog",
 ];
 
 expectedRelativeTtbwsdFileFixturePaths
-  .slice(0, 1)
   .map(relativeFilePath => {
     return path.join(fixturesPath, relativeFilePath.replace("@/", ""));
   })
