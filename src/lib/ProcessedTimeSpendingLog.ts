@@ -80,20 +80,24 @@ export class ProcessedTimeSpendingLog {
         "Empty timezone",
         this.unprocessedTimeSpendingLog,
       );
-      throw new TimeSpendingLogProcessingErrorsEncounteredException(
+      const e = new TimeSpendingLogProcessingErrorsEncounteredException(
         "Empty timezone",
       );
+      e.processedTimeSpendingLog = this;
+      throw e;
     }
 
     if (!this.unprocessedTimeSpendingLog.rawLogContents) {
       this.addError(
         "issues-during-initial-parsing",
-        "Empty raw log contents" +
-          JSON.stringify(this.unprocessedTimeSpendingLog),
+        "Empty raw log contents",
+        // + JSON.stringify(this.unprocessedTimeSpendingLog),
       );
-      throw new TimeSpendingLogProcessingErrorsEncounteredException(
+      const e = new TimeSpendingLogProcessingErrorsEncounteredException(
         "Empty raw log contents",
       );
+      e.processedTimeSpendingLog = this;
+      throw e;
     }
 
     const timeLogProcessor = this.getTimeLogProcessor();
