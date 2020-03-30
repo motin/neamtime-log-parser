@@ -2,9 +2,7 @@ import { ArgumentParser } from "argparse";
 import stackman from "stackman";
 import { NeamtimeLogParserCli } from "./cli/NeamtimeLogParserCli";
 
-process.once("unhandledRejection", (err, _p) => {
-  console.error("Event: Unhandled Rejection");
-
+const exitWithError = err => {
   stackman().callsites(err, (stackmanErr, callsites) => {
     if (stackmanErr) {
       throw stackmanErr;
@@ -21,27 +19,16 @@ process.once("unhandledRejection", (err, _p) => {
   console.error(err.stack, err);
   // debugger;
   process.exit(1);
+};
+
+process.once("unhandledRejection", (err, _p) => {
+  console.error("Event: Unhandled Rejection");
+  exitWithError(err);
 });
 
 process.once("uncaughtException", err => {
   console.error("Event: Uncaught Exception");
-
-  stackman().callsites(err, (stackmanErr, callsites) => {
-    if (stackmanErr) {
-      throw stackmanErr;
-    }
-    callsites.forEach(callsite => {
-      console.log(
-        "Error occured in at %s line %d",
-        callsite.getFileName(),
-        callsite.getLineNumber(),
-      );
-    });
-  });
-
-  console.error(err.stack, err);
-  // debugger;
-  process.exit(1);
+  exitWithError(err);
 });
 
 Error.stackTraceLimit = Infinity;
@@ -67,10 +54,7 @@ try {
       const neamtimeLogParserCli = new NeamtimeLogParserCli();
       const parseResult = await neamtimeLogParserCli
         .run(filePath)
-        .catch(error => {
-          console.error(error.stack, error);
-          // throw new Error(error);
-        });
+        .catch(exitWithError);
       console.log(JSON.stringify(parseResult));
     }
   })();
