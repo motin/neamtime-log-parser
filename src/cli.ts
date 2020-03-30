@@ -1,11 +1,10 @@
 import { ArgumentParser } from "argparse";
+import stackman from "stackman";
 import { NeamtimeLogParserCli } from "./cli/NeamtimeLogParserCli";
-// import stackman from "stackman";
 
 process.once("unhandledRejection", (err, _p) => {
-  console.log("Event: Unhandled Rejection");
+  console.error("Event: Unhandled Rejection");
 
-  /*
   stackman().callsites(err, (stackmanErr, callsites) => {
     if (stackmanErr) {
       throw stackmanErr;
@@ -18,7 +17,6 @@ process.once("unhandledRejection", (err, _p) => {
       );
     });
   });
-   */
 
   console.error(err.stack, err);
   // debugger;
@@ -26,9 +24,8 @@ process.once("unhandledRejection", (err, _p) => {
 });
 
 process.once("uncaughtException", err => {
-  console.log("Event: Uncaught Exception");
+  console.error("Event: Uncaught Exception");
 
-  /*
   stackman().callsites(err, (stackmanErr, callsites) => {
     if (stackmanErr) {
       throw stackmanErr;
@@ -41,7 +38,6 @@ process.once("uncaughtException", err => {
       );
     });
   });
-   */
 
   console.error(err.stack, err);
   // debugger;
@@ -72,12 +68,14 @@ try {
       const parseResult = await neamtimeLogParserCli
         .run(filePath)
         .catch(error => {
-          throw new Error(error);
+          console.error(error.stack, error);
+          // throw new Error(error);
         });
       console.log(JSON.stringify(parseResult));
     }
   })();
 } catch (e) {
-  console.log("CLI: Caught error:");
+  console.error("CLI: Caught error:");
   console.error(e);
+  process.exit(1);
 }
