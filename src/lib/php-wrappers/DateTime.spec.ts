@@ -120,6 +120,7 @@ const testCreateFromFormat: Macro = (
 const testCreateFromFormatData = () => {
   return [
     [DateTime.YMDHI, "2016-05-25 14:50", "2016-05-25 14:50"],
+    [DateTime.YMDHI, "2016-05-25 4:50", "2016-05-25 04:50"],
     [DateTime.ISO8601Z, "2016-05-25T14:50:00Z", "2016-05-25 14:50"],
     [DateTime.ISO8601, "2016-05-25T14:50:00+01:00", "2016-05-25 14:50"],
     [DateTime.ISO8601, "2016-05-25T14:50:00+0100", "2016-05-25 14:50"],

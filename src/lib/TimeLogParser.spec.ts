@@ -220,8 +220,16 @@ const testDetectTimeStampAndInterpretTsAndDate: Macro = (
 
   const interpretTsAndDateErrorMessage =
     timeLogParser.lastInterpretTsAndDateErrorMessage;
-  // t.log({date, datetime, interpretTsAndDateErrorMessage, setTsAndDateErrorClass, setTsAndDateErrorMessage,});
   const valid = !!date;
+  if (valid !== expectedToBeValid) {
+    t.log({
+      date,
+      datetime,
+      interpretTsAndDateErrorMessage,
+      setTsAndDateErrorClass,
+      setTsAndDateErrorMessage,
+    });
+  }
   t.is(
     valid,
     expectedToBeValid,
@@ -776,6 +784,18 @@ const testDetectTimeStampAndInterpretTsAndDateData = () => {
       true,
       "Europe/Stockholm",
       "2014-11-21 16:49:00",
+    ],
+    [
+      "start 2014-11-21 7:49",
+      "Y-m-d H:i",
+      "2014-11-21 7:49",
+      "7:49",
+      false,
+      "Europe/Stockholm",
+      "2014-11-21",
+      true,
+      "Europe/Stockholm",
+      "2014-11-21 06:49:00",
     ],
     [
       "start 2014-11-21, 17:49",

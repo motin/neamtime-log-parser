@@ -7,21 +7,17 @@ const testNeamtimeLogParserCli: Macro = async (
   t: ExecutionContext,
   filePath: string,
 ) => {
-  t.log("filePath", filePath);
+  // t.log("filePath", filePath);
 
   const neamtimeLogParserCli = new NeamtimeLogParserCli();
   const parseResult = await neamtimeLogParserCli.run(filePath);
 
-  t.log("parseResult", parseResult);
+  // t.log("parseResult", parseResult);
 
-  t.is(undefined, undefined);
+  t.not(!!parseResult, false);
 };
-testNeamtimeLogParserCli.title = (
-  providedTitle: string,
-  filePath: string,
-  fileSha1: number,
-) =>
-  `${providedTitle}: - should be able to parse files using NeamtimeLogParserCli: ${filePath}, ${fileSha1}`;
+testNeamtimeLogParserCli.title = (providedTitle: string, filePath: string) =>
+  `${providedTitle}: - should be able to parse files using NeamtimeLogParserCli: ${filePath}`;
 
 const expectedRelativeTtbwsdFileFixturePaths = [
   "@/correct/basics/an-hour-of-something.tslog",
