@@ -45,6 +45,10 @@ export function readFirstNonEmptyLineOfText(text) {
   return undefined;
 }
 
+export function tsIsTooOld(ts) {
+  return ts < new Date().getTime() / 1000 - 24 * 3600 * 365 * 100;
+}
+
 // Since strtotime is way to generous, leading to detected "timestamps" which are not actual timestamps
 //
 // @param $dateRaw
@@ -367,13 +371,10 @@ export class LogParser {
       ts = 0;
       // console.debug("setTsAndDate - !ts - {dateRaw, datetimeParseResult, timezoneStringToUseInCaseDateStringHasNoTimezoneInfo, ts}, this.lastKnownDate, this.lastKnownTimeZone, this.lastSetTsAndDateErrorMessage, this.lastUsedTimeZone",{dateRaw, datetimeParseResult, timezoneStringToUseInCaseDateStringHasNoTimezoneInfo, ts}, this.lastKnownDate, this.lastKnownTimeZone, this.lastSetTsAndDateErrorMessage, this.lastUsedTimeZone);
       this.lastSetTsAndDateErrorMessage = `No successful date parsing for '${dateRaw}'. Maybe the dateRaw string did not exactly match formatToUse ('${formatToUse}')?`;
-    } else if (
-      ts > 0 &&
-      ts < new Date().getTime() / 1000 - 24 * 3600 * 365 * 10
-    ) {
+    } else if (ts > 0 && tsIsTooOld(ts)) {
       ts = 0;
       this.lastSetTsAndDateErrorMessage =
-        "Timestamp found was more than 10 years old, not reasonably correct";
+        "Timestamp found was more than 100 years old, not reasonably correct";
     } else {
       if (datetimeParseResult instanceof DateTime) {
         datetime = datetimeParseResult;

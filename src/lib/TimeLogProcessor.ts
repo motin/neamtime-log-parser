@@ -10,6 +10,7 @@ import {
   LogParser,
   newlineConvert,
   textIntoLinesArray,
+  tsIsTooOld,
 } from "./LogParser";
 import {
   cloneVariable,
@@ -296,9 +297,7 @@ export class TimeLogProcessor {
 
       // invalidate
       let invalid =
-        !date ||
-        strpos(lineWithoutDate, "min") === false ||
-        ts < Date.now() / 1000 - 24 * 3600 * 365 * 10;
+        !date || strpos(lineWithoutDate, "min") === false || tsIsTooOld(ts);
 
       if (invalid) {
         this.notParsedTimeReport.push(line);
