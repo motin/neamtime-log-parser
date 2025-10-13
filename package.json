@@ -1,5 +1,5 @@
 {
-  "name": "@neam/neamtime-log-parser",
+  "name": "neamtime-log-parser",
   "version": "0.4.0",
   "description": "Parses neamtime time tracking logs",
   "bin": "build/main/cli.js",
