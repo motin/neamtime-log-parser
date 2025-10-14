@@ -6,12 +6,26 @@
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
-  "repository": "https://github.com/motin/neamtime-log-parser",
-  "license": "UNLICENSED",
-  "publishConfig": {
-    "registry": "http://localhost:4873/"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/motin/neamtime-log-parser.git"
   },
-  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/motin/neamtime-log-parser/issues"
+  },
+  "homepage": "https://github.com/motin/neamtime-log-parser#readme",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "time-tracking",
+    "time-log",
+    "parser",
+    "markdown",
+    "timesheet",
+    "neamtime"
+  ],
   "scripts": {
     "info": "npm-scripts-info",
     "build": "run-s clean && run-p build:*",

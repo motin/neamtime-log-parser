@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.5.0"></a>
+# [0.5.0](https://github.com/motin/neamtime-log-parser/compare/v0.4.0...v0.5.0) (2025-10-14)
+
+### Features
+
+* **npm**: First public npm release with MIT license
+* **docs**: Comprehensive README with API documentation and examples
+* **parser**: Extended date detection to support years before 1999 and after 2020
+* **parser**: Improved handling of timelogs without time markers
+* **cli**: Better error handling and reporting
+* **cli**: Support for binaries on all major platforms
+* **export**: Structured time report data format
+
+### Bug Fixes
+
+* Restored passing tests by extending date range support to 100 years
+* Properly handle empty raw log contents and timezone errors
+* Test cleanups and improvements
+
+### Internal
+
+* Updated date-fns dependency
+* Added comprehensive test fixtures
+
 <a name="0.4.0"></a>
 # [0.4.0](https://github.com/motin/neamtime-log-parser/compare/v0.3.0...v0.4.0) (2019-03-26)
 
