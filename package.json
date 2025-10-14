@@ -55,16 +55,16 @@
     "doc:html": "typedoc src/ --target ES6 --mode file --out build/docs",
     "doc:json": "typedoc src/ --target ES6 --mode file --json build/docs/typedoc.json",
     "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
-    "version-major": "git stash && run-s prepare && standard-version --release-as major",
-    "version-minor": "git stash && run-s prepare && standard-version --release-as minor",
-    "version-patch": "git stash && run-s prepare && standard-version --release-as patch",
     "reset": "git clean -dfx && git stash && npm i",
     "clean": "trash build test",
     "all": "run-s reset test cov:check doc:html",
     "pkg": "pkg .",
     "install-mac": "npm run build && npm run pkg && cp neamtime-log-parser-macos /usr/local/bin/neamtime-log-parser",
-    "prepare": "run-s lint build",
-    "prepare-release": "run-s all version doc:publish"
+    "prepack": "npm run build",
+    "prepublishOnly": "npx publint",
+    "check": "npm run lint && npm test && npm run build",
+    "release": "echo '🚀 Starting release process...' && git branch --show-current | grep -q '^main$' && npm run check && npm pack && echo '📦 Package created. Testing locally...' && npm install -g ./neamtime-log-parser-*.tgz && neamtime-log-parser --help && echo '✅ Local test passed! Ready to bump version...' && bumpp --commit 'chore: release v%s' --tag 'v%s' --push && npm publish && echo '🎉 Release complete!'",
+    "release:test": "npm run check && npm pack && npm install -g ./neamtime-log-parser-*.tgz && neamtime-log-parser --help && echo '✅ Package tests passed!'"
   },
   "scripts-info": {
     "info": "Display information about the package scripts",
@@ -78,9 +78,10 @@
     "cov": "Rebuild, run tests, then create and open the coverage report",
     "doc": "Generate HTML API documentation and open it in a browser",
     "doc:json": "Generate API documentation in typedoc JSON format",
-    "version": "Bump package.json version, update CHANGELOG.md, tag release",
-    "reset": "Delete all untracked files and reset the repo to the last commit",
-    "prepare-release": "One-step: clean, build, test, publish docs, and prep a release"
+    "check": "Run all checks (lint + test + build)",
+    "release": "Full release workflow: check, test package, bump version, publish to npm",
+    "release:test": "Test package build and installation without publishing",
+    "reset": "Delete all untracked files and reset the repo to the last commit"
   },
   "engines": {
     "node": ">=8.9"
@@ -94,6 +95,7 @@
   },
   "devDependencies": {
     "ava": "1.0.0-beta.7",
+    "bumpp": "^10.3.1",
     "codecov": "^3.1.0",
     "cz-conventional-changelog": "^2.1.0",
     "fast-glob": "^2.2.4",
@@ -104,6 +106,7 @@
     "opn-cli": "^3.1.0",
     "pkg": "^4.4.5",
     "prettier": "^1.14.3",
+    "publint": "^0.3.14",
     "standard-version": "^4.4.0",
     "tempy": "^0.2.1",
     "trash-cli": "^1.4.0",

@@ -174,14 +174,48 @@ INCLUDE_UNVERSIONED_FIXTURES=true npm test
 npm run cov
 ```
 
+## Release Process
+
+### Key Principles
+
+- **Test before merging**: Test features (`npm pack` + local install) on feature branches
+- **Publish from main**: Only publish to npm from `main` branch after PR merge
+- **Tag releases**: Create git tags for published versions (automated via `bumpp`)
+
+### Workflow
+
+1. **Merge features**: All features merged to main via GitHub PRs
+2. **Release**: On main branch, run `npm run release`
+   - Validates you're on main branch
+   - Runs all checks (lint, tests, build)
+   - Creates and tests package locally
+   - Interactive version bump (via `bumpp`)
+   - Publishes to npm and creates git tag
+   - Pushes tag to GitHub (triggers automated release notes)
+3. **Bug fixes**: If issues found, fix via PR then re-run `npm run release`
+
+### Testing Releases
+
+Before publishing, test the package locally:
+
+```bash
+npm run release:test
+```
+
+This will:
+- Run all checks
+- Build the package
+- Install it globally from the tarball
+- Test the CLI works
+
+### GitHub Actions
+
+The project uses GitHub Actions for:
+- **CI**: Runs on all PRs and pushes to main (tests on Node 18, 20, 22)
+
 ## License
 
 MIT © motin
-
-## Related Projects
-
-- **RememberThis.ai** - Ecosystem using this parser
-- **RememberThis Obsidian Plugin** - Primary consumer for time tracking in Obsidian
 
 ## Contributing
 
