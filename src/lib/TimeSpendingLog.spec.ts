@@ -26,6 +26,10 @@ const correctTimeSpendingLogContents = () => {
   const providerData = Array();
 
   for (const timeSpendingLogPath of Object.values(timeSpendingLogPaths)) {
+    // Skip unversioned fixtures that are not committed to git
+    if (timeSpendingLogPath.includes("unversioned")) {
+      continue;
+    }
     providerData.push([timeSpendingLogPath]);
   }
 
@@ -44,6 +48,10 @@ const incorrectTimeSpendingLogContents = () => {
   const providerData = Array();
 
   for (const timeSpendingLogPath of Object.values(timeSpendingLogPaths)) {
+    // Skip unversioned fixtures that are not committed to git
+    if (timeSpendingLogPath.includes("unversioned")) {
+      continue;
+    }
     const processingErrorsJsonFilePath = str_replace(
       ".tslog",
       ".processing-errors.json",
