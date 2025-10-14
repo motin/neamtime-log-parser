@@ -32,6 +32,10 @@ export function glob(patternOrPatterns): string[] {
 }
 
 export function file_put_contents(filePath, contents) {
+  // Guard against undefined/null contents to avoid writeFileSync errors
+  if (contents === undefined || contents === null) {
+    contents = "";
+  }
   writeFileSync(filePath, contents, "utf-8");
 }
 
