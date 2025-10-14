@@ -102,10 +102,8 @@ export class LogParser {
   public supportedTimestampFormats() // the minute-part may be omitted and instead an approx token will be found, which will be replaced before reaching createFromFormat
   // todo: dyn load appr-tokens
   {
-    const regexDetectYmd =
-      "(\\d{4})-\\d+-\\d+";
-    const regexDetectdmY =
-      "[^\\s\\>>]*-.*-(\\d{4})";
+    const regexDetectYmd = "(\\d{4})-\\d+-\\d+";
+    const regexDetectdmY = "[^\\s\\>>]*-.*-(\\d{4})";
     const regexDetectHis = "(\\d+:\\d+:\\d+)";
     const regexDetectHcoloniAcceptingApproxToken =
       "(\\d+:([^\\s\\-,:]*|ca|appr))";
