@@ -19,6 +19,13 @@ const pathToFolderWhereIncorrectTsLogsReside = path.join(
   "incorrect",
 );
 
+const shouldIncludeUnversionedFixtures = () => {
+  return (
+    process.env.INCLUDE_UNVERSIONED_FIXTURES === "true" ||
+    process.env.INCLUDE_UNVERSIONED_FIXTURES === "1"
+  );
+};
+
 const correctTimeSpendingLogContents = () => {
   const timeSpendingLogPaths = timeSpendingLogPathsInFolder(
     pathToFolderWhereCorrectTsLogsReside,
@@ -27,7 +34,11 @@ const correctTimeSpendingLogContents = () => {
 
   for (const timeSpendingLogPath of Object.values(timeSpendingLogPaths)) {
     // Skip unversioned fixtures that are not committed to git
-    if (timeSpendingLogPath.includes("unversioned")) {
+    // unless INCLUDE_UNVERSIONED_FIXTURES environment variable is set
+    if (
+      timeSpendingLogPath.includes("unversioned") &&
+      !shouldIncludeUnversionedFixtures()
+    ) {
       continue;
     }
     providerData.push([timeSpendingLogPath]);
@@ -49,7 +60,11 @@ const incorrectTimeSpendingLogContents = () => {
 
   for (const timeSpendingLogPath of Object.values(timeSpendingLogPaths)) {
     // Skip unversioned fixtures that are not committed to git
-    if (timeSpendingLogPath.includes("unversioned")) {
+    // unless INCLUDE_UNVERSIONED_FIXTURES environment variable is set
+    if (
+      timeSpendingLogPath.includes("unversioned") &&
+      !shouldIncludeUnversionedFixtures()
+    ) {
       continue;
     }
     const processingErrorsJsonFilePath = str_replace(

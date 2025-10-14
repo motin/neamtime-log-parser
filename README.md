@@ -156,8 +156,17 @@ npm run build
 ### Testing
 
 ```bash
+# Run tests (versioned fixtures only - suitable for CI/CD)
 npm test
+
+# Run tests including unversioned fixtures (if available locally)
+npm run test:all
+
+# Or set environment variable directly
+INCLUDE_UNVERSIONED_FIXTURES=true npm test
 ```
+
+**Note**: By default, tests skip unversioned fixtures that are not committed to git. This ensures tests pass in CI/CD environments and fresh clones. If you have unversioned fixtures locally (in directories matching `*unversioned*`), you can include them in tests by setting the `INCLUDE_UNVERSIONED_FIXTURES` environment variable.
 
 ### Coverage
 
