@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { ArgumentParser } from "argparse";
 import stackman from "stackman";
 import { NeamtimeLogParserCli } from "./cli/NeamtimeLogParserCli";
