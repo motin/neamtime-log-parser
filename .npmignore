@@ -12,3 +12,25 @@ build/docs
 coverage
 .nyc_output
 *.log
+
+# Test fixtures (not needed in production)
+fixtures/
+
+# pkg binaries (standalone executables, NOT for npm)
+neamtime-log-parser-linux
+neamtime-log-parser-macos
+neamtime-log-parser-win.exe
+
+# Package tarballs
+*.tgz
+
+# IDE files
+.idea/
+.claude/
+
+# Config files
+.editorconfig
+.nvmrc
+
+# Docs
+PLAN.md
