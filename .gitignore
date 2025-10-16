@@ -10,3 +10,4 @@ coverage
 
 yarn.lock
 neamtime-log-parser-*
+.claude/settings.local.json
