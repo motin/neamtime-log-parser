@@ -9,6 +9,9 @@ export * from "./lib/LogParser";
 export * from "./lib/TimeLogParser";
 export * from "./lib/TimeSpendingLog";
 export * from "./lib/TimeLogProcessor";
+export * from "./lib/ProcessedTimeSpendingLog";
+export * from "./lib/parse";
+export * from "./types";
 
 export const timeSpendingLogPathsInFolder = (
   pathToFolderWhereTsLogsReside, // handle bear-exported txt-files // pick up properly named files for parsing

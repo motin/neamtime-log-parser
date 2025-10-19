@@ -11,9 +11,56 @@ import {
 import { TimeSpendingLog } from "./TimeSpendingLog";
 
 export interface ProcessingError {
-  data;
-  ref;
-  message;
+  /** Reference identifier for this error type (e.g., "issues-during-initial-parsing") */
+  ref: string;
+  /** Human-readable error message */
+  message: string;
+  /** Additional context data for this error */
+  data?: any;
+  /** Source line number where error occurred */
+  sourceLine?: number;
+  /** Raw date entry that caused the error */
+  dateRaw?: string;
+  /** Log entry line with comment */
+  lineWithComment?: string;
+  /** Error log details */
+  log?: string;
+}
+
+export interface ParseMetadata {
+  /** Total hours tracked in the log */
+  totalHours: number;
+  /** Number of sessions detected */
+  sessionCount: number;
+  /** Number of non-empty lines processed */
+  processedLines: number;
+  /** Oldest timestamp in the log */
+  oldestTimestamp?: Date;
+  /** Most recent timestamp in the log */
+  mostRecentTimestamp?: Date;
+  /** Calendar time span in hours */
+  leadTimeHours?: number;
+  /** Log name/comment */
+  name?: string;
+}
+
+export interface TimeLogParseResult {
+  /** Whether parsing completed without fatal errors */
+  success: boolean;
+  /** Parsed time log entries with metadata */
+  entries: TimeLogEntryWithMetadata[];
+  /** Metadata about the parsed log */
+  metadata: ParseMetadata;
+  /** Processing errors encountered (can have errors even if success=true) */
+  errors: ProcessingError[];
+  /** Number of errors */
+  errorCount: number;
+  /** Parse status: OK (no errors), Warnings (errors but usable), Failed (unusable) */
+  status: "OK" | "Warnings" | "Failed";
+  /** Troubleshooting information */
+  troubleshootingInfo?: any;
+  /** The processed time log processor (for advanced use) */
+  processor?: TimeLogProcessor;
 }
 
 export class ProcessedTimeSpendingLog {
