@@ -22,7 +22,7 @@ export function textIntoLinesArray(text): string[] {
   // Remove weird skype-produced spaces (hex c2a0 as opposed to hex 20 for ordinary spaces)
   text = str_replace("\xA0", " ", text);
   // Normalize line-endings
-  text = this.newlineConvert(text, LogParser.NL_NIX);
+  text = newlineConvert(text, LogParser.NL_NIX);
   return text.split(LogParser.NL_NIX);
 }
 
@@ -31,7 +31,7 @@ export function linesArrayIntoText(lines) {
 }
 
 export function readFirstNonEmptyLineOfText(text) {
-  const lines = this.textIntoLinesArray(text);
+  const lines = textIntoLinesArray(text);
 
   for (const i of Object.keys(lines)) {
     const line: string = lines[i];
