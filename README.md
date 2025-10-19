@@ -60,7 +60,80 @@ Output includes:
 - Individual time log entries with metadata
 - Processing errors (if any)
 
-### Programmatic API
+### Programmatic API (Recommended)
+
+The new high-level API provides a clean, type-safe interface with structured error handling:
+
+```typescript
+import { parseTimeLog } from 'neamtime-log-parser';
+
+// Parse a time log from string content
+const result = parseTimeLog(content, {
+  timezone: 'UTC', // optional, defaults to UTC
+  includeProcessor: true, // optional, for advanced use
+});
+
+// Check status
+if (result.status === 'OK') {
+  console.log('✅ Parsed successfully!');
+} else if (result.status === 'Warnings') {
+  console.warn(`⚠️ Parsed with ${result.errorCount} warnings`);
+  result.errors.forEach(err => console.warn(`  ${err.ref}: ${err.message}`));
+} else {
+  console.error('❌ Parsing failed:', result.errors[0].message);
+}
+
+// Access parsed data (available even with warnings)
+console.log(`Total hours: ${result.metadata.totalHours}`);
+console.log(`Sessions: ${result.metadata.sessionCount}`);
+
+// Use time log entries
+result.entries.forEach(entry => {
+  console.log(`${entry.gmtTimestamp}: ${entry.hours}h - ${entry.text}`);
+});
+
+// Access processor for advanced use (if includeProcessor: true)
+if (result.processor) {
+  const markdown = result.processor.contentsWithTimeMarkers;
+  const sessions = result.processor.sessions;
+}
+```
+
+**Parse from file:**
+
+```typescript
+import { parseTimeLogFile } from 'neamtime-log-parser';
+
+// Automatically reads .tzFirst file if present
+const result = await parseTimeLogFile('/path/to/timelog.tslog');
+
+console.log(`Status: ${result.status}`);
+console.log(`Entries: ${result.entries.length}`);
+```
+
+**Type-safe error handling:**
+
+```typescript
+import type { ProcessingError } from 'neamtime-log-parser';
+
+function handleErrors(errors: ProcessingError[]): void {
+  errors.forEach(error => {
+    console.log(`${error.ref}: ${error.message}`);
+
+    if (error.sourceLine) {
+      console.log(`  Line: ${error.sourceLine}`);
+    }
+
+    if (error.lineWithComment) {
+      console.log(`  Entry: ${error.lineWithComment}`);
+    }
+  });
+}
+```
+
+### Legacy API (Still Supported)
+
+The original class-based API continues to work for backward compatibility:
 
 ```typescript
 import { getProcessedTimeSpendingLog } from 'neamtime-log-parser';
@@ -112,7 +185,79 @@ If not specified, UTC is used as the default timezone.
 
 ## API Reference
 
-### Core Functions
+### Recommended API
+
+#### `parseTimeLog(content: string, options?: ParseOptions): TimeLogParseResult`
+
+Parse a time log from string content.
+
+**Options:**
+- `timezone?: string` - Timezone to use (default: 'UTC')
+- `includeTroubleshootingInfo?: boolean` - Include troubleshooting info in result
+- `includeProcessor?: boolean` - Include the processor instance in result
+
+**Returns:** `TimeLogParseResult` with:
+- `success: boolean` - Whether parsing completed without fatal errors
+- `status: 'OK' | 'Warnings' | 'Failed'` - Parse status
+- `entries: TimeLogEntryWithMetadata[]` - Parsed time log entries
+- `metadata: ParseMetadata` - Statistics (totalHours, sessionCount, etc.)
+- `errors: ProcessingError[]` - Any errors encountered
+- `errorCount: number` - Number of errors
+- `processor?: TimeLogProcessor` - Raw processor (if includeProcessor: true)
+- `troubleshootingInfo?: any` - Debug info (if includeTroubleshootingInfo: true)
+
+#### `parseTimeLogFile(filePath: string, options?: ParseOptions): Promise<TimeLogParseResult>`
+
+Parse a time log from a file. Automatically reads `.tzFirst` file if present.
+
+**Returns:** Promise resolving to `TimeLogParseResult`
+
+### Type Definitions
+
+#### `TimeLogParseResult`
+
+```typescript
+interface TimeLogParseResult {
+  success: boolean;
+  status: 'OK' | 'Warnings' | 'Failed';
+  entries: TimeLogEntryWithMetadata[];
+  metadata: ParseMetadata;
+  errors: ProcessingError[];
+  errorCount: number;
+  processor?: TimeLogProcessor;
+  troubleshootingInfo?: any;
+}
+```
+
+#### `ParseMetadata`
+
+```typescript
+interface ParseMetadata {
+  totalHours: number;
+  sessionCount: number;
+  processedLines: number;
+  oldestTimestamp?: Date;
+  mostRecentTimestamp?: Date;
+  leadTimeHours?: number;
+  name?: string;
+}
+```
+
+#### `ProcessingError`
+
+```typescript
+interface ProcessingError {
+  ref: string;              // Error reference identifier
+  message: string;          // Human-readable error message
+  data?: any;              // Additional context data
+  sourceLine?: number;     // Source line number
+  dateRaw?: string;        // Raw date entry
+  lineWithComment?: string; // Log entry line
+  log?: string;            // Error log details
+}
+```
+
+### Legacy API
 
 #### `getProcessedTimeSpendingLog(timeSpendingLogPath: string): ProcessedTimeSpendingLog`
 
@@ -122,7 +267,7 @@ Parses a time spending log file and returns a processed log object.
 
 Finds all time spending log files (`.tslog`) in a folder, including subdirectories.
 
-### ProcessedTimeSpendingLog
+#### ProcessedTimeSpendingLog
 
 The main result object with methods:
 
@@ -132,7 +277,7 @@ The main result object with methods:
 - `getTroubleshootingInfo()` - Metadata for debugging
 - `getTimeLogProcessor(): TimeLogProcessor` - Access to raw processor
 
-### TimeLogProcessor
+#### TimeLogProcessor
 
 Contains parsed data:
 
