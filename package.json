@@ -67,7 +67,10 @@
     "prepublishOnly": "npx publint",
     "check": "npm run lint && npm test && npm run build",
     "release": "echo '🚀 Starting release process...' && git branch --show-current | grep -q '^main$' && npm run check && npm pack && echo '📦 Package created. Testing locally...' && npm install -g ./neamtime-log-parser-*.tgz && neamtime-log-parser --help && echo '✅ Local test passed! Ready to bump version...' && bumpp --commit 'chore: release v%s' --tag 'v%s' --push && npm publish && echo '🎉 Release complete!'",
-    "release:test": "npm run check && npm pack && npm install -g ./neamtime-log-parser-*.tgz && neamtime-log-parser --help && echo '✅ Package tests passed!'"
+    "release:test": "npm run check && npm pack && npm install -g ./neamtime-log-parser-*.tgz && neamtime-log-parser --help && echo '✅ Package tests passed!'",
+    "publish:local": "npm run build && npm publish --registry http://localhost:4873",
+    "registry:local": "npm set registry http://localhost:4873/",
+    "registry:reset": "npm config delete registry"
   },
   "scripts-info": {
     "info": "Display information about the package scripts",
