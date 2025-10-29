@@ -1497,8 +1497,23 @@ export class TimeLogProcessor {
   ) {
     const previousRowWithTimeMarkerIndex = this.rowsWithTimeMarkersHandled - 1;
     if (!this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex]) {
+      // Create a user-friendly error message
+      const userMessage = [
+        "This line cannot be parsed as a time log entry.",
+        "",
+        "The parser expected either:",
+        "  • A line starting with a valid timestamp (e.g., '10:30' or '2024-01-15 10:30')",
+        "  • OR a continuation of a previous log entry",
+        "",
+        "However, this appears to be the first line in your log, so it must start with a timestamp.",
+        "",
+        `Problem line: "${metadata.lineWithComment || line}"`,
+        "",
+        "💡 Tip: Time log entries should start with a time or date-time stamp.",
+      ].join("\n");
+
       throw new TimeLogParsingException(
-        "Incorrect parsing state: For some reason we are attempting to collect additional log comment rows until new log comment but we have no previous log comments",
+        userMessage,
         {
           // debugOriginalUnsortedRows: this.debugOriginalUnsortedRows,
           metadata,
