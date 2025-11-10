@@ -1,6 +1,6 @@
 {
   "name": "neamtime-log-parser",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Parses neamtime time tracking logs",
   "type": "commonjs",
   "bin": {
