@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.6.0"></a>
+# [0.6.0](https://github.com/motin/neamtime-log-parser/compare/v0.5.0...v0.6.0) (2025-11-17)
+
+### Features
+
+* **api**: New high-level API with structured error handling ([7868deb](https://github.com/motin/neamtime-log-parser/commit/7868deb), [00596d2](https://github.com/motin/neamtime-log-parser/commit/00596d2))
+  - Added `parseTimeLog()` and `parseTimeLogFile()` functions with clean, type-safe interface
+  - Structured result format with `status`, `entries`, `metadata`, and `errors`
+  - Better separation between warnings and fatal errors
+  - Comprehensive TypeScript types for all result data
+
+### Bug Fixes
+
+* **parser**: Preserve category markers (`.::`) during parsing ([b06e4c6](https://github.com/motin/neamtime-log-parser/commit/b06e4c6))
+  - Category markers like `.:: Client / Project` are no longer merged into previous log entries
+  - Category markers can now appear before the first time entry
+  - Fixes preprocessing to handle category markers without 'start MISSING?' errors
+  - All time entries are now correctly categorized in reports
+
+### Documentation
+
+* **readme**: Add category marker documentation with examples ([c2f3a45](https://github.com/motin/neamtime-log-parser/commit/c2f3a45))
+* **api**: Document new high-level API with usage examples
+* **testing**: Document local registry workflow for testing unreleased versions
+
 <a name="0.5.0"></a>
 # [0.5.0](https://github.com/motin/neamtime-log-parser/compare/v0.4.0...v0.5.0) (2025-10-14)
 
