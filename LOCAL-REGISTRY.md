@@ -53,17 +53,22 @@ npm run test
 
 ### 5. Publish to Local Registry
 
+**Important**: If you've already published this version to the local registry before, unpublish it first:
+
+```bash
+npm unpublish neamtime-log-parser@0.6.0 --registry http://localhost:4873 --force
+```
+
+Then publish:
+
 ```bash
 npm publish --registry http://localhost:4873
 ```
 
-Or use the version bump workflow:
-
-```bash
-# This will fail at git push (expected), but you can test the publish step
-npm version patch --no-git-tag-version
-npm publish --registry http://localhost:4873
-```
+**Note**: When testing fixes for unreleased versions (versions not yet published to public npm):
+- Always unpublish from local registry first to ensure you're testing the latest changes
+- The version in package.json should match the unreleased version you're testing
+- Only bump the version after testing is complete and you're ready for real release
 
 ### 6. Test Installation from Local Registry
 

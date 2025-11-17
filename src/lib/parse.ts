@@ -1,9 +1,9 @@
+import { TimeSpendingLogProcessingErrorsEncounteredException } from "./exceptions/TimeSpendingLogProcessingErrorsEncounteredException";
 import {
   ProcessedTimeSpendingLog,
   TimeLogParseResult,
 } from "./ProcessedTimeSpendingLog";
 import { TimeSpendingLog } from "./TimeSpendingLog";
-import { TimeSpendingLogProcessingErrorsEncounteredException } from "./exceptions/TimeSpendingLogProcessingErrorsEncounteredException";
 
 export interface ParseOptions {
   /** Timezone to use (default: 'UTC') */
@@ -83,7 +83,7 @@ export function parseTimeLog(
           processedLog = error.processedTimeSpendingLog;
 
           // Extract errors
-          result.errors = processedLog.getProcessingErrors().map((e) => ({
+          result.errors = processedLog.getProcessingErrors().map(e => ({
             ref: e.ref || "unknown",
             message: e.message || "Unknown error",
             data: e.data,

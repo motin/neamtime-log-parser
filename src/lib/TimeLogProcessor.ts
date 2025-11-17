@@ -916,6 +916,15 @@ export class TimeLogProcessor {
           continue;
         }
 
+        // Skip category markers during preprocessing - they don't need timestamps
+        if (strpos(trimmedLine, ".::") === 0) {
+          processed.push(trimmedLine);
+          this.preProcessedContentsSourceLineContentsSourceLineMap[
+            processed.length
+          ] = sourceLine;
+          continue;
+        }
+
         processed.push("start MISSING?");
         this.preProcessedContentsSourceLineContentsSourceLineMap[
           processed.length
@@ -990,6 +999,11 @@ export class TimeLogProcessor {
           "",
           trimmedLine,
         );
+        continue;
+      }
+
+      // Skip category markers during parsing - they will be handled by generateTimeReport
+      if (strpos(trimmedLine, ".::") === 0) {
         continue;
       }
 
@@ -1512,15 +1526,19 @@ export class TimeLogProcessor {
         "💡 Tip: Time log entries should start with a time or date-time stamp.",
       ].join("\n");
 
-      throw new TimeLogParsingException(
-        userMessage,
-        {
-          // debugOriginalUnsortedRows: this.debugOriginalUnsortedRows,
-          metadata,
-          previousRowWithTimeMarkerIndex,
-          rowsWithTimeMarkers: this.rowsWithTimeMarkers,
-        },
-      );
+      throw new TimeLogParsingException(userMessage, {
+        // debugOriginalUnsortedRows: this.debugOriginalUnsortedRows,
+        metadata,
+        previousRowWithTimeMarkerIndex,
+        rowsWithTimeMarkers: this.rowsWithTimeMarkers,
+      });
+    }
+
+    // Skip lines that are category markers - they should not be appended as continuation text
+    const trimmedLine = line.trim();
+    if (strpos(trimmedLine, ".::") === 0) {
+      // This is a category marker, don't append it to the previous line
+      return;
     }
 
     // Until next date, we just add the lines up to the previous line
@@ -1614,11 +1632,62 @@ export class TimeLogProcessor {
     rowsWithTimeMarkers: RowMetadata[],
   ) {
     let contentsWithTimeMarkers = "";
-    contentsWithTimeMarkers += ".:: Uncategorized" + LogParser.NL_NIX;
+
+    // Extract category markers from preprocessed contents to preserve them
+    const preProcessedLines = textIntoLinesArray(this.preProcessedContents);
+    const categoryMarkers: Map<number, string> = new Map();
+
+    for (let i = 0; i < preProcessedLines.length; i++) {
+      const line = preProcessedLines[i].trim();
+      if (strpos(line, ".::") === 0) {
+        // Map category marker to the source line number from preprocessing map
+        const sourceLineIndex = i + 1;
+        categoryMarkers.set(sourceLineIndex, line);
+      }
+    }
+
+    // Check if there's a category marker before the first time entry
+    let initialCategoryFound = false;
+    if (rowsWithTimeMarkers.length > 0) {
+      const firstRowSourceLine =
+        rowsWithTimeMarkers[0].preprocessedContentsSourceLineIndex + 1;
+      // Look back before the first entry
+      for (let lookback = 1; lookback <= 10; lookback++) {
+        const checkLine = firstRowSourceLine - lookback;
+        if (categoryMarkers.has(checkLine)) {
+          const marker = categoryMarkers.get(checkLine)!;
+          contentsWithTimeMarkers += marker + LogParser.NL_NIX;
+          categoryMarkers.delete(checkLine);
+          initialCategoryFound = true;
+          break;
+        }
+      }
+    }
+
+    // If no category marker found before first entry, use default
+    if (!initialCategoryFound) {
+      contentsWithTimeMarkers += ".:: Uncategorized" + LogParser.NL_NIX;
+    }
 
     for (let k = 0; k < rowsWithTimeMarkers.length; k++) {
       const rowWithTimeMarker: RowMetadata = rowsWithTimeMarkers[k];
       const previousRowWithTimeMarker = rowsWithTimeMarkers[k - 1];
+
+      // Check if there's a category marker just before this time entry in preprocessing
+      const preprocessedSourceLine =
+        rowWithTimeMarker.preprocessedContentsSourceLineIndex + 1;
+
+      // Look back a few lines for category markers
+      for (let lookback = 1; lookback <= 3; lookback++) {
+        const checkLine = preprocessedSourceLine - lookback;
+        if (categoryMarkers.has(checkLine)) {
+          const marker = categoryMarkers.get(checkLine)!;
+          contentsWithTimeMarkers +=
+            LogParser.NL_NIX + marker + LogParser.NL_NIX + LogParser.NL_NIX;
+          categoryMarkers.delete(checkLine); // Only output each marker once
+          break;
+        }
+      }
 
       if (
         rowWithTimeMarker.highlightWithNewlines !== undefined &&

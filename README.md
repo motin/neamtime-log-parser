@@ -41,7 +41,29 @@ start 13:00
 - `paus` or `pause` - Mark a pause/break
 - Timestamps with format: `YYYY-MM-DD (±ZZZZ) HH:MM`
 - Task descriptions after timestamps
+- `.:: Category / Subcategory` - Categorize time entries (can appear before first entry)
 - `#endts` - End of time log
+
+**Categories:**
+
+You can organize time entries into categories using the `.::` marker:
+
+```
+.:: Client Name / Project Name
+
+start 2025-01-15 10:00
+
+2025-01-15 10:15, working on feature X
+2025-01-15 11:30, code review
+
+.:: Another Client / Different Project
+
+2025-01-15 13:00, meeting notes
+
+paus->
+```
+
+Entries following a category marker will be grouped under that category in reports.
 
 ## Usage
 
