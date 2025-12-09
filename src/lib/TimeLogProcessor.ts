@@ -1,9 +1,5 @@
 import { addSeconds, eachDayOfInterval, subMinutes } from "date-fns";
-import {
-  str_replace,
-  strpos,
-  trim /*, array_count_values, arsort */,
-} from "locutus/php/strings";
+import { str_replace, strpos, trim } from "./php-compat";
 import { TimeLogParsingException } from "./exceptions/TimeLogParsingException";
 import {
   linesArrayIntoText,

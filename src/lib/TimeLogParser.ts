@@ -1,5 +1,4 @@
-import { str_replace, strpos } from "locutus/php/strings";
-import { is_null } from "locutus/php/var";
+import { is_null, str_replace, strpos } from "./php-compat";
 import { LogParser } from "./LogParser";
 import { cloneVariable, DateTime } from "./php-wrappers";
 
@@ -215,7 +214,7 @@ export class TimeLogParser extends LogParser {
               metadata.dateRaw = str_replace(
                 tokens.approx,
                 "00",
-                metadata.dateRaw,
+                metadata.dateRaw as string,
               );
             }
           }

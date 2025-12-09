@@ -1,14 +1,11 @@
 import { subMinutes } from "date-fns";
-import { join, str_replace, strpos } from "locutus/php/strings";
+import { join, str_replace, strpos } from "./php-compat";
 import { InvalidDateTimeZoneException } from "./exceptions/InvalidDateTimeZoneException";
 import {
   DateTime,
   DateTimeZone,
   phpFormatStringContainsTimeZoneInformation,
 } from "./php-wrappers";
-/*
-import { is_null } from "locutus/php/var";
-*/
 
 export function newlineConvert(str, newline) {
   return str_replace(

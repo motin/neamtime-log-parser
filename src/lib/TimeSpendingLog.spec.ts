@@ -1,6 +1,5 @@
 import test, { ExecutionContext, Macro } from "ava";
-import { file_get_contents } from "locutus/php/filesystem";
-import { str_replace } from "locutus/php/strings";
+import { file_get_contents, str_replace } from "./php-compat";
 import path from "path";
 import { fixturesPath /*, memoryUsageInMiB*/ } from "../inc/testUtils";
 import {

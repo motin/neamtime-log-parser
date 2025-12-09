@@ -1,4 +1,4 @@
-import { strpos } from "locutus/php/strings";
+import { strpos } from "./php-compat";
 import { TimeLogParsingException } from "./exceptions/TimeLogParsingException";
 import { TimeSpendingLogProcessingErrorsEncounteredException } from "./exceptions/TimeSpendingLogProcessingErrorsEncounteredException";
 import { cloneVariable } from "./php-wrappers";

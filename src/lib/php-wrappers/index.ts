@@ -1,7 +1,6 @@
 import fg from "fast-glob";
 import fs, { writeFileSync } from "fs";
-import { ini_set } from "locutus/php/info";
-import { substr } from "locutus/php/strings";
+import { ini_set, substr } from "../php-compat";
 export * from "./DateTime";
 export * from "./DateTimeZone";
 

@@ -1,6 +1,5 @@
 import fs from "fs";
-import { file_get_contents, pathinfo } from "locutus/php/filesystem";
-import { str_replace } from "locutus/php/strings";
+import { file_get_contents, pathinfo, str_replace } from "./lib/php-compat";
 import { glob, is_file } from "./lib/php-wrappers";
 import { ProcessedTimeSpendingLog } from "./lib/ProcessedTimeSpendingLog";
 import { TimeSpendingLog } from "./lib/TimeSpendingLog";

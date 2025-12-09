@@ -1,5 +1,4 @@
-import { file_get_contents } from "locutus/php/filesystem";
-import { str_replace } from "locutus/php/strings";
+import { file_get_contents, str_replace } from "./php-compat";
 import { InvalidArgumentException } from "./exceptions/InvalidArgumentException";
 import { readFirstNonEmptyLineOfText } from "./LogParser";
 

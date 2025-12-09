@@ -1,5 +1,5 @@
 import test, { ExecutionContext, Macro } from "ava";
-import { array_merge } from "locutus/php/array";
+import { array_merge } from "./php-compat";
 import { DateTime, DateTimeZone } from "./php-wrappers";
 import { TimeLogParser } from "./TimeLogParser";
 

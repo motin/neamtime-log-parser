@@ -68,9 +68,7 @@ export class DateTime {
     // be assumed that we are parsing in the local timezone, which means that we need to
     // adjust the parsed time here to match our timezone parameter
 
-    const initiallyParsedDate = parse(dateString, formatString, new Date(), {
-      awareOfUnicodeTokens: false,
-    });
+    const initiallyParsedDate = parse(dateString, formatString, new Date());
     // console.debug("{phpFormatString, formatString, dateString, initiallyParsedDate}", {phpFormatString, formatString, dateString, initiallyParsedDate},);
 
     if (!DateTime.isValidDate(initiallyParsedDate)) {
