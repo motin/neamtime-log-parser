@@ -35,17 +35,14 @@ process.once("uncaughtException", err => {
 Error.stackTraceLimit = Infinity;
 
 try {
-  // const packageInfo = require("./package.json");
   const parser = new ArgumentParser({
-    // version: packageInfo.version,
-    // description: packageInfo.description,
-    addHelp: true,
+    description: "Parse neamtime time tracking logs",
   });
-  parser.addArgument(["--filePath"], {
-    help: "filePath",
+  parser.add_argument("--filePath", {
+    help: "Path to the time log file",
     required: false,
   });
-  const args = parser.parseArgs();
+  const args = parser.parse_args();
   // console.log("CLI arguments: ", args, "\n");
 
   const { filePath } = args;

@@ -1,10 +1,10 @@
-import test, { ExecutionContext, Macro } from "ava";
+import test, { ExecutionContext } from "ava";
 import { findTimeZone } from "timezone-support";
 import { parseZonedTime } from "timezone-support/dist/parse-format";
 import { DateTime } from "./DateTime";
 import { DateTimeZone, TimeZoneOffset } from "./DateTimeZone";
 
-const testTimeZoneSupportFindTimeZone: Macro = (
+const testTimeZoneSupportFindTimeZone= (
   t: ExecutionContext,
   timeZoneName,
   expectedFoundTimeZoneName,
@@ -36,7 +36,7 @@ testTimeZoneSupportFindTimeZoneData().forEach((testData, index) => {
   );
 });
 
-const testTimeZoneSupportParseZonedTime: Macro = (
+const testTimeZoneSupportParseZonedTime= (
   t: ExecutionContext,
   dateString,
   formatString,
@@ -169,7 +169,7 @@ testTimeZoneSupportParseZonedTimeData().forEach((testData, index) => {
   );
 });
 
-const testCreateFromTimeZoneOffset: Macro = (
+const testCreateFromTimeZoneOffset= (
   t: ExecutionContext,
   timeZoneOffset: TimeZoneOffset,
   expectedDateTimeZoneString,
@@ -183,10 +183,10 @@ const testCreateFromTimeZoneOffset: Macro = (
   t.truthy(dateTimeZone.getTimeZoneInfo());
 };
 
-const testCreateFromTimeZoneOffsetData = () => {
+const testCreateFromTimeZoneOffsetData = (): [TimeZoneOffset, string][] => {
   return [
-    [{ abbreviation: "UTC" }, "UTC"],
-    [{ abbreviation: "CET" }, "CET"],
+    [{ abbreviation: "UTC", offset: 0 }, "UTC"],
+    [{ abbreviation: "CET", offset: 0 }, "CET"],
     [{ offset: -60 }, "+01:00"],
     [{ offset: -120 }, "+02:00"],
     [{ offset: 600 }, "-10:00"],
@@ -198,12 +198,12 @@ testCreateFromTimeZoneOffsetData().forEach((testData, index) => {
   test(
     "testCreateFromTimeZoneOffset - " + index,
     testCreateFromTimeZoneOffset,
-    testData[0],
+    testData[0] as TimeZoneOffset,
     testData[1],
   );
 });
 
-const testCreateDateTimeFromZonedFormat: Macro = (
+const testCreateDateTimeFromZonedFormat= (
   t: ExecutionContext,
   phpFormatString,
   dateString,

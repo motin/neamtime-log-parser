@@ -1,8 +1,8 @@
-import test, { ExecutionContext, Macro } from "ava";
+import test, { ExecutionContext } from "ava";
 import { linesArrayIntoText, LogParser } from "./LogParser";
 import { DateTime, DateTimeZone } from "./php-wrappers";
 
-const testLinesArrayIntoText: Macro = (
+const testLinesArrayIntoText= (
   t: ExecutionContext,
   lines,
   expectedText,
@@ -34,7 +34,7 @@ testLinesArrayIntoTextData().forEach((testData, index) => {
   );
 });
 
-const testSecondsToDuration: Macro = (
+const testSecondsToDuration= (
   t: ExecutionContext,
   seconds: string,
   expectedReturnValue: string,
@@ -73,7 +73,7 @@ testSecondsToDurationData().forEach((testData, index) => {
   );
 });
 
-const testDurationToMinutes: Macro = (
+const testDurationToMinutes= (
   t: ExecutionContext,
   duration: string,
   expectedReturnValue: number,
@@ -109,7 +109,7 @@ testDurationToMinutesData().forEach((testData, index) => {
   );
 });
 
-const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone: Macro = (
+const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone= (
   t: ExecutionContext,
   str,
   timezone,

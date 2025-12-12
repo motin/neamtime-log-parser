@@ -1,9 +1,9 @@
-import test, { ExecutionContext, Macro } from "ava";
+import test, { ExecutionContext } from "ava";
 import { parse } from "date-fns";
 import { DateTime } from "./DateTime";
 import { DateTimeZone } from "./DateTimeZone";
 
-const testFormat: Macro = (
+const testFormat= (
   t: ExecutionContext,
   unixTimestamp,
   expectedDateTimeZoneString,
@@ -45,7 +45,7 @@ testFormatData().forEach((testData, index) => {
   );
 });
 
-const testDateFnsParse: Macro = (
+const testDateFnsParse= (
   t: ExecutionContext,
   dateString,
   formatString,
@@ -106,7 +106,7 @@ testDateFnsParseData().forEach((testData, index) => {
   );
 });
 
-const testCreateFromFormat: Macro = (
+const testCreateFromFormat= (
   t: ExecutionContext,
   phpFormatString,
   dateString,
@@ -137,7 +137,7 @@ testCreateFromFormatData().forEach((testData, index) => {
   );
 });
 
-const testCreateFromFormatWhenTimeZonesAreInvolved: Macro = (
+const testCreateFromFormatWhenTimeZonesAreInvolved= (
   t: ExecutionContext,
   phpFormatString,
   dateString,

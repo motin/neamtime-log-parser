@@ -1,9 +1,9 @@
-import test, { ExecutionContext, Macro } from "ava";
+import test, { ExecutionContext } from "ava";
 import path from "path";
 import { fixturesPath } from "../inc/testUtils";
 import { NeamtimeLogParserCli } from "./NeamtimeLogParserCli";
 
-const testNeamtimeLogParserCli: Macro = async (
+const testNeamtimeLogParserCli= async (
   t: ExecutionContext,
   filePath: string,
 ) => {

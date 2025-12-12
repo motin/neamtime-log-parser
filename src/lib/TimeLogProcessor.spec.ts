@@ -1,4 +1,4 @@
-import test, { ExecutionContext, Macro } from "ava";
+import test, { ExecutionContext } from "ava";
 // import * as util from "util";
 import { LogParser } from "./LogParser";
 // import { DateTime, DateTimeZone } from "./php-wrappers";
@@ -34,7 +34,7 @@ const testDetectStartStopLinesCorrectlyData = () => {
 };
 */
 
-const testAddNullFilledDates: Macro = (
+const testAddNullFilledDates= (
   t: ExecutionContext,
   times,
   expectedReturnValue,
@@ -76,7 +76,7 @@ testAddNullFilledDatesData().forEach((testData, index) => {
   );
 });
 
-const testPreProcessContents: Macro = (
+const testPreProcessContents= (
   t: ExecutionContext,
   contents,
   expectedPreProcessedContents,
@@ -210,7 +210,7 @@ testPreProcessContentsData().forEach((testData, index) => {
   );
 });
 
-const testParsePreProcessedContents: Macro = (
+const testParsePreProcessedContents= (
   t: ExecutionContext,
   preProcessedContents,
   expectedNotParsedAddTimeMarkersParsePreProcessedContents,
@@ -656,7 +656,7 @@ testParsePreProcessedContentsData().forEach((testData, index) => {
   );
 });
 
-const testAddTimeMarkers: Macro = (
+const testAddTimeMarkers= (
   t: ExecutionContext,
   contents,
   expectedNotParsedAddTimeMarkersParsePreProcessedContents,
@@ -884,7 +884,7 @@ testAddTimeMarkersData().forEach((testData, index) => {
   );
 });
 
-const testGenerateTimeReport: Macro = (
+const testGenerateTimeReport= (
   t: ExecutionContext,
   contentsWithTimeMarkers,
   expectedCategories,

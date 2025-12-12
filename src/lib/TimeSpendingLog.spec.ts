@@ -1,4 +1,4 @@
-import test, { ExecutionContext, Macro } from "ava";
+import test, { ExecutionContext } from "ava";
 import { file_get_contents, str_replace } from "./php-compat";
 import path from "path";
 import { fixturesPath /*, memoryUsageInMiB*/ } from "../inc/testUtils";
@@ -91,7 +91,7 @@ test("there exists at least one incorrect time spending log fixture paths", (t: 
  * @param t
  * @param timeSpendingLogPath
  */
-const testProcessAndAssertCorrectTimeSpendingLog: Macro = (
+const testProcessAndAssertCorrectTimeSpendingLog= (
   t: ExecutionContext,
   timeSpendingLogPath: string,
 ) => {
@@ -237,7 +237,7 @@ correctTimeSpendingLogContents().forEach((testData, index) => {
  * @param t
  * @param timeSpendingLogPath
  */
-const testCorrectTimeSpendingLogsCorrectness: Macro = (
+const testCorrectTimeSpendingLogsCorrectness= (
   t: ExecutionContext,
   timeSpendingLogPath,
 ) => {
@@ -291,7 +291,7 @@ correctTimeSpendingLogContents().forEach((testData, index) => {
   );
 });
 
-const testCorrectlyReportedProcessingErrors: Macro = (
+const testCorrectlyReportedProcessingErrors= (
   t: ExecutionContext,
   timeSpendingLogPath,
   expectedProcessingErrorsJsonFilePath,

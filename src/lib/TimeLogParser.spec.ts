@@ -1,9 +1,9 @@
-import test, { ExecutionContext, Macro } from "ava";
+import test, { ExecutionContext } from "ava";
 import { array_merge } from "./php-compat";
 import { DateTime, DateTimeZone } from "./php-wrappers";
 import { TimeLogParser } from "./TimeLogParser";
 
-const testDurationFromLast: Macro = (
+const testDurationFromLast= (
   t: ExecutionContext,
   ts,
   rowsWithTimemarkersHandled,
@@ -107,7 +107,7 @@ testDurationFromLastData().forEach((testData, index) => {
   );
 });
 
-const testStartsWithOptionallySuffixedToken: Macro = (
+const testStartsWithOptionallySuffixedToken= (
   t: ExecutionContext,
   haystack: string,
   keyword: string,
@@ -169,7 +169,7 @@ testStartsWithOptionallySuffixedTokenData().forEach((testData, index) => {
 
 // TODO: testRemoveSuffixedToken
 
-const testDetectTimeStampAndInterpretTsAndDate: Macro = (
+const testDetectTimeStampAndInterpretTsAndDate= (
   t: ExecutionContext,
   lineForDateCheck,
   expectedMetadataDateRawFormat,
@@ -945,7 +945,7 @@ testDetectTimeStampAndInterpretTsAndDateData().forEach((testData, index) => {
  * @param expectedLastKnownTimeZone
  * @param expectedUtcDateString
  */
-const testParseLogComment: Macro = (
+const testParseLogComment= (
   t: ExecutionContext,
   line,
   expectedLineWithoutDate,
