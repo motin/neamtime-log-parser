@@ -32,6 +32,8 @@ jobs:
 
       - name: Run tests
         run: npm test
+        env:
+          TZ: Europe/Stockholm
 
       - name: Check coverage
         if: matrix.node-version == '22.x'
