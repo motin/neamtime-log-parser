@@ -34,7 +34,7 @@ const testDetectStartStopLinesCorrectlyData = () => {
 };
 */
 
-const testAddNullFilledDates= (
+const testAddNullFilledDates = (
   t: ExecutionContext,
   times,
   expectedReturnValue,
@@ -76,7 +76,7 @@ testAddNullFilledDatesData().forEach((testData, index) => {
   );
 });
 
-const testPreProcessContents= (
+const testPreProcessContents = (
   t: ExecutionContext,
   contents,
   expectedPreProcessedContents,
@@ -210,7 +210,7 @@ testPreProcessContentsData().forEach((testData, index) => {
   );
 });
 
-const testParsePreProcessedContents= (
+const testParsePreProcessedContents = (
   t: ExecutionContext,
   preProcessedContents,
   expectedNotParsedAddTimeMarkersParsePreProcessedContents,
@@ -656,7 +656,7 @@ testParsePreProcessedContentsData().forEach((testData, index) => {
   );
 });
 
-const testAddTimeMarkers= (
+const testAddTimeMarkers = (
   t: ExecutionContext,
   contents,
   expectedNotParsedAddTimeMarkersParsePreProcessedContents,
@@ -884,7 +884,7 @@ testAddTimeMarkersData().forEach((testData, index) => {
   );
 });
 
-const testGenerateTimeReport= (
+const testGenerateTimeReport = (
   t: ExecutionContext,
   contentsWithTimeMarkers,
   expectedCategories,

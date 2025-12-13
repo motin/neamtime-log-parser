@@ -34,7 +34,7 @@ export function readFirstNonEmptyLineOfText(text) {
     const line: string = lines[i];
     const trimmedLine = line.trim();
 
-    if (!!trimmedLine) {
+    if (trimmedLine) {
       return trimmedLine;
     }
   }
@@ -96,9 +96,9 @@ export class LogParser {
     this.lastSetTsAndDateErrorMessage = "";
   }
 
-  public supportedTimestampFormats() // the minute-part may be omitted and instead an approx token will be found, which will be replaced before reaching createFromFormat
-  // todo: dyn load appr-tokens
-  {
+  public supportedTimestampFormats() {
+    // the minute-part may be omitted and instead an approx token will be found, which will be replaced before reaching createFromFormat
+    // todo: dyn load appr-tokens
     const regexDetectYmd = "(\\d{4})-\\d+-\\d+";
     const regexDetectdmY = "[^\\s\\>>]*-.*-(\\d{4})";
     const regexDetectHis = "(\\d+:\\d+:\\d+)";
@@ -138,7 +138,7 @@ export class LogParser {
         detectRegexTimeRawMatchIndex: 2,
         detectRegexTimeZoneRawMatchIndex: 3,
         format: DateTime.ISO8601Z,
-        preDatetimeParsingCallback: str => {
+        preDatetimeParsingCallback: (str) => {
           // Convert to ISO8601Z
           return str_replace("+UTC", "Z", str);
         },
@@ -316,17 +316,16 @@ export class LogParser {
     let datetimeParseResult: DateTime | false;
     let date: string;
 
-    const timezoneStringToUseInCaseDateStringHasNoTimezoneInfo = this.interpretLastKnownTimeZone();
+    const timezoneStringToUseInCaseDateStringHasNoTimezoneInfo =
+      this.interpretLastKnownTimeZone();
 
     try {
-      const {
-        gmtTimestamp,
-        datetime: datetimeReturned,
-      } = this.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
-        dateRaw,
-        timezoneStringToUseInCaseDateStringHasNoTimezoneInfo,
-        formatToUse,
-      );
+      const { gmtTimestamp, datetime: datetimeReturned } =
+        this.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
+          dateRaw,
+          timezoneStringToUseInCaseDateStringHasNoTimezoneInfo,
+          formatToUse,
+        );
       ts = gmtTimestamp;
       datetimeParseResult = datetimeReturned;
       if (datetimeParseResult) {
@@ -341,14 +340,12 @@ export class LogParser {
     } catch (e) {
       if (e instanceof InvalidDateTimeZoneException) {
         // If invalid timezone is encountered, use UTC and at least detect the timestamp correctly, but make a note about that the wrong timezone was used
-        const {
-          gmtTimestamp,
-          datetime: datetimeReturned,
-        } = this.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
-          dateRaw,
-          "UTC",
-          formatToUse,
-        );
+        const { gmtTimestamp, datetime: datetimeReturned } =
+          this.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
+            dateRaw,
+            "UTC",
+            formatToUse,
+          );
         ts = gmtTimestamp;
         datetimeParseResult = datetimeReturned;
         this.lastSetTsAndDateErrorMessage = e.message;
@@ -412,12 +409,11 @@ export class LogParser {
     timezoneStringToUseInCaseDateStringHasNoTimezoneInfo: string,
     formatToUse: string = null,
   ): { gmtTimestamp: number; datetime: DateTime } {
-    let gmtTimestamp: number;
+    let gmtTimestamp: number = 0;
     let datetimeParseResult: DateTime | false;
     let datetime: DateTime;
-    const timezoneToUseInCaseDateStringHasNoTimezoneInfo: DateTimeZone = new DateTimeZone(
-      timezoneStringToUseInCaseDateStringHasNoTimezoneInfo,
-    );
+    const timezoneToUseInCaseDateStringHasNoTimezoneInfo: DateTimeZone =
+      new DateTimeZone(timezoneStringToUseInCaseDateStringHasNoTimezoneInfo);
 
     for (const supportedTimestampFormat of Object.values(
       this.supportedTimestampFormats(),
@@ -460,7 +456,9 @@ export class LogParser {
     }
 
     // TODO: Remove expectation of number and this setting of 0 on error
-    gmtTimestamp = !datetime ? 0 : datetime.getTimestamp();
+    if (datetime) {
+      gmtTimestamp = datetime.getTimestamp();
+    }
 
     return { gmtTimestamp, datetime };
   }

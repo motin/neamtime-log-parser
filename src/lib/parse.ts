@@ -83,7 +83,7 @@ export function parseTimeLog(
           processedLog = error.processedTimeSpendingLog;
 
           // Extract errors
-          result.errors = processedLog.getProcessingErrors().map(e => ({
+          result.errors = processedLog.getProcessingErrors().map((e) => ({
             ref: e.ref || "unknown",
             message: e.message || "Unknown error",
             data: e.data,

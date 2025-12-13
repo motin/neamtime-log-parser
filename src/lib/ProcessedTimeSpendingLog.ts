@@ -310,12 +310,12 @@ export class ProcessedTimeSpendingLog {
 
       // If only one session was detected, we will not parse the session, but instead simply use the current timeLogProcessor in order to avoid stack overflow
       if (starts.length === 1) {
-        sessionSpecificProcessedTimeSpendingLogTimeLogProcessor = timeLogProcessor;
+        sessionSpecificProcessedTimeSpendingLogTimeLogProcessor =
+          timeLogProcessor;
       } else {
         // Get the section of the pre-processed log that corresponds to this session
-        const preProcessedLines = timeLogProcessor.preProcessedContents.split(
-          "\n",
-        );
+        const preProcessedLines =
+          timeLogProcessor.preProcessedContents.split("\n");
         const startLine = start.preprocessedContentsSourceLineIndex;
         const nextStart = starts[k + 1];
 
@@ -336,9 +336,8 @@ export class ProcessedTimeSpendingLog {
         sessionSpecificTimeSpendingLog.tzFirst = start.lastKnownTimeZone;
 
         try {
-          const sessionSpecificProcessedTimeSpendingLog = new ProcessedTimeSpendingLog(
-            sessionSpecificTimeSpendingLog,
-          );
+          const sessionSpecificProcessedTimeSpendingLog =
+            new ProcessedTimeSpendingLog(sessionSpecificTimeSpendingLog);
 
           sessionSpecificProcessedTimeSpendingLogTimeLogProcessor =
             sessionSpecificProcessedTimeSpendingLog.timeLogProcessor;
@@ -359,7 +358,8 @@ export class ProcessedTimeSpendingLog {
                   "Encountered a processing error which was only evident when detecting/parsing sessions individually: " +
                     e.message,
                   {
-                    processingErrors: e.processedTimeSpendingLog.getProcessingErrors(),
+                    processingErrors:
+                      e.processedTimeSpendingLog.getProcessingErrors(),
                     sessionStartMetadata: start,
                   },
                 );
@@ -369,7 +369,8 @@ export class ProcessedTimeSpendingLog {
                   "Encountered a processing error when detecting/parsing sessions individually: " +
                     e.message,
                   {
-                    processingErrors: e.processedTimeSpendingLog.getProcessingErrors(),
+                    processingErrors:
+                      e.processedTimeSpendingLog.getProcessingErrors(),
                     sessionStartMetadata: start,
                   },
                 );
@@ -396,7 +397,8 @@ export class ProcessedTimeSpendingLog {
           sessionSpecificProcessedTimeSpendingLogTimeLogProcessor.timeReportSourceComments;
         const tzFirst =
           sessionSpecificProcessedTimeSpendingLogTimeLogProcessor.tzFirst;
-        const metadata = sessionSpecificProcessedTimeSpendingLogTimeLogProcessor.getTimeLogMetadata();
+        const metadata =
+          sessionSpecificProcessedTimeSpendingLogTimeLogProcessor.getTimeLogMetadata();
         // var_dump($metadata);
         // Store the session metadata
         const timeLogSession: TimeLogSession = {

@@ -3,7 +3,7 @@ import path from "path";
 import { fixturesPath } from "../inc/testUtils";
 import { NeamtimeLogParserCli } from "./NeamtimeLogParserCli";
 
-const testNeamtimeLogParserCli= async (
+const testNeamtimeLogParserCli = async (
   t: ExecutionContext,
   filePath: string,
 ) => {
@@ -32,9 +32,9 @@ const expectedRelativeTtbwsdFileFixturePaths = [
 ];
 
 expectedRelativeTtbwsdFileFixturePaths
-  .map(relativeFilePath => {
+  .map((relativeFilePath) => {
     return path.join(fixturesPath, relativeFilePath.replace("@/", ""));
   })
-  .forEach(filePath => {
+  .forEach((filePath) => {
     test("testNeamtimeLogParserCli", testNeamtimeLogParserCli, filePath);
   });

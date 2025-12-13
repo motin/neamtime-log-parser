@@ -4,7 +4,7 @@ import { parseZonedTime } from "timezone-support/dist/parse-format";
 import { DateTime } from "./DateTime";
 import { DateTimeZone, TimeZoneOffset } from "./DateTimeZone";
 
-const testTimeZoneSupportFindTimeZone= (
+const testTimeZoneSupportFindTimeZone = (
   t: ExecutionContext,
   timeZoneName,
   expectedFoundTimeZoneName,
@@ -36,7 +36,7 @@ testTimeZoneSupportFindTimeZoneData().forEach((testData, index) => {
   );
 });
 
-const testTimeZoneSupportParseZonedTime= (
+const testTimeZoneSupportParseZonedTime = (
   t: ExecutionContext,
   dateString,
   formatString,
@@ -169,7 +169,7 @@ testTimeZoneSupportParseZonedTimeData().forEach((testData, index) => {
   );
 });
 
-const testCreateFromTimeZoneOffset= (
+const testCreateFromTimeZoneOffset = (
   t: ExecutionContext,
   timeZoneOffset: TimeZoneOffset,
   expectedDateTimeZoneString,
@@ -203,7 +203,7 @@ testCreateFromTimeZoneOffsetData().forEach((testData, index) => {
   );
 });
 
-const testCreateDateTimeFromZonedFormat= (
+const testCreateDateTimeFromZonedFormat = (
   t: ExecutionContext,
   phpFormatString,
   dateString,

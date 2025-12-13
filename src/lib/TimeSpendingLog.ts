@@ -36,9 +36,10 @@ export class TimeSpendingLog {
   ) {
     const timeSpendingLogContents = file_get_contents(timeSpendingLogPath);
     timeSpendingLogStdClass.rawLogContents = timeSpendingLogContents;
-    const timeSpendingLog = this.createFromStdClassAndUseDefaultsForMissingAttributes(
-      timeSpendingLogStdClass,
-    );
+    const timeSpendingLog =
+      this.createFromStdClassAndUseDefaultsForMissingAttributes(
+        timeSpendingLogStdClass,
+      );
     return timeSpendingLog;
   }
 
@@ -54,9 +55,8 @@ export class TimeSpendingLog {
     }
 
     if (!(undefined !== timeSpendingLogStdClass.firstRowsCommentIsTheName)) {
-      timeSpendingLogStdClass.firstRowsCommentIsTheName = !timeSpendingLogStdClass.name
-        ? "1"
-        : undefined;
+      timeSpendingLogStdClass.firstRowsCommentIsTheName =
+        !timeSpendingLogStdClass.name ? "1" : undefined;
     }
   }
 
@@ -91,7 +91,7 @@ export class TimeSpendingLog {
       this.inputContentTypeRef = timeSpendingLogStdClass.inputContentTypeRef;
     }
 
-    this.name = !!timeSpendingLogStdClass.firstRowsCommentIsTheName
+    this.name = timeSpendingLogStdClass.firstRowsCommentIsTheName
       ? this.nameFromFirstRowOfRawLogContents()
       : timeSpendingLogStdClass.name;
   }

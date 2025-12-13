@@ -3,7 +3,7 @@ import { parse } from "date-fns";
 import { DateTime } from "./DateTime";
 import { DateTimeZone } from "./DateTimeZone";
 
-const testFormat= (
+const testFormat = (
   t: ExecutionContext,
   unixTimestamp,
   expectedDateTimeZoneString,
@@ -45,7 +45,7 @@ testFormatData().forEach((testData, index) => {
   );
 });
 
-const testDateFnsParse= (
+const testDateFnsParse = (
   t: ExecutionContext,
   dateString,
   formatString,
@@ -106,7 +106,7 @@ testDateFnsParseData().forEach((testData, index) => {
   );
 });
 
-const testCreateFromFormat= (
+const testCreateFromFormat = (
   t: ExecutionContext,
   phpFormatString,
   dateString,
@@ -137,7 +137,7 @@ testCreateFromFormatData().forEach((testData, index) => {
   );
 });
 
-const testCreateFromFormatWhenTimeZonesAreInvolved= (
+const testCreateFromFormatWhenTimeZonesAreInvolved = (
   t: ExecutionContext,
   phpFormatString,
   dateString,

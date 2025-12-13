@@ -3,12 +3,12 @@ import { ArgumentParser } from "argparse";
 import stackman from "stackman";
 import { NeamtimeLogParserCli } from "./cli/NeamtimeLogParserCli";
 
-const exitWithError = err => {
+const exitWithError = (err) => {
   stackman().callsites(err, (stackmanErr, callsites) => {
     if (stackmanErr) {
       throw stackmanErr;
     }
-    callsites.forEach(callsite => {
+    callsites.forEach((callsite) => {
       console.log(
         "Error occured in at %s line %d",
         callsite.getFileName(),
@@ -27,7 +27,7 @@ process.once("unhandledRejection", (err, _p) => {
   exitWithError(err);
 });
 
-process.once("uncaughtException", err => {
+process.once("uncaughtException", (err) => {
   console.error("Event: Uncaught Exception");
   exitWithError(err);
 });

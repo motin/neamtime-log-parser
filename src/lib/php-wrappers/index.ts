@@ -27,7 +27,7 @@ export function cloneVariable(variable) {
 }
 
 export function glob(patternOrPatterns): string[] {
-  return fg.sync(patternOrPatterns).map(_ => _.toString());
+  return fg.sync(patternOrPatterns).map((_) => _.toString());
 }
 
 export function file_put_contents(filePath, contents) {

@@ -73,26 +73,14 @@ export class TimeLogParser extends LogParser {
 
   public isProbableStartStopLine(line) {
     const trimmedLine = line.trim();
-    const startsWithPauseTokenFollowedByASpace = this.startsWithOptionallySuffixedToken(
-      trimmedLine,
-      "pause",
-      " ",
-    );
-    const startsWithStartStopTokenFollowedByASpace = this.startsWithOptionallySuffixedToken(
-      trimmedLine,
-      "start-stop",
-      " ",
-    );
-    const startsWithPauseTokenFollowedByAnArrow = this.startsWithOptionallySuffixedToken(
-      trimmedLine,
-      "pause",
-      "->",
-    );
-    const startsWithStartStopTokenFollowedByAnArrow = this.startsWithOptionallySuffixedToken(
-      trimmedLine,
-      "start-stop",
-      "->",
-    );
+    const startsWithPauseTokenFollowedByASpace =
+      this.startsWithOptionallySuffixedToken(trimmedLine, "pause", " ");
+    const startsWithStartStopTokenFollowedByASpace =
+      this.startsWithOptionallySuffixedToken(trimmedLine, "start-stop", " ");
+    const startsWithPauseTokenFollowedByAnArrow =
+      this.startsWithOptionallySuffixedToken(trimmedLine, "pause", "->");
+    const startsWithStartStopTokenFollowedByAnArrow =
+      this.startsWithOptionallySuffixedToken(trimmedLine, "start-stop", "->");
     const forReturn =
       (startsWithPauseTokenFollowedByASpace ||
         startsWithStartStopTokenFollowedByASpace ||
@@ -334,10 +322,8 @@ export class TimeLogParser extends LogParser {
     const parts = line.split(separator);
     let dateRaw = parts.shift();
     let lineWithoutDate = parts.join(separator);
-    let parsedLogComment: ParsedLogComment = this.parseLogCommentDateRawCandidate(
-      dateRaw,
-      lineWithoutDate,
-    );
+    let parsedLogComment: ParsedLogComment =
+      this.parseLogCommentDateRawCandidate(dateRaw, lineWithoutDate);
 
     // If not, allow one more separated chunk into the dateRaw and try again
     // since some timestamp formats may include the seperator (at most once)
@@ -367,7 +353,7 @@ export class TimeLogParser extends LogParser {
     this.lastSetTsAndDateErrorClass = "";
     this.lastSetTsAndDateErrorMessage = "";
 
-    const m = dateRaw.match(/[0-9\.\,]+/);
+    const m = dateRaw.match(/[0-9.,]+/);
 
     // Invalidate lines without any number or comma or period at all
     if (!m) {
@@ -412,9 +398,8 @@ export class TimeLogParser extends LogParser {
     }
 
     // Detect and set any timestamp found in this dateRaw candidate
-    const {
-      metadata: parseLogCommentDetectTimeStampMetadata,
-    } = this.detectTimeStamp(dateRaw);
+    const { metadata: parseLogCommentDetectTimeStampMetadata } =
+      this.detectTimeStamp(dateRaw);
     const { date, datetime, ts } = this.interpretTsAndDate(
       dateRaw,
       parseLogCommentDetectTimeStampMetadata.dateRawFormat,

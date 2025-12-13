@@ -2,11 +2,7 @@ import test, { ExecutionContext } from "ava";
 import { linesArrayIntoText, LogParser } from "./LogParser";
 import { DateTime, DateTimeZone } from "./php-wrappers";
 
-const testLinesArrayIntoText= (
-  t: ExecutionContext,
-  lines,
-  expectedText,
-) => {
+const testLinesArrayIntoText = (t: ExecutionContext, lines, expectedText) => {
   const text = linesArrayIntoText(lines);
   // t.log("{lines, expectedText}", {lines, expectedText});
   t.deepEqual(
@@ -34,7 +30,7 @@ testLinesArrayIntoTextData().forEach((testData, index) => {
   );
 });
 
-const testSecondsToDuration= (
+const testSecondsToDuration = (
   t: ExecutionContext,
   seconds: string,
   expectedReturnValue: string,
@@ -73,7 +69,7 @@ testSecondsToDurationData().forEach((testData, index) => {
   );
 });
 
-const testDurationToMinutes= (
+const testDurationToMinutes = (
   t: ExecutionContext,
   duration: string,
   expectedReturnValue: number,
@@ -109,7 +105,7 @@ testDurationToMinutesData().forEach((testData, index) => {
   );
 });
 
-const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone= (
+const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone = (
   t: ExecutionContext,
   str,
   timezone,
@@ -121,19 +117,16 @@ const testParseGmtTimestampFromDateSpecifiedInSpecificTimezone= (
   expectedTransposedFormatted,
 ) => {
   const logParser = new LogParser();
-  const {
-    gmtTimestamp,
-    datetime,
-  } = logParser.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
-    str,
-    timezone,
-  );
+  const { gmtTimestamp, datetime } =
+    logParser.parseGmtTimestampFromDateSpecifiedInSpecificTimezone(
+      str,
+      timezone,
+    );
   // t.log("{datetime, gmtTimestamp, str, timezone}", {datetime, gmtTimestamp, str, timezone,});
   t.true(typeof datetime !== "undefined");
   t.is(gmtTimestamp, expectedGmtTimestamp);
-  const gmtTimestampFormattedAsNewDefaultDatetime = DateTime.createFromUnixTimestamp(
-    gmtTimestamp,
-  );
+  const gmtTimestampFormattedAsNewDefaultDatetime =
+    DateTime.createFromUnixTimestamp(gmtTimestamp);
   t.is(
     gmtTimestampFormattedAsNewDefaultDatetime.format("Y-m-d H:i"),
     expectedGmtTimestampFormattedAsNewDefaultDatetime,

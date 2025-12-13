@@ -60,10 +60,8 @@ export class DateTimeZone {
     let parsedZonedDate;
     let detectedTimeZone;
 
-    const {
-      formatString,
-      formatStringIncludesTimezone,
-    } = phpToTimeZoneSupportFormatString(phpFormatString);
+    const { formatString, formatStringIncludesTimezone } =
+      phpToTimeZoneSupportFormatString(phpFormatString);
 
     if (!formatStringIncludesTimezone) {
       throw new Error(
@@ -78,8 +76,8 @@ export class DateTimeZone {
       // console.debug("{time}", { time });
       parsedZonedDate = convertTimeToDate(time);
       detectedTimeZone = DateTimeZone.createFromTimeZoneOffset(time.zone);
-    } catch (e) {
-      // console.error("Zoned time parse error: ", e);
+    } catch {
+      // Zoned time parse error - ignore as we will fall back to defaults
       parsedZonedDate = false;
     }
 
@@ -95,7 +93,7 @@ export class DateTimeZone {
     if (typeof timeZoneOffset.offset === "number") {
       const hours = (timeZoneOffset.offset / 60) % 60;
       const minutes = timeZoneOffset.offset % 60;
-      const absFloorAndPad = num => {
+      const absFloorAndPad = (num) => {
         return String(Math.floor(Math.abs(num))).padStart(2, "0");
       };
       // Set ISO-style "timezone", representing the known offset
@@ -138,7 +136,7 @@ export class DateTimeZone {
         throw new InvalidDateTimeZoneException("Time zone not set");
       }
       // Support ISO-style "timezones", representing known offsets
-      const m = this.timezone.match(/^(\+|\-)?(\d\d):?(\d\d)?$/);
+      const m = this.timezone.match(/^(\+|-)?(\d\d):?(\d\d)?$/);
       if (m) {
         const [timeZoneName, sign, hoursString, minutesString] = m;
         const hours = parseInt(hoursString, 10);
@@ -212,7 +210,7 @@ const phpToTimezoneSupportFormatStringConversions = {
   /* tslint:enable:object-literal-sort-keys */
 };
 
-const phpToTimeZoneSupportFormatString = phpFormat => {
+const phpToTimeZoneSupportFormatString = (phpFormat) => {
   const items = phpFormat.split("");
   let formatString = "";
   let formatStringIncludesTimezone = false;

@@ -3,7 +3,7 @@ import { array_merge } from "./php-compat";
 import { DateTime, DateTimeZone } from "./php-wrappers";
 import { TimeLogParser } from "./TimeLogParser";
 
-const testDurationFromLast= (
+const testDurationFromLast = (
   t: ExecutionContext,
   ts,
   rowsWithTimemarkersHandled,
@@ -63,7 +63,7 @@ const testDurationFromLastData = () => {
           date: "2017-12-12",
           dateRaw: "2017-12-12, 18:28",
           ts: 1513096080,
-          log: Array(),
+          log: [],
           source_line: 5,
           preprocessedContentsSourceLineIndex: 4,
           lastKnownTimeZone: "Europe/Helsinki",
@@ -80,7 +80,7 @@ const testDurationFromLastData = () => {
           date: "2017-12-12",
           dateRaw: "2017-12-12, 18:32ca",
           ts: 1513096320,
-          log: Array(),
+          log: [],
           source_line: 7,
           preprocessedContentsSourceLineIndex: 6,
           lastKnownTimeZone: "Europe/Helsinki",
@@ -107,7 +107,7 @@ testDurationFromLastData().forEach((testData, index) => {
   );
 });
 
-const testStartsWithOptionallySuffixedToken= (
+const testStartsWithOptionallySuffixedToken = (
   t: ExecutionContext,
   haystack: string,
   keyword: string,
@@ -136,7 +136,7 @@ testStartsWithOptionallySuffixedToken.title = (
   `: ${providedTitle} ${keyword} with suffix "${suffix}" in "${haystack}" = ${expectedReturnValue}`.trim();
 
 const testStartsWithOptionallySuffixedTokenData = () => {
-  let testDataMatrix = Array();
+  let testDataMatrix = [];
   const timeLogParser = new TimeLogParser();
   const tokens = timeLogParser.tokens();
   const keyword = "pause";
@@ -169,7 +169,7 @@ testStartsWithOptionallySuffixedTokenData().forEach((testData, index) => {
 
 // TODO: testRemoveSuffixedToken
 
-const testDetectTimeStampAndInterpretTsAndDate= (
+const testDetectTimeStampAndInterpretTsAndDate = (
   t: ExecutionContext,
   lineForDateCheck,
   expectedMetadataDateRawFormat,
@@ -945,7 +945,7 @@ testDetectTimeStampAndInterpretTsAndDateData().forEach((testData, index) => {
  * @param expectedLastKnownTimeZone
  * @param expectedUtcDateString
  */
-const testParseLogComment= (
+const testParseLogComment = (
   t: ExecutionContext,
   line,
   expectedLineWithoutDate,

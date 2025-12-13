@@ -91,7 +91,7 @@ export interface TimeReportExportEntry {
 // Since date-fns can not handle UTC dates
 function eachDayOfIntervalUTC(dirtyInterval, dirtyOptions = null) {
   const borkyDates = eachDayOfInterval(dirtyInterval, dirtyOptions);
-  const dates = borkyDates.map(date => {
+  const dates = borkyDates.map((date) => {
     return subMinutes(date, date.getTimezoneOffset());
   });
   // console.debug({ borkyDates, dates });
@@ -121,7 +121,8 @@ export class TimeLogProcessor {
 
   // Metadata arrays
   public notParsedAddTimeMarkersParsePreProcessedContents: RowMetadata[] = [];
-  public notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput: RowMetadata[] = [];
+  public notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput: RowMetadata[] =
+    [];
   public notParsedTimeReport: string[] = [];
   public rowsWithTimeMarkers: RowMetadata[] = [];
   public readonly preProcessedContentsSourceLineContentsSourceLineMap: any = {};
@@ -153,9 +154,10 @@ export class TimeLogProcessor {
     this.parsePreProcessedContents(this.preProcessedContents);
 
     // Uses this.rowsWithTimeMarkers to generate a textual representation of the parsed rows
-    this.contentsWithTimeMarkers = this.generateStructuredTimeMarkedOutputBasedOnParsedRowsWithTimeMarkers(
-      this.rowsWithTimeMarkers,
-    );
+    this.contentsWithTimeMarkers =
+      this.generateStructuredTimeMarkedOutputBasedOnParsedRowsWithTimeMarkers(
+        this.rowsWithTimeMarkers,
+      );
   }
 
   public notParsedAddTimeMarkersErrorSummary() {
@@ -370,9 +372,8 @@ export class TimeLogProcessor {
     // Fill out and sort the times-object
 
     this.timeReportData = times;
-    this.timeReportDataWithNullFilledIntermediateDates = this.addNullFilledDates(
-      times,
-    );
+    this.timeReportDataWithNullFilledIntermediateDates =
+      this.addNullFilledDates(times);
 
     // console.debug("generateTimeReport - this.timeReportData", this.timeReportData,);
 
@@ -394,11 +395,12 @@ export class TimeLogProcessor {
       return {};
     }
 
-    const timesWithNullFilledDates = this.addNullFilledDatesBetweenSpecificDates(
-      times,
-      firstDateFound,
-      lastDateFound,
-    );
+    const timesWithNullFilledDates =
+      this.addNullFilledDatesBetweenSpecificDates(
+        times,
+        firstDateFound,
+        lastDateFound,
+      );
 
     // console.debug("addNullFilledDates - { timesWithNullFilledDates }", { timesWithNullFilledDates });
 
@@ -572,11 +574,11 @@ export class TimeLogProcessor {
 
       timeReportCsv +=
         this.categories
-          .map(c => timeReportExportEntry.hoursByCategoryRounded[c])
+          .map((c) => timeReportExportEntry.hoursByCategoryRounded[c])
           .join(";") + ";";
       timeReportCsv +=
         this.categories
-          .map(c => timeReportExportEntry.hoursByCategory[c])
+          .map((c) => timeReportExportEntry.hoursByCategory[c])
           .join(";") + ";";
 
       timeReportCsv += timeReportExportEntry.activities + LogParser.NL_NIX;
@@ -746,13 +748,11 @@ export class TimeLogProcessor {
             const implicitMessage =
               trimmedLineForDateCheck + `, <just before ${token}>`;
             processed.push(implicitMessage);
-            phase1SourceLineContentsSourceLineMap[
-              processed.length
-            ] = sourceLine;
+            phase1SourceLineContentsSourceLineMap[processed.length] =
+              sourceLine;
             processed.push(`${token}->` + rowParts[1]);
-            phase1SourceLineContentsSourceLineMap[
-              processed.length
-            ] = sourceLine;
+            phase1SourceLineContentsSourceLineMap[processed.length] =
+              sourceLine;
             continue;
           }
         }
@@ -836,7 +836,7 @@ export class TimeLogProcessor {
           let minutesString;
           let foundADurationInFirstLine = false;
 
-          if (!!m) {
+          if (m) {
             apprtoken = m[1];
             hoursString = m[3];
             minutesString = m[4];
@@ -846,7 +846,7 @@ export class TimeLogProcessor {
             preg = /^(ca|appr)? ?(\d)+h/; // todo dynamic insertion of apprtokens
             const m2 = trimmedLinewithoutdate.match(preg);
 
-            if (!!m2) {
+            if (m2) {
               apprtoken = m2[1];
               hoursString = m2[2];
               foundADurationInFirstLine = true;
@@ -983,10 +983,10 @@ export class TimeLogProcessor {
       }
 
       // Get raw contents source line
-      const sourceLine = this
-        .preProcessedContentsSourceLineContentsSourceLineMap[
-        preprocessedContentsSourceLineRow
-      ];
+      const sourceLine =
+        this.preProcessedContentsSourceLineContentsSourceLineMap[
+          preprocessedContentsSourceLineRow
+        ];
 
       // Detect and switch timezone change
       if (strpos(trimmedLine, "|tz:") === 0) {
@@ -1089,9 +1089,8 @@ export class TimeLogProcessor {
         );
       const previousRowWithTimeMarkerIndex =
         this.rowsWithTimeMarkersHandled - 1;
-      const isTheFirstRowWithTimeMarker = !this.rowsWithTimeMarkers[
-        previousRowWithTimeMarkerIndex
-      ];
+      const isTheFirstRowWithTimeMarker =
+        !this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex];
       const hasAPreviousRowWithTimeMarker = !isTheFirstRowWithTimeMarker;
       const previousRowWithTimeMarkerHasTheSameDate =
         hasAPreviousRowWithTimeMarker &&
@@ -1101,10 +1100,11 @@ export class TimeLogProcessor {
       // Catch lines that has a timestamp but not in the beginning
       if (notTheFirstRowOfALogCommentAndProbableStartStopLine) {
         isNewRowWithTimeMarker = true;
-        const updates = this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine(
-          trimmedLineWithoutCommentAndWhiteSpaceNoise,
-          metadata,
-        );
+        const updates =
+          this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine(
+            trimmedLineWithoutCommentAndWhiteSpaceNoise,
+            metadata,
+          );
         if (updates.isNewRowWithTimeMarker !== undefined) {
           isNewRowWithTimeMarker = updates.isNewRowWithTimeMarker;
         }
@@ -1167,9 +1167,8 @@ export class TimeLogProcessor {
 
       // Handle new-found rows with time marker
       if (isNewRowWithTimeMarker) {
-        this.rowsWithTimeMarkers[
-          this.rowsWithTimeMarkersHandled
-        ] = cloneVariable(metadata);
+        this.rowsWithTimeMarkers[this.rowsWithTimeMarkersHandled] =
+          cloneVariable(metadata);
         this.rowsWithTimeMarkersHandled++;
       }
 
@@ -1197,9 +1196,8 @@ export class TimeLogProcessor {
         k < this.notParsedAddTimeMarkersParsePreProcessedContents.length;
         k++
       ) {
-        const metadata = this.notParsedAddTimeMarkersParsePreProcessedContents[
-          k
-        ];
+        const metadata =
+          this.notParsedAddTimeMarkersParsePreProcessedContents[k];
         const token = this.timeLogParser.startsWithOptionallySuffixedToken(
           metadata.line + "|$",
           "pause",
@@ -1211,9 +1209,10 @@ export class TimeLogProcessor {
         }
       }
       // Filter away deleted items in the not-parsed array
-      this.notParsedAddTimeMarkersParsePreProcessedContents = this.notParsedAddTimeMarkersParsePreProcessedContents.filter(
-        _ => _ !== undefined,
-      );
+      this.notParsedAddTimeMarkersParsePreProcessedContents =
+        this.notParsedAddTimeMarkersParsePreProcessedContents.filter(
+          (_) => _ !== undefined,
+        );
     }
   }
 
@@ -1223,13 +1222,10 @@ export class TimeLogProcessor {
   ): { isNewRowWithTimeMarker: boolean } {
     let isNewRowWithTimeMarker;
     const previousRowWithTimeMarkerIndex = this.rowsWithTimeMarkersHandled - 1;
-    const startsWithPauseToken = this.timeLogParser.startsWithOptionallySuffixedToken(
-      line,
-      "pause",
-    );
-    const isTheFirstRowWithTimeMarker = !this.rowsWithTimeMarkers[
-      previousRowWithTimeMarkerIndex
-    ];
+    const startsWithPauseToken =
+      this.timeLogParser.startsWithOptionallySuffixedToken(line, "pause");
+    const isTheFirstRowWithTimeMarker =
+      !this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex];
 
     // Assume true
     let probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp = true;
@@ -1241,9 +1237,10 @@ export class TimeLogProcessor {
       strpos(trimmedLineWithoutComment, "min") !== false;
 
     if (pauseWithWrittenDuration) {
-      const updates = this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration(
-        metadata,
-      );
+      const updates =
+        this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration(
+          metadata,
+        );
       if (
         probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp !== null
       ) {
@@ -1252,11 +1249,12 @@ export class TimeLogProcessor {
       }
       isNewRowWithTimeMarker = true;
     } else {
-      const updates = this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine_notPauseWithWrittenDuration(
-        line,
-        startsWithPauseToken,
-        metadata,
-      );
+      const updates =
+        this.processNotTheFirstRowOfALogCommentAndProbableStartStopLine_notPauseWithWrittenDuration(
+          line,
+          startsWithPauseToken,
+          metadata,
+        );
       if (
         probableStartStopLineIsIndeedStartStopLineWithSaneTimestamp !== null
       ) {
@@ -1283,11 +1281,12 @@ export class TimeLogProcessor {
       // metadata.line = metadata.line;
     } else {
       // We keep track of sessions starts for double-checking that time has registered on each of those dates
-      const startsWithStartTokenFollowedByASpace = this.timeLogParser.startsWithOptionallySuffixedToken(
-        line,
-        "start",
-        " ",
-      );
+      const startsWithStartTokenFollowedByASpace =
+        this.timeLogParser.startsWithOptionallySuffixedToken(
+          line,
+          "start",
+          " ",
+        );
       if (startsWithStartTokenFollowedByASpace) {
         this.sessionStarts.push(metadata);
       }
@@ -1323,9 +1322,8 @@ export class TimeLogProcessor {
       metadata.log.push(
         "found pause duration, adding to accumulated pause duration (if any)",
       );
-      const previousRowWithTimeMarker = this.rowsWithTimeMarkers[
-        previousRowWithTimeMarkerIndex
-      ];
+      const previousRowWithTimeMarker =
+        this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex];
       // console.debug("processNotTheFirstRowOfALogCommentAndProbableStartStopLine_pauseWithWrittenDuration - metadata.line, m, previousRowWithTimeMarker", metadata.line, m, previousRowWithTimeMarker);
       metadata.pauseDuration = previousRowWithTimeMarker.pauseDuration
         ? previousRowWithTimeMarker.pauseDuration
@@ -1385,14 +1383,12 @@ export class TimeLogProcessor {
     }
 
     // Try to find a timestamp
-    let datetime: DateTime;
     const result = this.timeLogParser.detectTimeStamp(lineForDateCheck);
     const interpretedTsAndDate = this.timeLogParser.interpretTsAndDate(
       result.metadata.dateRaw,
       result.metadata.dateRawFormat,
     );
-    const { ts, date } = interpretedTsAndDate;
-    datetime = interpretedTsAndDate.datetime;
+    const { ts, date, datetime } = interpretedTsAndDate;
     // var_dump($ts, $date, $datetime);
     const validTimestampFound = !!date;
 
@@ -1562,9 +1558,8 @@ export class TimeLogProcessor {
 
       // Debug log info
       const timezone = new DateTimeZone("UTC");
-      const datetime = DateTime.createFromUnixTimestamp(
-        ts,
-      ).cloneWithAnotherTimezone(timezone);
+      const datetime =
+        DateTime.createFromUnixTimestamp(ts).cloneWithAnotherTimezone(timezone);
       const last = new DateTime(
         addSeconds(datetime.getDate(), Math.abs(durationSinceLast)),
         datetime.getTimezone(),
@@ -1576,9 +1571,8 @@ export class TimeLogProcessor {
           "Y-m-d H:i:s",
         )}`,
       );
-      const previousRowWithTimeMarker = this.rowsWithTimeMarkers[
-        previousRowWithTimeMarkerIndex
-      ];
+      const previousRowWithTimeMarker =
+        this.rowsWithTimeMarkers[previousRowWithTimeMarkerIndex];
       metadata.log.push(
         `$previousRowWithTimeMarker line: ${previousRowWithTimeMarker.line}`,
       );

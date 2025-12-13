@@ -29,7 +29,7 @@ const correctTimeSpendingLogContents = () => {
   const timeSpendingLogPaths = timeSpendingLogPathsInFolder(
     pathToFolderWhereCorrectTsLogsReside,
   );
-  const providerData = Array();
+  const providerData = [];
 
   for (const timeSpendingLogPath of Object.values(timeSpendingLogPaths)) {
     // Skip unversioned fixtures that are not committed to git
@@ -55,7 +55,7 @@ const incorrectTimeSpendingLogContents = () => {
   const timeSpendingLogPaths = timeSpendingLogPathsInFolder(
     pathToFolderWhereIncorrectTsLogsReside,
   );
-  const providerData = Array();
+  const providerData = [];
 
   for (const timeSpendingLogPath of Object.values(timeSpendingLogPaths)) {
     // Skip unversioned fixtures that are not committed to git
@@ -91,7 +91,7 @@ test("there exists at least one incorrect time spending log fixture paths", (t: 
  * @param t
  * @param timeSpendingLogPath
  */
-const testProcessAndAssertCorrectTimeSpendingLog= (
+const testProcessAndAssertCorrectTimeSpendingLog = (
   t: ExecutionContext,
   timeSpendingLogPath: string,
 ) => {
@@ -126,22 +126,21 @@ const processAndAssertCorrectTimeSpendingLog = (
 const processTimeSpendingLog = (t: ExecutionContext, timeSpendingLogPath) => {
   // t.log(660 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
   // t.log(timeSpendingLogPath);
-  const correspondingCsvDataFilePath = getCorrespondingCsvDataFilePath(
-    timeSpendingLogPath,
-  );
+  const correspondingCsvDataFilePath =
+    getCorrespondingCsvDataFilePath(timeSpendingLogPath);
   let thrownException;
   let processedTimeSpendingLog: ProcessedTimeSpendingLog;
 
-  try // t.log($processedTimeSpendingLog->timeReportCsv);
-  {
+  try {
+    // t.log($processedTimeSpendingLog->timeReportCsv);
     // t.log(667 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
 
     processedTimeSpendingLog = getProcessedTimeSpendingLog(timeSpendingLogPath);
 
     // t.log(671 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
 
-    const timeReportCsv = processedTimeSpendingLog.getTimeLogProcessor()
-      .timeReportCsv;
+    const timeReportCsv =
+      processedTimeSpendingLog.getTimeLogProcessor().timeReportCsv;
 
     // To update the expected contents based on the current output (use only when certain that everything
     // is correct and only the format of the output file has been changed)
@@ -159,7 +158,8 @@ const processTimeSpendingLog = (t: ExecutionContext, timeSpendingLogPath) => {
       timeReportCsv,
     );
 
-    const timeLogEntriesWithMetadata = processedTimeSpendingLog.getTimeLogEntriesWithMetadata();
+    const timeLogEntriesWithMetadata =
+      processedTimeSpendingLog.getTimeLogEntriesWithMetadata();
     // t.log({timeLogEntriesWithMetadata});
 
     // t.log(692 + " - Memory usage: " + memoryUsageInMiB() + " MiB");
@@ -237,19 +237,17 @@ correctTimeSpendingLogContents().forEach((testData, index) => {
  * @param t
  * @param timeSpendingLogPath
  */
-const testCorrectTimeSpendingLogsCorrectness= (
+const testCorrectTimeSpendingLogsCorrectness = (
   t: ExecutionContext,
   timeSpendingLogPath,
 ) => {
   try {
-    const processedTimeSpendingLog = getProcessedTimeSpendingLog(
-      timeSpendingLogPath,
-    );
-    const timeReportCsv = processedTimeSpendingLog.getTimeLogProcessor()
-      .timeReportCsv;
-    const correspondingCsvDataFilePath = getCorrespondingCsvDataFilePath(
-      timeSpendingLogPath,
-    );
+    const processedTimeSpendingLog =
+      getProcessedTimeSpendingLog(timeSpendingLogPath);
+    const timeReportCsv =
+      processedTimeSpendingLog.getTimeLogProcessor().timeReportCsv;
+    const correspondingCsvDataFilePath =
+      getCorrespondingCsvDataFilePath(timeSpendingLogPath);
     const correspondingCsvDataFileContents = file_get_contents(
       correspondingCsvDataFilePath,
     );
@@ -291,7 +289,7 @@ correctTimeSpendingLogContents().forEach((testData, index) => {
   );
 });
 
-const testCorrectlyReportedProcessingErrors= (
+const testCorrectlyReportedProcessingErrors = (
   t: ExecutionContext,
   timeSpendingLogPath,
   expectedProcessingErrorsJsonFilePath,
@@ -319,7 +317,7 @@ const testCorrectlyReportedProcessingErrors= (
   };
   const migrateValue = (v, key = null) => {
     if (v instanceof Array) {
-      return v.map(el => migrateValue(el));
+      return v.map((el) => migrateValue(el));
     } else {
       if (typeof v === "object") {
         return migrateProcessingErrorsObject(v);
@@ -338,7 +336,7 @@ const testCorrectlyReportedProcessingErrors= (
       }
     }
   };
-  const migrateProcessingErrorsObject = v => {
+  const migrateProcessingErrorsObject = (v) => {
     if (v === undefined || v === null) {
       return v;
     }
@@ -365,7 +363,8 @@ const testCorrectlyReportedProcessingErrors= (
       // t.log("e.processedTimeSpendingLog.getTroubleshootingInfo()", e.processedTimeSpendingLog.getTroubleshootingInfo(),);
       // t.log(e.processedTimeSpendingLog.getTimeLogParser().preProcessedContentsSourceLineContentsSourceLineMap);
 
-      const encounteredProcessingErrorsOriginal = e.processedTimeSpendingLog.getProcessingErrors();
+      const encounteredProcessingErrorsOriginal =
+        e.processedTimeSpendingLog.getProcessingErrors();
       encounteredProcessingErrors = migrateProcessingErrorsObject(
         encounteredProcessingErrorsOriginal,
       );

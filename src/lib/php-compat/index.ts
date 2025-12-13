@@ -20,6 +20,7 @@ export function array_merge<T>(...arrays: T[][]): T[] {
  * Note: This is a synchronous operation
  */
 export function file_get_contents(filename: string): string {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const fs = require("fs");
   return fs.readFileSync(filename, "utf8");
 }
@@ -28,12 +29,19 @@ export function file_get_contents(filename: string): string {
  * Returns information about a file path
  * When called without options, returns an object with all path components
  */
-export function pathinfo(path: string): { dirname: string; basename: string; extension: string; filename: string };
+export function pathinfo(path: string): {
+  dirname: string;
+  basename: string;
+  extension: string;
+  filename: string;
+};
 export function pathinfo(path: string, options: number): string;
 export function pathinfo(
   path: string,
-  options?: number
-): { dirname: string; basename: string; extension: string; filename: string } | string {
+  options?: number,
+):
+  | { dirname: string; basename: string; extension: string; filename: string }
+  | string {
   const lastSlash = path.lastIndexOf("/");
   const lastBackslash = path.lastIndexOf("\\");
   const lastSep = Math.max(lastSlash, lastBackslash);
@@ -42,8 +50,10 @@ export function pathinfo(
   const basename = lastSep === -1 ? path : path.substring(lastSep + 1);
 
   const lastDot = basename.lastIndexOf(".");
-  const extension = lastDot === -1 || lastDot === 0 ? "" : basename.substring(lastDot + 1);
-  const filename = lastDot === -1 || lastDot === 0 ? basename : basename.substring(0, lastDot);
+  const extension =
+    lastDot === -1 || lastDot === 0 ? "" : basename.substring(lastDot + 1);
+  const filename =
+    lastDot === -1 || lastDot === 0 ? basename : basename.substring(0, lastDot);
 
   // PHP constants for pathinfo options
   const PATHINFO_DIRNAME = 1;
@@ -80,7 +90,7 @@ export function ini_set(_varname: string, _newvalue: string): string | false {
 export function str_replace(
   search: string | string[],
   replace: string | string[],
-  subject: string
+  subject: string,
 ): string {
   if (Array.isArray(search)) {
     let result = subject;
@@ -97,7 +107,11 @@ export function str_replace(
  * Find the position of the first occurrence of a substring
  * Returns false if not found (PHP-style), otherwise returns the position
  */
-export function strpos(haystack: string, needle: string, offset: number = 0): number | false {
+export function strpos(
+  haystack: string,
+  needle: string,
+  offset: number = 0,
+): number | false {
   const pos = haystack.indexOf(needle, offset);
   return pos === -1 ? false : pos;
 }

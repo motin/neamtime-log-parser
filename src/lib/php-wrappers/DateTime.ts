@@ -216,7 +216,7 @@ const phpToDateFnsFormatString = (
   };
 };
 
-export const phpFormatStringContainsTimeZoneInformation = phpFormatString => {
+export const phpFormatStringContainsTimeZoneInformation = (phpFormatString) => {
   const {
     formatStringIncludesLiteralZAsTimezone,
     formatStringIncludesTimezone,

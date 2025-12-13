@@ -55,6 +55,6 @@ export const getProcessedTimeSpendingLog = (
   return processedTimeSpendingLog;
 };
 
-export const getCorrespondingCsvDataFilePath = timeSpendingLogPath => {
+export const getCorrespondingCsvDataFilePath = (timeSpendingLogPath) => {
   return str_replace(".tslog", ".csv", timeSpendingLogPath);
 };

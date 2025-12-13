@@ -59,7 +59,8 @@ export class NeamtimeLogParserCli {
      */
 
     const timeLogProcessor = processedTimeSpendingLog.getTimeLogProcessor();
-    const troubleshootingInfo = processedTimeSpendingLog.getTroubleshootingInfo();
+    const troubleshootingInfo =
+      processedTimeSpendingLog.getTroubleshootingInfo();
 
     /* tslint:disable:object-literal-sort-keys */
     return {
@@ -70,12 +71,13 @@ export class NeamtimeLogParserCli {
       sessionCount: timeLogProcessor.sessions.length,
       timeReportData: timeLogProcessor.timeReportData,
       // timeReportCsv: timeLogProcessor.timeReportCsv,
-      timeLogEntriesWithMetadata: processedTimeSpendingLog.getTimeLogEntriesWithMetadata(),
+      timeLogEntriesWithMetadata:
+        processedTimeSpendingLog.getTimeLogEntriesWithMetadata(),
       processingErrors: processedTimeSpendingLog.getProcessingErrors(),
       troubleshootingInfo,
       // processingDebugInfo: processedTimeSpendingLog.processingDebugInfo,
-      nonEmptyPreprocessedLinesCount: timeLogProcessor.nonEmptyPreprocessedLines()
-        .length,
+      nonEmptyPreprocessedLinesCount:
+        timeLogProcessor.nonEmptyPreprocessedLines().length,
     };
     /* tslint:enable:object-literal-sort-keys */
   }
