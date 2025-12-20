@@ -9,6 +9,9 @@ A TypeScript library for parsing timestamped markdown time logs into structured 
 - **Duration Calculations**: Automatically calculate session durations
 - **Timezone Support**: Handle multiple timezone specifications
 - **Pause Detection**: Track breaks and pauses in work sessions
+- **Frontmatter Parsing**: Extract client, project, and category defaults from YAML frontmatter
+- **Client/Project Tracking**: Entries include `client` and `project` fields from frontmatter or `.::` tags
+- **Flexible Category Syntax**: Three-format `.::` tags for category, client/project, or full override
 - **Data Export**: Generate structured time reports and CSV exports
 - **CLI & API**: Use as a command-line tool or integrate into your application
 
@@ -44,26 +47,56 @@ start 13:00
 - `.:: Category / Subcategory` - Categorize time entries (can appear before first entry)
 - `#endts` - End of time log
 
-**Categories:**
+**Frontmatter:**
 
-You can organize time entries into categories using the `.::` marker:
+Time logs can include YAML frontmatter to set defaults for client, project, and category:
 
-```
-.:: Client Name / Project Name
+```markdown
+---
+client: Acme Corp
+project: Website Redesign
+default_category: Development
+---
 
 start 2025-01-15 10:00
 
 2025-01-15 10:15, working on feature X
-2025-01-15 11:30, code review
+```
 
-.:: Another Client / Different Project
+**Categories with `.::` Tags:**
 
-2025-01-15 13:00, meeting notes
+The `.::` marker supports three formats for organizing time entries:
+
+```markdown
+.:: Category                        # Just category (client/project from frontmatter)
+.:: Client / Project                # Override client and project (category from frontmatter)
+.:: Client / Project : Category     # Full override - client, project, and category
+```
+
+**Example with all formats:**
+
+```markdown
+---
+client: Acme Corp
+project: Main App
+default_category: Development
+---
+
+start 2025-01-15 10:00
+
+.:: Development
+2025-01-15 10:15, working on feature X    # Uses Acme Corp / Main App / Development
+
+.:: BigCorp / Mobile App
+2025-01-15 11:30, code review             # Uses BigCorp / Mobile App / Development
+
+.:: Startup Inc / API Project : Onboarding
+2025-01-15 13:00, quick side task         # Uses Startup Inc / API Project / Onboarding
 
 paus->
 ```
 
-Entries following a category marker will be grouped under that category in reports.
+Parsed entries include `client`, `project`, and `category` fields populated according to these rules.
 
 ## Usage
 
@@ -278,6 +311,55 @@ interface ProcessingError {
   log?: string;            // Error log details
 }
 ```
+
+#### `TimeLogEntryWithMetadata`
+
+```typescript
+interface TimeLogEntryWithMetadata {
+  gmtTimestamp: string;     // UTC timestamp
+  category: string;         // Work category
+  client?: string;          // Client name (from frontmatter or .:: tag)
+  project?: string;         // Project name (from frontmatter or .:: tag)
+  date: string;             // Date string
+  dateRaw: string;          // Raw date from log
+  hours: number;            // Duration in hours
+  hoursRounded: number;     // Rounded duration
+  text: string;             // Entry description
+  ts: number;               // Unix timestamp
+  tz: string;               // Timezone
+  sessionMeta: {
+    session_ref: string;    // Session reference
+    tzFirst: string;        // Session timezone
+  };
+}
+```
+
+#### `TimeLogFrontmatter`
+
+```typescript
+interface TimeLogFrontmatter {
+  client?: string;          // Default client for entries
+  project?: string;         // Default project for entries
+  default_category?: string; // Default category for entries
+}
+```
+
+### Utility Functions
+
+#### `parseTimeLogFrontmatter(content: string): TimeLogFrontmatter`
+
+Parse YAML frontmatter from raw time log content to extract client, project, and default_category.
+
+#### `parseCategoryTag(tag: string, defaults?: TimeLogFrontmatter): ParsedCategoryTag`
+
+Parse a `.::` category tag using three-format rules:
+- `"Category"` → uses defaults for client/project
+- `"Client / Project"` → overrides client/project, uses default category
+- `"Client / Project : Category"` → full override
+
+#### `stripFrontmatter(content: string): string`
+
+Remove YAML frontmatter from content, returning just the log body.
 
 ### Legacy API
 
