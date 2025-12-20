@@ -2,7 +2,12 @@ import test, { ExecutionContext } from "ava";
 // import * as util from "util";
 import { LogParser } from "./LogParser";
 // import { DateTime, DateTimeZone } from "./php-wrappers";
-import { TimeLogProcessor } from "./TimeLogProcessor";
+import {
+  parseCategoryTag,
+  parseTimeLogFrontmatter,
+  stripFrontmatter,
+  TimeLogProcessor,
+} from "./TimeLogProcessor";
 
 // TODO: Test detection of start/stop-lines
 // TODO: testIsProbableStartStopLine
@@ -969,5 +974,148 @@ testGenerateTimeReportData().forEach((testData, index) => {
     testData[1],
     testData[2],
     testData[3],
+  );
+});
+
+// Tests for frontmatter parsing
+const testParseTimeLogFrontmatter = (
+  t: ExecutionContext,
+  content: string,
+  expectedFrontmatter: {
+    client?: string;
+    project?: string;
+    default_category?: string;
+  },
+) => {
+  const result = parseTimeLogFrontmatter(content);
+  t.deepEqual(
+    result,
+    expectedFrontmatter,
+    "parseTimeLogFrontmatter() parses correctly",
+  );
+};
+
+const testParseTimeLogFrontmatterData = () => {
+  return [
+    // No frontmatter
+    ["start 2019-01-05\nfoo", {}],
+    // Empty frontmatter
+    ["---\n---\nstart 2019-01-05", {}],
+    // Client only
+    ["---\nclient: Acme Corp\n---\nstart 2019-01-05", { client: "Acme Corp" }],
+    // Project only
+    ["---\nproject: Website Redesign\n---\nstart 2019-01-05", {
+      project: "Website Redesign",
+    }],
+    // All fields
+    [
+      "---\nclient: Acme Corp\nproject: Website Redesign\ndefault_category: Development\n---\nstart 2019-01-05",
+      {
+        client: "Acme Corp",
+        project: "Website Redesign",
+        default_category: "Development",
+      },
+    ],
+    // With quotes
+    [
+      '---\nclient: "My Client"\nproject: \'My Project\'\n---\nstart 2019-01-05',
+      { client: "My Client", project: "My Project" },
+    ],
+    // No closing ---
+    ["---\nclient: Acme\nstart 2019-01-05", {}],
+  ];
+};
+
+testParseTimeLogFrontmatterData().forEach((testData, index) => {
+  test(
+    "testParseTimeLogFrontmatter - " + index,
+    testParseTimeLogFrontmatter,
+    testData[0] as string,
+    testData[1] as any,
+  );
+});
+
+// Tests for stripFrontmatter
+const testStripFrontmatter = (
+  t: ExecutionContext,
+  content: string,
+  expectedContent: string,
+) => {
+  const result = stripFrontmatter(content);
+  t.deepEqual(result, expectedContent, "stripFrontmatter() strips correctly");
+};
+
+const testStripFrontmatterData = () => {
+  return [
+    // No frontmatter - unchanged
+    ["start 2019-01-05\nfoo", "start 2019-01-05\nfoo"],
+    // With frontmatter - stripped
+    [
+      "---\nclient: Acme\n---\nstart 2019-01-05\nfoo",
+      "start 2019-01-05\nfoo",
+    ],
+    // No closing --- - unchanged
+    ["---\nclient: Acme\nstart 2019-01-05", "---\nclient: Acme\nstart 2019-01-05"],
+  ];
+};
+
+testStripFrontmatterData().forEach((testData, index) => {
+  test(
+    "testStripFrontmatter - " + index,
+    testStripFrontmatter,
+    testData[0],
+    testData[1],
+  );
+});
+
+// Tests for parseCategoryTag
+const testParseCategoryTag = (
+  t: ExecutionContext,
+  tag: string,
+  defaults: { client?: string; project?: string; default_category?: string },
+  expectedResult: { client?: string; project?: string; category?: string },
+) => {
+  const result = parseCategoryTag(tag, defaults);
+  t.deepEqual(result, expectedResult, "parseCategoryTag() parses correctly");
+};
+
+const testParseCategoryTagData = () => {
+  return [
+    // Format 1: Category only - uses defaults for client/project
+    [
+      "Development",
+      { client: "Acme", project: "Website" },
+      { client: "Acme", project: "Website", category: "Development" },
+    ],
+    // Format 2: Client / Project - uses default category
+    [
+      "NewClient / NewProject",
+      { default_category: "Coding" },
+      { client: "NewClient", project: "NewProject", category: "Coding" },
+    ],
+    // Format 3: Client / Project : Category - full override
+    [
+      "BigCorp / Mobile App : Testing",
+      {},
+      { client: "BigCorp", project: "Mobile App", category: "Testing" },
+    ],
+    // Category only without defaults
+    ["Admin", {}, { client: undefined, project: undefined, category: "Admin" }],
+    // Client / Project without category defaults
+    [
+      "Client / Project",
+      {},
+      { client: "Client", project: "Project", category: undefined },
+    ],
+  ];
+};
+
+testParseCategoryTagData().forEach((testData, index) => {
+  test(
+    "testParseCategoryTag - " + index,
+    testParseCategoryTag,
+    testData[0] as string,
+    testData[1] as any,
+    testData[2] as any,
   );
 });

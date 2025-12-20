@@ -53,6 +53,8 @@ export interface RowMetadata {
 
 export interface TimeReportSourceComment {
   category: string;
+  client?: string;
+  project?: string;
   date: string;
   dateRaw: string;
   hours: any;
@@ -61,6 +63,160 @@ export interface TimeReportSourceComment {
   text: string;
   ts: number;
   tz: string;
+}
+
+/**
+ * Frontmatter defaults parsed from a raw time log
+ */
+export interface TimeLogFrontmatter {
+  client?: string;
+  project?: string;
+  default_category?: string;
+}
+
+/**
+ * Result of parsing a .:: category tag
+ */
+export interface ParsedCategoryTag {
+  client?: string;
+  project?: string;
+  category?: string;
+}
+
+/**
+ * Parse YAML frontmatter from raw time log content.
+ * Frontmatter is between --- markers at the start of the file.
+ *
+ * @param content Raw time log content
+ * @returns Parsed frontmatter with client, project, default_category
+ */
+export function parseTimeLogFrontmatter(content: string): TimeLogFrontmatter {
+  const result: TimeLogFrontmatter = {};
+
+  if (!content) {
+    return result;
+  }
+
+  const lines = content.split("\n");
+  if (lines.length === 0 || lines[0].trim() !== "---") {
+    return result;
+  }
+
+  // Find the closing ---
+  let endIndex = -1;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === "---") {
+      endIndex = i;
+      break;
+    }
+  }
+
+  if (endIndex === -1) {
+    return result;
+  }
+
+  // Parse the frontmatter lines (simple YAML parsing)
+  for (let i = 1; i < endIndex; i++) {
+    const line = lines[i];
+    const colonIndex = line.indexOf(":");
+    if (colonIndex === -1) continue;
+
+    const key = line.substring(0, colonIndex).trim();
+    let value = line.substring(colonIndex + 1).trim();
+
+    // Remove quotes if present
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    if (key === "client" && value) {
+      result.client = value;
+    } else if (key === "project" && value) {
+      result.project = value;
+    } else if (key === "default_category" && value) {
+      result.default_category = value;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Parse a .:: category tag according to three-format rules:
+ * - ".:: Category" - just category
+ * - ".:: Client / Project" - client and project (uses defaults for category)
+ * - ".:: Client / Project : Category" - full override
+ *
+ * @param tag The tag content after ".:: " prefix
+ * @param defaults Frontmatter defaults to use when not overridden
+ * @returns Parsed client, project, category
+ */
+export function parseCategoryTag(
+  tag: string,
+  defaults: TimeLogFrontmatter = {},
+): ParsedCategoryTag {
+  const trimmed = tag.trim();
+  const result: ParsedCategoryTag = {};
+
+  // Check for colon (category separator)
+  const colonIndex = trimmed.indexOf(":");
+  // Check for slash (client/project separator)
+  const slashIndex = trimmed.indexOf("/");
+
+  if (colonIndex !== -1 && slashIndex !== -1 && slashIndex < colonIndex) {
+    // Format: "Client / Project : Category"
+    const clientProject = trimmed.substring(0, colonIndex).trim();
+    const category = trimmed.substring(colonIndex + 1).trim();
+
+    const parts = clientProject.split("/");
+    result.client = parts[0].trim();
+    result.project = parts[1]?.trim() || undefined;
+    result.category = category || defaults.default_category;
+  } else if (slashIndex !== -1) {
+    // Format: "Client / Project" (no category override)
+    const parts = trimmed.split("/");
+    result.client = parts[0].trim();
+    result.project = parts[1]?.trim() || undefined;
+    result.category = defaults.default_category;
+  } else {
+    // Format: "Category" only - use defaults for client/project
+    result.client = defaults.client;
+    result.project = defaults.project;
+    result.category = trimmed;
+  }
+
+  return result;
+}
+
+/**
+ * Strip frontmatter from content, returning the content body.
+ *
+ * @param content Raw time log content with potential frontmatter
+ * @returns Content without frontmatter
+ */
+export function stripFrontmatter(content: string): string {
+  if (!content) {
+    return content;
+  }
+
+  const lines = content.split("\n");
+  if (lines.length === 0 || lines[0].trim() !== "---") {
+    return content;
+  }
+
+  // Find the closing ---
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === "---") {
+      // Return everything after the frontmatter
+      return lines.slice(i + 1).join("\n");
+    }
+  }
+
+  // No closing ---, return original
+  return content;
 }
 
 export interface TimeLogEntryWithMetadata extends TimeReportSourceComment {
@@ -103,6 +259,7 @@ export class TimeLogProcessor {
   public tzFirst: string;
   public contents: string = "";
   public preProcessedContents: string = "";
+  public frontmatter: TimeLogFrontmatter = {};
   public contentsWithTimeMarkers: string = "";
   public timeReportExportData: TimeReportExportEntry[];
   public timeReportCsv: string = "";
@@ -232,6 +389,8 @@ export class TimeLogProcessor {
 
     const lines: string[] = textIntoLinesArray(contentsWithTimeMarkers);
     let category = "Unspecified";
+    let client: string | undefined = this.frontmatter.client;
+    let project: string | undefined = this.frontmatter.project;
 
     for (const line of lines) {
       const trimmedLine = line.trim();
@@ -241,14 +400,22 @@ export class TimeLogProcessor {
         continue;
       }
 
-      // Detect and switch category
+      // Detect and switch category/client/project using three-format parsing
       if (strpos(line, ".::") === 0) {
-        const categoryNeedle = str_replace(".::", "", trimmedLine).trim();
+        const tagContent = str_replace(".::", "", trimmedLine).trim();
+        const parsed = parseCategoryTag(tagContent, this.frontmatter);
 
-        if (-1 !== this.categories.indexOf(categoryNeedle)) {
-          category = categoryNeedle;
-          continue;
+        // Update current state from parsed tag
+        if (parsed.category) {
+          category = parsed.category;
         }
+        if (parsed.client !== undefined) {
+          client = parsed.client;
+        }
+        if (parsed.project !== undefined) {
+          project = parsed.project;
+        }
+        continue;
       }
 
       // skip all in the "Ignored" category
@@ -352,6 +519,8 @@ export class TimeLogProcessor {
       // Save a useful form of the time-marked rows that build up the hours-sum:
       const sourceComment: TimeReportSourceComment = {
         category,
+        client,
+        project,
         date,
         dateRaw,
         hours,

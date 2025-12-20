@@ -5,9 +5,14 @@
 // Type re-exports (TypeScript 3.0 compatible syntax)
 export {
   TimeLogEntryWithMetadata,
+  TimeLogFrontmatter,
   TimeLogSession,
   TimeLogMetadata,
   TimeReportSourceComment,
+  ParsedCategoryTag,
+  parseTimeLogFrontmatter,
+  parseCategoryTag,
+  stripFrontmatter,
 } from "./lib/TimeLogProcessor";
 
 export {

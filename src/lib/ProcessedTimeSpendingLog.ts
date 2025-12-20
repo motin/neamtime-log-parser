@@ -3,7 +3,9 @@ import { TimeLogParsingException } from "./exceptions/TimeLogParsingException";
 import { TimeSpendingLogProcessingErrorsEncounteredException } from "./exceptions/TimeSpendingLogProcessingErrorsEncounteredException";
 import { cloneVariable } from "./php-wrappers";
 import {
+  parseTimeLogFrontmatter,
   RowMetadata,
+  stripFrontmatter,
   TimeLogEntryWithMetadata,
   TimeLogProcessor,
   TimeLogSession,
@@ -149,7 +151,13 @@ export class ProcessedTimeSpendingLog {
 
     const timeLogProcessor = this.getTimeLogProcessor();
     timeLogProcessor.tzFirst = this.unprocessedTimeSpendingLog.tzFirst;
-    timeLogProcessor.contents = this.unprocessedTimeSpendingLog.rawLogContents;
+
+    // Parse frontmatter from raw contents (before stripping)
+    const rawContents = this.unprocessedTimeSpendingLog.rawLogContents;
+    timeLogProcessor.frontmatter = parseTimeLogFrontmatter(rawContents);
+
+    // Strip frontmatter from contents before parsing
+    timeLogProcessor.contents = stripFrontmatter(rawContents);
 
     try {
       timeLogProcessor.addTimeMarkers();
