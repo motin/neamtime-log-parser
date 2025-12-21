@@ -1004,9 +1004,12 @@ const testParseTimeLogFrontmatterData = () => {
     // Client only
     ["---\nclient: Acme Corp\n---\nstart 2019-01-05", { client: "Acme Corp" }],
     // Project only
-    ["---\nproject: Website Redesign\n---\nstart 2019-01-05", {
-      project: "Website Redesign",
-    }],
+    [
+      "---\nproject: Website Redesign\n---\nstart 2019-01-05",
+      {
+        project: "Website Redesign",
+      },
+    ],
     // All fields
     [
       "---\nclient: Acme Corp\nproject: Website Redesign\ndefault_category: Development\n---\nstart 2019-01-05",
@@ -1018,7 +1021,7 @@ const testParseTimeLogFrontmatterData = () => {
     ],
     // With quotes
     [
-      '---\nclient: "My Client"\nproject: \'My Project\'\n---\nstart 2019-01-05',
+      "---\nclient: \"My Client\"\nproject: 'My Project'\n---\nstart 2019-01-05",
       { client: "My Client", project: "My Project" },
     ],
     // No closing ---
@@ -1050,12 +1053,12 @@ const testStripFrontmatterData = () => {
     // No frontmatter - unchanged
     ["start 2019-01-05\nfoo", "start 2019-01-05\nfoo"],
     // With frontmatter - stripped
-    [
-      "---\nclient: Acme\n---\nstart 2019-01-05\nfoo",
-      "start 2019-01-05\nfoo",
-    ],
+    ["---\nclient: Acme\n---\nstart 2019-01-05\nfoo", "start 2019-01-05\nfoo"],
     // No closing --- - unchanged
-    ["---\nclient: Acme\nstart 2019-01-05", "---\nclient: Acme\nstart 2019-01-05"],
+    [
+      "---\nclient: Acme\nstart 2019-01-05",
+      "---\nclient: Acme\nstart 2019-01-05",
+    ],
   ];
 };
 
