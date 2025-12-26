@@ -154,7 +154,16 @@ export class ProcessedTimeSpendingLog {
 
     // Parse frontmatter from raw contents (before stripping)
     const rawContents = this.unprocessedTimeSpendingLog.rawLogContents;
-    timeLogProcessor.frontmatter = parseTimeLogFrontmatter(rawContents);
+    const parsedFrontmatter = parseTimeLogFrontmatter(rawContents);
+
+    // Use inherited frontmatter (for session-specific logs) if available,
+    // otherwise use parsed frontmatter from the content
+    if (this.unprocessedTimeSpendingLog.inheritedFrontmatter) {
+      timeLogProcessor.frontmatter =
+        this.unprocessedTimeSpendingLog.inheritedFrontmatter;
+    } else {
+      timeLogProcessor.frontmatter = parsedFrontmatter;
+    }
 
     // Strip frontmatter from contents before parsing
     timeLogProcessor.contents = stripFrontmatter(rawContents);
@@ -339,9 +348,28 @@ export class ProcessedTimeSpendingLog {
           );
         }
 
+        // Find the most recent .:: category tag before this session
+        // This ensures session-specific content includes the relevant category context
+        let categoryTagLine: string | null = null;
+        for (let i = startLine - 1; i >= 0; i--) {
+          const line = preProcessedLines[i].trim();
+          if (line.startsWith(".::")) {
+            categoryTagLine = preProcessedLines[i];
+            break;
+          }
+        }
+
+        // Prepend the category tag to session content if found
+        const sessionLines = categoryTagLine
+          ? [categoryTagLine, ...lines]
+          : lines;
+
         const sessionSpecificTimeSpendingLog = new TimeSpendingLog();
-        sessionSpecificTimeSpendingLog.rawLogContents = lines.join("\n");
+        sessionSpecificTimeSpendingLog.rawLogContents = sessionLines.join("\n");
         sessionSpecificTimeSpendingLog.tzFirst = start.lastKnownTimeZone;
+        // Propagate frontmatter from parent to session-specific log
+        sessionSpecificTimeSpendingLog.inheritedFrontmatter =
+          timeLogProcessor.frontmatter;
 
         try {
           const sessionSpecificProcessedTimeSpendingLog =

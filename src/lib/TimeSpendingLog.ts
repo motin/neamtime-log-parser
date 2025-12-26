@@ -1,6 +1,7 @@
 import { file_get_contents, str_replace } from "./php-compat";
 import { InvalidArgumentException } from "./exceptions/InvalidArgumentException";
 import { readFirstNonEmptyLineOfText } from "./LogParser";
+import { TimeLogFrontmatter } from "./TimeLogProcessor";
 
 interface TimeSpendingLogStdClass {
   tzFirst;
@@ -80,6 +81,11 @@ export class TimeSpendingLog {
   public rawLogContents;
   public inputContentTypeRef;
   public name;
+  /**
+   * Frontmatter inherited from parent log (for session-specific logs).
+   * When set, this takes precedence over parsing frontmatter from rawLogContents.
+   */
+  public inheritedFrontmatter?: TimeLogFrontmatter;
 
   public setAttributesFromStdClass(
     timeSpendingLogStdClass: TimeSpendingLogStdClass,
