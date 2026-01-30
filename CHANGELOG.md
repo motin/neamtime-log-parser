@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.7.0"></a>
+# [0.7.0](https://github.com/motin/neamtime-log-parser/compare/v0.6.0...v0.7.0) (2026-01-30)
+
+### Features
+
+* **parser**: Add frontmatter and category tag parsing for client/project tracking ([4da3ccd](https://github.com/motin/neamtime-log-parser/commit/4da3ccd))
+* **parser**: Fix multi-session parsing: propagate frontmatter and category tags ([55ac0d6](https://github.com/motin/neamtime-log-parser/commit/55ac0d6))
+
+### Internal
+
+* Remove locutus dependency, replace with lightweight TypeScript implementations ([ab4b7cf](https://github.com/motin/neamtime-log-parser/commit/ab4b7cf))
+* Modernize dependencies and tooling ([631a5ee](https://github.com/motin/neamtime-log-parser/commit/631a5ee))
+* Upgrade ESLint to v9 with flat config ([28c53e3](https://github.com/motin/neamtime-log-parser/commit/28c53e3))
+* Fix CI: set TZ=Europe/Stockholm for timezone-sensitive tests ([3214452](https://github.com/motin/neamtime-log-parser/commit/3214452))
+* Fix test scripts to avoid recursive/redundant test runs ([cb7d1ee](https://github.com/motin/neamtime-log-parser/commit/cb7d1ee))
+
 <a name="0.6.0"></a>
 # [0.6.0](https://github.com/motin/neamtime-log-parser/compare/v0.5.0...v0.6.0) (2025-11-17)
 
