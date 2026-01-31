@@ -14,16 +14,7 @@ export function array_merge<T>(...arrays: T[][]): T[] {
 }
 
 // === Filesystem functions ===
-
-/**
- * Reads entire file into a string (Node.js environment only)
- * Note: This is a synchronous operation
- */
-export function file_get_contents(filename: string): string {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const fs = require("fs");
-  return fs.readFileSync(filename, "utf8");
-}
+// file_get_contents is in ./fs.ts to avoid pulling in Node's fs module
 
 /**
  * Returns information about a file path

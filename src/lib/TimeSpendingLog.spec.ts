@@ -1,5 +1,6 @@
 import test, { ExecutionContext } from "ava";
-import { file_get_contents, str_replace } from "./php-compat";
+import { str_replace } from "./php-compat";
+import { file_get_contents } from "./php-compat/fs";
 import path from "path";
 import { fixturesPath /*, memoryUsageInMiB*/ } from "../inc/testUtils";
 import {
@@ -8,7 +9,7 @@ import {
   timeSpendingLogPathsInFolder,
 } from "../index";
 import { TimeSpendingLogProcessingErrorsEncounteredException } from "./exceptions/TimeSpendingLogProcessingErrorsEncounteredException";
-import { file_put_contents } from "./php-wrappers";
+import { file_put_contents } from "./php-wrappers/fs";
 import { ProcessedTimeSpendingLog } from "./ProcessedTimeSpendingLog";
 import { prettyJson } from "./string-utils";
 

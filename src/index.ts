@@ -1,6 +1,7 @@
 import fs from "fs";
-import { file_get_contents, pathinfo, str_replace } from "./lib/php-compat";
-import { glob, is_file } from "./lib/php-wrappers";
+import { pathinfo, str_replace } from "./lib/php-compat";
+import { file_get_contents } from "./lib/php-compat/fs";
+import { glob, is_file } from "./lib/php-wrappers/fs";
 import { ProcessedTimeSpendingLog } from "./lib/ProcessedTimeSpendingLog";
 import { TimeSpendingLog } from "./lib/TimeSpendingLog";
 

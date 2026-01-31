@@ -1,4 +1,5 @@
-import { file_get_contents, str_replace } from "./php-compat";
+import { str_replace } from "./php-compat";
+import { file_get_contents } from "./php-compat/fs";
 import { InvalidArgumentException } from "./exceptions/InvalidArgumentException";
 import { readFirstNonEmptyLineOfText } from "./LogParser";
 import { TimeLogFrontmatter } from "./TimeLogProcessor";

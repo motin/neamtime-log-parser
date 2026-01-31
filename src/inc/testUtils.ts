@@ -1,5 +1,5 @@
 import path from "path";
-import { memory_get_usage } from "../lib/php-wrappers";
+import { memory_get_usage } from "../lib/php-wrappers/fs";
 
 export const rootPath = path.join(__dirname, "..", "..", ".."); // relative to build/*/*.*, not src/*.*
 export const fixturesPath = path.resolve(rootPath, "fixtures");
