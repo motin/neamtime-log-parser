@@ -2,8 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-<a name="0.7.3"></a>
-## [0.7.3](https://github.com/motin/neamtime-log-parser/compare/v0.7.0...v0.7.3) (2026-07-26)
+<a name="0.7.1"></a>
+## [0.7.1](https://github.com/motin/neamtime-log-parser/compare/v0.7.0...v0.7.1) (2026-07-27)
 
 ### Bug Fixes
 
@@ -36,9 +36,12 @@ All notable changes to this project will be documented in this file. See [standa
   `fixtures/incorrect/basics/entry-timestamped-before-its-own-start.tslog`) that differ
   only in the one timestamp.
 
-**Note on versioning**: this jumps 0.7.0 → 0.7.3. Versions 0.7.1 and 0.7.2 were published
-to a local Verdaccio registry and never to npm; 0.7.3 is chosen so that `^0.7.0` resolves
-to this release on machines that can see either registry.
+**Note on versioning**: `0.7.1` and `0.7.2` previously existed as artifacts in a local
+Verdaccio registry and were never published to npm. That registry is retired — npm is the
+single source of truth — so this release takes `0.7.1`, the natural successor to `0.7.0`.
+Any leftover Verdaccio storage must be cleared: a stale local `0.7.2` outranks this release
+and would silently resolve `^0.7.0` back to the buggy build, which is precisely the class of
+divergence this release fixes.
 
 <a name="0.7.0"></a>
 # [0.7.0](https://github.com/motin/neamtime-log-parser/compare/v0.6.0...v0.7.0) (2026-01-30)
