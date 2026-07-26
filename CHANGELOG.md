@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.7.3"></a>
+## [0.7.3](https://github.com/motin/neamtime-log-parser/compare/v0.7.0...v0.7.3) (2026-07-26)
+
+### Bug Fixes
+
+* **parser**: A session is no longer discarded when its individual re-parse reports a
+  processing error. `parseDetectSessionsOneByOne` caught
+  `TimeSpendingLogProcessingErrorsEncounteredException`, recorded the error, and then
+  dropped the session — even though the exception carried a fully-parsed processor with
+  its `timeReportSourceComments` populated. Every entry of that session vanished from
+  `parseTimeLog().entries` while the remaining days still summed to a plausible total.
+  The processor is now salvaged and the session kept.
+* **parser**: An entry timestamped *before* the `start` line of its own session is clamped
+  to the start timestamp instead of being dropped, and reported as a processing error with
+  ref `entry-before-session-start` naming the source line and both timestamps — so the
+  parse status is `Warnings`, never `OK`. Clamping preserves the day's tracked minutes
+  exactly (the entry's own duration is the gap between it and the start, which simply
+  moves) and keeps the entry text. Entries merely out of order relative to a preceding
+  *entry* are still rejected, which after the fix above costs one line rather than a day.
+
+  Together these fixed a silent data loss: shifting a `start` to a later time — the single
+  most common edit when correcting a log — deleted the entire enclosing session, in one
+  real case 344 tracked minutes from a log used for client invoicing, with no error
+  anywhere. Reported downstream as rememberthis issue #65.
+
+### Internal
+
+* New `TimeLogProcessor.entriesClampedToSessionStart`, and `RowMetadata` gains
+  `tsClampedToSessionStart` / `tsBeforeClamp` / `clampedToLine`.
+* Regression coverage in `src/lib/entryBeforeSessionStart.spec.ts` plus a fixture pair
+  (`fixtures/correct/basics/entry-right-after-its-own-start.tslog` and
+  `fixtures/incorrect/basics/entry-timestamped-before-its-own-start.tslog`) that differ
+  only in the one timestamp.
+
+**Note on versioning**: this jumps 0.7.0 → 0.7.3. Versions 0.7.1 and 0.7.2 were published
+to a local Verdaccio registry and never to npm; 0.7.3 is chosen so that `^0.7.0` resolves
+to this release on machines that can see either registry.
+
 <a name="0.7.0"></a>
 # [0.7.0](https://github.com/motin/neamtime-log-parser/compare/v0.6.0...v0.7.0) (2026-01-30)
 
