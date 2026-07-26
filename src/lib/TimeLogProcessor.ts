@@ -49,6 +49,12 @@ export interface RowMetadata {
   highlightWithNewlines?: boolean;
   pauseDuration?: number;
   durationSinceLast?: number;
+  /** Set when the row's timestamp preceded its own session `start` line and was clamped to it */
+  tsClampedToSessionStart?: boolean;
+  /** The row's original (too early) timestamp, kept for reporting when tsClampedToSessionStart is set */
+  tsBeforeClamp?: number;
+  /** The session `start` line the row was clamped to */
+  clampedToLine?: string;
 }
 
 export interface TimeReportSourceComment {
@@ -281,6 +287,13 @@ export class TimeLogProcessor {
   public notParsedAddTimeMarkersGenerateStructuredTimeMarkedOutput: RowMetadata[] =
     [];
   public notParsedTimeReport: string[] = [];
+  /**
+   * Entries whose own timestamp precedes the `start` line of their own
+   * session. These are clamped to the start timestamp (rather than discarded)
+   * so that neither the entry nor the enclosing session is lost, and are
+   * reported as a warning by ProcessedTimeSpendingLog.
+   */
+  public entriesClampedToSessionStart: RowMetadata[] = [];
   public rowsWithTimeMarkers: RowMetadata[] = [];
   public readonly preProcessedContentsSourceLineContentsSourceLineMap: any = {};
   public debugOriginalUnsortedRows?: RowMetadata[] = [];
@@ -1723,7 +1736,6 @@ export class TimeLogProcessor {
 
     if (durationSinceLast < 0) {
       metadata.log.push("negative duration since last");
-      isNewRowWithTimeMarker = false;
 
       // Debug log info
       const timezone = new DateTimeZone("UTC");
@@ -1745,6 +1757,41 @@ export class TimeLogProcessor {
       metadata.log.push(
         `$previousRowWithTimeMarker line: ${previousRowWithTimeMarker.line}`,
       );
+
+      // An entry stamped before the `start` line of its own session is
+      // malformed input rather than an out-of-order entry - it is exactly what
+      // shifting a `start` to a later time produces, the single most common
+      // edit made when correcting a log. Dropping such a row used to make the
+      // whole enclosing session fail to parse, silently removing every entry of
+      // that day from the output. Clamp it to the start instead and report it
+      // as a warning, so that neither the entry nor its session is lost.
+      const previousRowIsASessionStart =
+        !!this.timeLogParser.startsWithOptionallySuffixedToken(
+          previousRowWithTimeMarker.line,
+          "start",
+          " ",
+        );
+
+      if (previousRowIsASessionStart) {
+        metadata.log.push(
+          "entry precedes the start line of its own session - clamping to the start timestamp instead of discarding the row",
+        );
+        metadata.tsClampedToSessionStart = true;
+        metadata.tsBeforeClamp = metadata.ts;
+        metadata.clampedToLine = previousRowWithTimeMarker.line;
+        metadata.ts = previousRowWithTimeMarker.ts;
+        metadata.date = previousRowWithTimeMarker.date;
+        metadata.formattedUtcDate = DateTime.createFromUnixTimestamp(
+          metadata.ts,
+        )
+          .cloneWithAnotherTimezone(new DateTimeZone("UTC"))
+          .format("Y-m-d H:i");
+        metadata.durationSinceLast = 0;
+        this.entriesClampedToSessionStart.push(metadata);
+        return { isNewRowWithTimeMarker: true };
+      }
+
+      isNewRowWithTimeMarker = false;
       metadata.log.push("sent to notParsed in processTheFirstRowOfALogComment");
       this.notParsedAddTimeMarkersParsePreProcessedContents.push(metadata);
     } else if (durationSinceLast > 24 * 60 * 60) {

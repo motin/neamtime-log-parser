@@ -1,0 +1,140 @@
+{
+  "0": {
+    "ref": "entry-before-session-start",
+    "message": "Entries timestamped before the `start` line of their own session.\nThey were clamped to that start so that no time is lost, but the log should be corrected:\nline 8: entry timestamped \"2026-01-19 (+0200) 08:57\" precedes \"start 2026-01-19 (+0200) 09:15\" - clamped to the latter",
+    "data": [
+      {
+        "date": "2026-01-19",
+        "dateRaw": "2026-01-19 (+0200) 08:57",
+        "formattedUtcDate": "2026-01-19 07:15",
+        "lastInterpretTsAndDateErrorMessage": "",
+        "lastKnownTimeZone": "+02:00",
+        "lastParseLogCommentErrorMessage": "",
+        "lastSetTsAndDateErrorClass": "",
+        "lastSetTsAndDateErrorMessage": "",
+        "lastUsedTimeZone": "+02:00",
+        "line": "2026-01-19 (+0200) 08:57, immutable billing reconciliation",
+        "lineWithComment": "2026-01-19 (+0200) 08:57, immutable billing reconciliation",
+        "log": [
+          "negative duration since last",
+          "Timestamp found: 2026-01-19 06:57:00 vs last found (based on duration since last which is -1080): 2026-01-19 07:15:00",
+          "$previousRowWithTimeMarker line: start 2026-01-19 (+0200) 09:15",
+          "entry precedes the start line of its own session - clamping to the start timestamp instead of discarding the row"
+        ],
+        "parseLogCommentDetectTimeStampMetadata": {
+          "log": [
+            "Found a supported timestamp ('Y-m-d \\(O\\) H:i')"
+          ],
+          "lastKnownsBeforeDetectTimeStamp": {
+            "lastKnownDate": "2026-01-19",
+            "lastKnownTimeZone": "+02:00",
+            "lastUsedTimeZone": "+02:00"
+          },
+          "dateRawFormat": "Y-m-d \\(O\\) H:i",
+          "dateRaw": "2026-01-19 (+0200) 08:57",
+          "timeZoneRaw": "+0200",
+          "timeRaw": "08:57"
+        },
+        "preprocessedContentsSourceLineIndex": 8,
+        "rowsWithTimeMarkersHandled": 5,
+        "sourceLine": 8,
+        "ts": 1768806900,
+        "tsClampedToSessionStart": true,
+        "tsBeforeClamp": 1768805820,
+        "clampedToLine": "start 2026-01-19 (+0200) 09:15",
+        "durationSinceLast": 0
+      }
+    ]
+  },
+  "1": {
+    "ref": "session-parsing",
+    "message": "Encountered a processing error when detecting/parsing sessions individually: Issues encountered (see e->processedTimeSpendingLog->processingErrors for details)",
+    "data": {
+      "processingErrors": [
+        {
+          "ref": "entry-before-session-start",
+          "message": "Entries timestamped before the `start` line of their own session.\nThey were clamped to that start so that no time is lost, but the log should be corrected:\nline 3: entry timestamped \"2026-01-19 (+0200) 08:57\" precedes \"start 2026-01-19 (+0200) 09:15\" - clamped to the latter",
+          "data": [
+            {
+              "date": "2026-01-19",
+              "dateRaw": "2026-01-19 (+0200) 08:57",
+              "formattedUtcDate": "2026-01-19 07:15",
+              "lastInterpretTsAndDateErrorMessage": "",
+              "lastKnownTimeZone": "+02:00",
+              "lastParseLogCommentErrorMessage": "",
+              "lastSetTsAndDateErrorClass": "",
+              "lastSetTsAndDateErrorMessage": "",
+              "lastUsedTimeZone": "+02:00",
+              "line": "2026-01-19 (+0200) 08:57, immutable billing reconciliation",
+              "lineWithComment": "2026-01-19 (+0200) 08:57, immutable billing reconciliation",
+              "log": [
+                "negative duration since last",
+                "Timestamp found: 2026-01-19 06:57:00 vs last found (based on duration since last which is -1080): 2026-01-19 07:15:00",
+                "$previousRowWithTimeMarker line: start 2026-01-19 (+0200) 09:15",
+                "entry precedes the start line of its own session - clamping to the start timestamp instead of discarding the row"
+              ],
+              "parseLogCommentDetectTimeStampMetadata": {
+                "log": [
+                  "Found a supported timestamp ('Y-m-d \\(O\\) H:i')"
+                ],
+                "lastKnownsBeforeDetectTimeStamp": {
+                  "lastKnownDate": "2026-01-19",
+                  "lastKnownTimeZone": "+02:00",
+                  "lastUsedTimeZone": "+02:00"
+                },
+                "dateRawFormat": "Y-m-d \\(O\\) H:i",
+                "dateRaw": "2026-01-19 (+0200) 08:57",
+                "timeZoneRaw": "+0200",
+                "timeRaw": "08:57"
+              },
+              "preprocessedContentsSourceLineIndex": 2,
+              "rowsWithTimeMarkersHandled": 1,
+              "sourceLine": 3,
+              "ts": 1768806900,
+              "tsClampedToSessionStart": true,
+              "tsBeforeClamp": 1768805820,
+              "clampedToLine": "start 2026-01-19 (+0200) 09:15",
+              "durationSinceLast": 0
+            }
+          ]
+        }
+      ],
+      "sessionStartMetadata": {
+        "date": "2026-01-19",
+        "dateRaw": "start 2026-01-19 (+0200) 09:15",
+        "formattedUtcDate": "2026-01-19 07:15:00",
+        "lastInterpretTsAndDateErrorMessage": "",
+        "lastKnownTimeZone": "+02:00",
+        "lastParseLogCommentErrorMessage": "",
+        "lastSetTsAndDateErrorClass": "",
+        "lastSetTsAndDateErrorMessage": "",
+        "lastUsedTimeZone": "+02:00",
+        "line": "start 2026-01-19 (+0200) 09:15",
+        "lineWithComment": "start 2026-01-19 (+0200) 09:15",
+        "log": [
+          "Found a valid timestamp in probable start/pause-row... interpreted as start/pause-row..."
+        ],
+        "parseLogCommentDetectTimeStampMetadata": {
+          "log": [
+            "Found a supported timestamp ('Y-m-d \\(O\\) H:i')"
+          ],
+          "lastKnownsBeforeDetectTimeStamp": {
+            "lastKnownDate": "2026-01-18",
+            "lastKnownTimeZone": "+02:00",
+            "lastUsedTimeZone": "+02:00"
+          },
+          "dateRawFormat": "Y-m-d \\(O\\) H:i",
+          "dateRaw": "2026-01-19 (+0200) 09:15",
+          "timeZoneRaw": "+0200",
+          "timeRaw": "09:15"
+        },
+        "preprocessedContentsSourceLineIndex": 6,
+        "rowsWithTimeMarkersHandled": 4,
+        "sourceLine": 6,
+        "ts": 1768806900,
+        "tsIsFaked": false,
+        "highlightWithNewlines": true
+      }
+    }
+  }
+}

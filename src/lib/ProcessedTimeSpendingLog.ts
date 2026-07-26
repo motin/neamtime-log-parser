@@ -196,6 +196,24 @@ export class ProcessedTimeSpendingLog {
       );
     }
 
+    if (timeLogProcessor.entriesClampedToSessionStart.length > 0) {
+      const occurrences = timeLogProcessor.entriesClampedToSessionStart.map(
+        (row) =>
+          `line ${row.sourceLine}: entry timestamped "${String(
+            row.dateRaw,
+          ).trim()}" precedes "${String(row.clampedToLine).trim()}" - clamped to the latter`,
+      );
+      this.addError(
+        "entry-before-session-start",
+        [
+          "Entries timestamped before the `start` line of their own session.",
+          "They were clamped to that start so that no time is lost, but the log should be corrected:",
+          ...occurrences,
+        ].join("\n"),
+        timeLogProcessor.entriesClampedToSessionStart,
+      );
+    }
+
     this.parseProcessedLogContentsWithTimeMarkers();
     // this.timeReportICal = timeLogProcessor.generateIcal();
   }
@@ -388,6 +406,17 @@ export class ProcessedTimeSpendingLog {
             //                $te->processedTimeSpendingLog = $e->processedTimeSpendingLog;
             //                throw $te;
             if (e.processedTimeSpendingLog) {
+              // Salvage the session's own processor. The exception is thrown at
+              // the very end of ProcessedTimeSpendingLog::ensureParsedRawLogContents,
+              // i.e. after the session has been fully parsed, so its
+              // timeReportSourceComments are populated and usable. Discarding it
+              // here used to drop every entry of the session from the parse
+              // result - a whole day of tracked time disappearing on account of
+              // a single malformed line, with no other trace than a warning
+              // nobody had to read.
+              sessionSpecificProcessedTimeSpendingLogTimeLogProcessor =
+                e.processedTimeSpendingLog.getTimeLogProcessor();
+
               if (this.getProcessingErrors().length === 0) {
                 this.addError(
                   "session-parsing",
