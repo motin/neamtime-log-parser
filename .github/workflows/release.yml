@@ -1,0 +1,59 @@
+name: Release
+
+# Publishes to npm via OIDC trusted publishing — no NPM_TOKEN, no secret of any
+# kind. npm is configured (Package → Settings → Trusted Publisher) to trust this
+# repository and THIS workflow filename, so renaming this file breaks publishing
+# until the npm side is updated to match.
+#
+# Trigger: push a version tag. The tag must match the version in package.json,
+# which the job verifies before publishing — a mismatch is the classic way to
+# ship a tarball that disagrees with its git tag.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # required for OIDC; without it npm sees no provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm >= 11.5.1; setup-node still ships older
+      - name: Ensure npm supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      - run: npm ci
+
+      - name: Verify the tag matches package.json
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(node -p "require('./package.json').version")
+          echo "tag=$TAG package.json=$PKG"
+          [ "$TAG" = "$PKG" ] || { echo "::error::tag $TAG != package.json $PKG"; exit 1; }
+
+      - name: Run linter
+        run: npm run lint
+
+      # `npm test` = build + ava. TZ matches ci.yml — the suite is timezone-sensitive.
+      - name: Run tests
+        run: npm test
+        env:
+          TZ: Europe/Stockholm
+
+      - name: Publish to npm
+        run: npm publish
